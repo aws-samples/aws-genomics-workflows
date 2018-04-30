@@ -23,7 +23,14 @@ We <b>strongly</b> recommend following the
 </td></tr>
 </table>
 
-:pushpin: _NOTE_ | You can finish off the tutorial to get used to using the AWS CLI.
+
+<table>
+<tr><th>
+:pushpin:  <span style="color: blue;" >NOTE</span>
+</th><td>
+You can finish off the tutorial to get used to using the AWS CLI.
+</td></tr>
+</table>
 
 
 
