@@ -1,0 +1,187 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Launches a EC2 host preconfigured for the hands-on exercises for the AWS re:Invent 2017 workshop "LFS309 - Highthroughput Genomics on AWS".'
+Parameters:
+  InstanceType:
+    Description: EC2 instance type, either t2.large or c4.2xlarge. If you want a little more horsepower, use the C4, but the t2.large is more than enough.
+    Type: String
+    Default: t2.large
+    AllowedValues:
+    - t2.large
+    - c4.2xlarge
+    ConstraintDescription: "Must be  't2.large' or 'c4.2xlarge'."
+  VpcId:
+    Description: The VPC to launch into
+    Type: AWS::EC2::VPC::Id
+  VPCSubnetId:
+    Description: The VPC subnet to launch into. MAKE SURE IT IS IN THE VPC THAT YOU DEFINED IN PREVIOUS STEPS.
+    Type: AWS::EC2::Subnet::Id
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair that is on your local machine.
+  SSHLocation:
+    Description: " The IP address range that can be used to SSH to the EC2 instances"
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+Resources:
+  Ec2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: ec2.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/PowerUserAccess
+      - arn:aws:iam::aws:policy/IAMReadOnlyAccess
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+        -
+          Ref: Ec2InstanceRole
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Ref: VpcId
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp:
+          Ref: SSHLocation
+  LoginServerInstance:
+    Type: AWS::EC2::Instance
+    Metadata:
+      Comment: Install a simple application
+      AWS::CloudFormation::Init:
+        configSets:
+          default:
+            - "pkgs"
+            - "fileops"
+        pkgs:
+          packages:
+            yum:
+              python27-pip: []
+              nano: []
+              wget: []
+              jq: []
+              git: []
+              tree: []
+            python:
+              awscli: []
+              boto3: []
+          files:
+            "/home/ec2-user/lfs309-labs.tar.gz":
+              source: "https://lfs309-pdx.s3.amazonaws.com/lfs309-labs.tar.gz"
+            "/home/ec2-user/.aws/config":
+              content: |
+                [default]
+                region = us-west-2
+              mode: "000644"
+              group: ec2-user
+              owner: ec2-user
+            "/etc/cfn/cfn-hup.conf":
+                content:
+                  Fn::Join:
+                  - ""
+                  - - "[main]\n"
+                    - "stack="
+                    - Ref: "AWS::StackId"
+                    - "\n"
+                    - "region="
+                    - Ref: "AWS::Region"
+                    - "\n"
+                mode: "000400"
+                owner: "root"
+                group: "root"
+            "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
+              content:
+                Fn::Join:
+                - ''
+                - - "[cfn-auto-reloader-hook]\n"
+                  - 'triggers=post.update'
+                  - "\n"
+                  - 'path=Resources.LoginServerInstance.Metadata.AWS::CloudFormation::Init'
+                  - "\n"
+                  - 'action=/opt/aws/bin/cfn-init -v --stack '
+                  - Ref: AWS::StackName
+                  - " --resource LoginServerInstance "
+                  - " --configsets default "
+                  - " --region "
+                  - Ref: AWS::Region
+                  - "\n"
+                  - 'runas=root'
+                  - "\n"
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: 'true'
+                ensureRunning: 'true'
+                files:
+                - "/etc/cfn/cfn-hup.conf"
+                - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+        fileops:
+          commands:
+            extractChown:
+              cwd: "/home/ec2-user"
+              command: "tar -xzf lfs309-labs.tar.gz && chown -R ec2-user:ec2-user /home/ec2-user "
+    Properties:
+      IamInstanceProfile:
+        Ref: EC2InstanceProfile
+      ImageId: ami-f5fc2c8d
+      InstanceType:
+        Ref: InstanceType
+      KeyName:
+        Ref: KeyName
+      Tags:
+      - Key: Application
+        Value:
+          Ref: AWS::StackId
+      NetworkInterfaces:
+      - GroupSet:
+        - Ref: InstanceSecurityGroup
+        AssociatePublicIpAddress: 'true'
+        DeviceIndex: '0'
+        DeleteOnTermination: 'true'
+        SubnetId:
+          Ref: VPCSubnetId
+      UserData:
+        Fn::Base64:
+          Fn::Join:
+          - ''
+          - - "#!/bin/bash -xe\n"
+            - 'yum install -y aws-cfn-bootstrap'
+            - "\n"
+            - "/opt/aws/bin/cfn-init -v "
+            - "         --stack "
+            - Ref: AWS::StackName
+            - "         --resource LoginServerInstance "
+            - "         --region "
+            - Ref: AWS::Region
+            - "\n"
+            - "/opt/aws/bin/cfn-signal -e $? "
+            - "         --stack "
+            - Ref: AWS::StackName
+            - "         --resource LoginServerInstance "
+            - "         --region "
+            - Ref: AWS::Region
+            - "\n"
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+Outputs:
+  PublicIp:
+    Value: !GetAtt LoginServerInstance.PublicIp
+    Description: Newly created instance IP address

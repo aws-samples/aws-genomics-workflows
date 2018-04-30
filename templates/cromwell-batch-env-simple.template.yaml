@@ -1,0 +1,369 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploys a the Amazon Identity and Access Management (IAM) Roles and AWS Batch environment that are used in the AWS re:Invent workshop LFS309 "Highthroughput Genomics on AWS". Outputs include the IAM Execution Role for AWS Lambda functions, and the names of the high and low priority JobQueues. You will be billed for the AWS resources used if you create a stack from this template.
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Compute Environment Config"
+        Parameters:
+        - SubnetIds
+        - SecurityGroupIds
+        - BidPercentage
+        - ImageId
+        - KeyPair
+        - MinvCpus
+        - MaxvCpus
+        - DesiredvCpus
+      - Label:
+        - default: "Cromwell Task"
+        Parameters:
+        - Cpus
+        - Memory
+        - ContainerId
+Parameters:
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Subnets you want your batch compute environment to launch in. Recommend private subnets
+  SecurityGroupIds:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+    Description: Security groups your instances in your batch compute environment should use
+  BidPercentage:
+    Type: Number
+    Description: Maximum spot percentage of on-demand. Should be an integer - default is 50
+    MaxValue: 100
+    MinValue: 5
+    Default: 100
+  ImageId:
+    Type: AWS::EC2::Image::Id
+    Description: AMI you want your AWS Batch Compute Environment to use
+    Default: ami-6add1712
+  KeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of the EC2 Key Pair for connecting to EC2 instances launched in your compute environment
+  MinvCpus:
+    Type: Number
+    Description: Minimum number of CPUs in the compute environment. Default 0.
+    Default: 4
+    MinValue: 0
+  DesiredvCpus:
+    Type: Number
+    Description: Desired number of CPUs in the compute environment to launch with. Default 0.
+    MinValue: 0
+    Default: 4
+  MaxvCpus:
+    Type: Number
+    Description: Maximum number of CPUs in the compute environment. Should be >= than MinCpus
+    Default: 64
+    MinValue: 0
+  RetryNumber:
+    Type: Number
+    Description: Number of retries for each AWS Batch job. Integer required.
+    MaxValue: 3
+    MinValue: 0
+    Default: 1
+  IsaacVcpus:
+    Type: Number
+    Description: vCPUs available to Isaac Jobs. Default is usually fine
+    Default: 32
+  IsaacMemory:
+    Type: Number
+    Description: Memory (in MB) available to Isaac Jobs. Default is usually fine
+    Default: 80000
+  StrelkaVcpus:
+    Type: Number
+    Description: vCPUs available to Strelka Jobs. Default is usually fine
+    Default: 32
+  StrelkaMemory:
+    Type: Number
+    Description: Memory (in MB) available to Strelka Jobs. Default is usually fine
+    Default: 32000
+  SnpeffVcpus:
+    Type: Number
+    Description: vCPUs available to snpEff Jobs. Default is usually fine
+    Default: 4
+  SnpeffMemory:
+    Type: Number
+    Description: Memory (in MB) available to snpEff Jobs. Default is usually fine
+    Default: 10000
+  SamtoolsStatsVcpus:
+    Type: Number
+    Description: vCPUs available to SAMtools Jobs. Default is usually fine
+    Default: 4
+  SamtoolsStatsMemory:
+    Type: Number
+    Description: Memory (in MB) available to SAMtools Jobs. Default is usually fine
+    Default: 10000
+Resources:
+  lambdaBatchExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+  lambdaBatchExecutionPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: lambdaBatchExecutionPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: CloudWatchPolicy
+            Effect: Allow
+            Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Resource:
+            - "*"
+          - Sid: S3Policy
+            Effect: Allow
+            Action:
+            - "s3:List*"
+            Resource:
+            - "*"
+          - Sid: LambdaPolicy
+            Effect: Allow
+            Action:
+            - "lambda:InvokeFunction"
+            Resource:
+            - "*"
+          - Sid: BatchPolicy
+            Effect: Allow
+            Action:
+            - "batch:DescribeJobs"
+            - "batch:ListJobs"
+            - "batch:SubmitJob"
+            Resource:
+            - "*"
+      Roles:
+      - !Ref lambdaBatchExecutionRole
+  ecsTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "ecs-tasks.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+      - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  ecsInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+      - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+      - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+  ecsInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+      - !Ref ecsInstanceRole
+      InstanceProfileName: !Ref ecsInstanceRole
+  spotFleetRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "spotfleet.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetRole"
+  awsBatchServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "batch.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole
+
+  GenomicsComputeEnvironment:
+    Type: AWS::Batch::ComputeEnvironment
+    Properties:
+      ServiceRole: !GetAtt awsBatchServiceRole.Arn
+      Type: MANAGED
+      State: ENABLED
+      ComputeResources:
+        BidPercentage: !Ref BidPercentage
+        Ec2KeyPair: !Ref KeyPair
+        ImageId: !Ref ImageId
+        InstanceRole: !GetAtt ecsInstanceRole.Arn
+        InstanceTypes:
+          - optimal
+        MinvCpus: !Ref MinvCpus
+        DesiredvCpus: !Ref DesiredvCpus
+        MaxvCpus: !Ref MaxvCpus
+        SecurityGroupIds: !Ref SecurityGroupIds
+        SpotIamFleetRole: !GetAtt spotFleetRole.Arn
+        Subnets: !Ref SubnetIds
+        Type: SPOT
+
+  HighPriorityQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      Priority: 1000
+      State: ENABLED
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment: !Ref GenomicsComputeEnvironment
+
+  LowPriorityQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      Priority: 1
+      State: ENABLED
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment: !Ref GenomicsComputeEnvironment
+
+  IsaacJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      Type: container
+      RetryStrategy:
+        Attempts: !Ref RetryNumber
+      ContainerProperties:
+        Image:
+          Fn::Join:
+            - "."
+            - - !Ref AWS::AccountId
+              - "dkr.ecr"
+              - !Ref AWS::Region
+              - "amazonaws.com/isaac"
+        Vcpus: !Ref IsaacVcpus
+        Memory: !Ref IsaacMemory
+        JobRoleArn: !GetAtt ecsTaskRole.Arn
+        MountPoints:
+          - ContainerPath: "/scratch"
+            ReadOnly: false
+            SourceVolume: docker_scratch
+        Volumes:
+          - Name: docker_scratch
+            Host:
+              SourcePath: "/docker_scratch"
+  StrelkaJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      Type: container
+      RetryStrategy:
+        Attempts: !Ref RetryNumber
+      ContainerProperties:
+        Image:
+          Fn::Join:
+            - "."
+            - - !Ref AWS::AccountId
+              - "dkr.ecr"
+              - !Ref AWS::Region
+              - "amazonaws.com/strelka"
+        Vcpus: !Ref StrelkaVcpus
+        Memory: !Ref StrelkaMemory
+        JobRoleArn: !GetAtt ecsTaskRole.Arn
+        MountPoints:
+          - ContainerPath: "/scratch"
+            ReadOnly: false
+            SourceVolume: docker_scratch
+        Volumes:
+          - Name: docker_scratch
+            Host:
+              SourcePath: "/docker_scratch"
+
+  SnpeffJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      Type: container
+      RetryStrategy:
+        Attempts: !Ref RetryNumber
+      ContainerProperties:
+        Image:
+          Fn::Join:
+            - "."
+            - - !Ref AWS::AccountId
+              - "dkr.ecr"
+              - !Ref AWS::Region
+              - "amazonaws.com/snpeff"
+        Vcpus: !Ref SnpeffVcpus
+        Memory: !Ref SnpeffMemory
+        JobRoleArn: !GetAtt ecsTaskRole.Arn
+        MountPoints:
+          - ContainerPath: "/scratch"
+            ReadOnly: false
+            SourceVolume: docker_scratch
+        Volumes:
+          - Name: docker_scratch
+            Host:
+              SourcePath: "/docker_scratch"
+
+  SamtoolsStatsJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      Type: container
+      RetryStrategy:
+        Attempts: !Ref RetryNumber
+      ContainerProperties:
+        Image:
+          Fn::Join:
+            - "."
+            - - !Ref AWS::AccountId
+              - "dkr.ecr"
+              - !Ref AWS::Region
+              - "amazonaws.com/samtools_stats"
+        Vcpus: !Ref SamtoolsStatsVcpus
+        Memory: !Ref SamtoolsStatsMemory
+        JobRoleArn: !GetAtt ecsTaskRole.Arn
+        MountPoints:
+          - ContainerPath: "/scratch"
+            ReadOnly: false
+            SourceVolume: docker_scratch
+        Volumes:
+          - Name: docker_scratch
+            Host:
+              SourcePath: "/docker_scratch"
+Outputs:
+  LambdaBatchExecutionRoleName:
+    Value: !Ref lambdaBatchExecutionRole
+  LambdaBatchExecutionRoleArn:
+    Value: !GetAtt lambdaBatchExecutionRole.Arn
+  HighPriorityQueue:
+    Value: !Ref HighPriorityQueue
+  LowPriorityQueue:
+    Value: !Ref LowPriorityQueue
+  IsaacJobDefinition:
+    Value: !Ref IsaacJobDefinition
+  SamtoolsStatsJobDefinition:
+    Value: !Ref SamtoolsStatsJobDefinition
+  StrelkaJobDefinition:
+    Value: !Ref StrelkaJobDefinition
+  SnpeffJobDefinition:
+    Value: !Ref SnpeffJobDefinition
