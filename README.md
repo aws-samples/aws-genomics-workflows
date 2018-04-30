@@ -16,9 +16,10 @@ The easiest way to accomplish this follow [Step 1](https://aws.amazon.com/gettin
 
 <table>
 <tr><th>
-:fire:  _WARNING_
+:fire:  <span style="color: red;" >WARNING</span>
 </th><td>
-We **strongly** recommend following the [IAM Security Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html) for securing your root AWS account and IAM users.
+We <b>strongly</b> recommend following the
+<a href='https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html'>IAM Security Best Practices</a> for securing your root AWS account and IAM users.
 </td></tr>
 </table>
 
