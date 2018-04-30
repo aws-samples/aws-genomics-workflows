@@ -27,7 +27,7 @@ You may also want to review the  [HIPAA on AWS Enterprise Accelerator](https://a
 * Standard Amazon VPC security groups for Amazon Elastic Compute Cloud (Amazon EC2) instances and load balancers used in the sample application stack
 * A secured bastion login host to facilitate command-line Secure Shell (SSH) access to Amazon EC2 instances for troubleshooting and systems administration activities
 * Logging, monitoring, and alerts using AWS CloudTrail, Amazon CloudWatch, and AWS Config rules
-!!!END
+
 
 ## Step 1. Creating a custom AMI for genomics
 
