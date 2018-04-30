@@ -40,7 +40,7 @@ Amazon Virtual Private Cloud ([Amazon VPC](https://docs.aws.amazon.com/AmazonVPC
 
 While users are able to leverage a [default VPC and Subnets](https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/default-vpc.html), we **strongly** recommend a more advanced setup that leverages private (not internet accessible) subnets and additional layers of security such as network Access Control Lists. There are [AWS Quickstart](https://aws.amazon.com/quickstart/) reference architectures for a [Modular and Scalable VPC Architecture](https://aws.amazon.com/quickstart/architecture/vpc/) serves this requirement.
 
-:bulb:  <span style="color: ##FF6600;" >TIP</span>
+:bulb:  <span style="color: #FF6600;" >TIP</span>
 <hr/>
 
 You may also want to review the  [HIPAA on AWS Enterprise Accelerator](https://aws.amazon.com/quickstart/architecture/accelerator-hipaa/) for additional security best practices such as:
