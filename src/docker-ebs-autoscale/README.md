@@ -16,13 +16,13 @@ You can modify the names of the VG and LV in the upstart configuration file.
 
 Copy the following files into the right place.
 
-| Source File | Destination File | Mode | Owner |
-| :--- | :--- | :--- | :--- |
-| src/docker-ebs-autoscale.sh | /usr/local/bin/docker-ebs-autoscale.sh | 0755 | root |
-| src/docker-ebs-autoscale.conf | /etc/init/docker-ebs-autoscale.conf | 0755 | root |
+```bash
+curl -O https://cromwell-aws-batch.s3.amazonaws.com/files/docker-ebs-autoscale.tar.gz
+...
+```
 
 Then start the service
 
 ```shell
-sudo service docker-ebs-autoscale start
+sudo start docker-ebs-autoscale
 ```

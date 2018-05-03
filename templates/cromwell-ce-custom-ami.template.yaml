@@ -1,15 +1,15 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Launches a EC2 host preconfigured for the hands-on exercises for the AWS re:Invent 2017 workshop "LFS309 - Highthroughput Genomics on AWS".'
+Description: 'Launches a EC2 host preconfigured ".'
 Parameters:
   InstanceType:
-    Description: EC2 instance type, either t2.large or c4.2xlarge. If you want a little more horsepower, use the C4, but the t2.large is more than enough.
+    Description: EC2 instance type, either t2.large or t2.xlarge.
     Type: String
     Default: t2.large
     AllowedValues:
     - t2.large
-    - c4.2xlarge
-    ConstraintDescription: "Must be  't2.large' or 'c4.2xlarge'."
+    - t2.xlarge
+    ConstraintDescription: "Must be  't2.large' or 't2.xlarge'."
   VpcId:
     Description: The VPC to launch into
     Type: AWS::EC2::VPC::Id
@@ -28,6 +28,50 @@ Parameters:
     Default: 0.0.0.0/0
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  Mappings:
+
+    # These are the latest ECS optimized AMIs as of Feb 2018:
+    #
+    #   amzn-ami-2017.09.h-amazon-ecs-optimized
+    #   ECS agent:    1.17.1
+    #   Docker:       17.09.1-ce
+    #   ecs-init:     1.17.1-1
+    #
+    # You can find the latest available on this page of our documentation:
+    # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
+    # (note the AMI identifier is region specific)
+
+    AWSRegionToAMI:
+      us-east-2:
+        AMI: ami-b86a5ddd
+      us-east-1:
+        AMI: ami-a7a242da
+      us-west-2:
+        AMI: ami-92e06fea
+      us-west-1:
+        AMI: ami-9ad4dcfa
+      eu-west-3:
+        AMI: ami-698b3d14
+      eu-west-2:
+        AMI: ami-f4e20693
+      eu-west-1:
+        AMI: ami-0693ed7f
+      eu-central-1:
+        AMI: ami-0799fa68
+      ap-northeast-2:
+        AMI: ami-a5dd70cb
+      ap-northeast-1:
+        AMI: ami-68ef940e
+      ap-southeast-2:
+        AMI: ami-ee884f8c
+      ap-southeast-1:
+        AMI: ami-0a622c76
+      ca-central-1:
+        AMI: ami-5ac94e3e
+      ap-south-1:
+        AMI: ami-2e461a41
+      sa-east-1:
+        AMI: ami-d44008b8
 Resources:
   Ec2InstanceRole:
     Type: AWS::IAM::Role
@@ -47,8 +91,7 @@ Resources:
     Properties:
       Path: "/"
       Roles:
-        -
-          Ref: Ec2InstanceRole
+        - Ref: Ec2InstanceRole
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -68,27 +111,32 @@ Resources:
       AWS::CloudFormation::Init:
         configSets:
           default:
-            - "pkgs"
-            - "fileops"
-        pkgs:
+            - "packagesAndFiles"
+            - "bootstrapOperations"
+        packagesAndFiles:
           packages:
             yum:
-              python27-pip: []
-              nano: []
-              wget: []
+              aws-cli: []
               jq: []
-              git: []
-              tree: []
-            python:
-              awscli: []
-              boto3: []
+              java-1.8.0-openjdk: []
+              java-1.8.0-openjdk-devel: []
           files:
-            "/home/ec2-user/lfs309-labs.tar.gz":
-              source: "https://lfs309-pdx.s3.amazonaws.com/lfs309-labs.tar.gz"
+            "/home/ec2-user/cromwell/cromwell-31.jar":
+              source: "https://github.com/broadinstitute/cromwell/releases/download/31/cromwell-31.jar"
+              mode: "000644"
+              group: ec2-user
+              owner: ec2-user
+            "/home/ec2-user/cromwell/womtool-31.jar":
+              source: "https://github.com/broadinstitute/cromwell/releases/download/31/womtool-31.jar"
+              mode: "000644"
+              group: ec2-user
+              owner: ec2-user
             "/home/ec2-user/.aws/config":
-              content: |
-                [default]
-                region = us-west-2
+              content:
+                  Fn::Join:
+                  - "\n"
+                  - - "[default]"
+                    - !Sub "region = ${AWS::Region}"
               mode: "000644"
               group: ec2-user
               owner: ec2-user
@@ -132,15 +180,19 @@ Resources:
                 files:
                 - "/etc/cfn/cfn-hup.conf"
                 - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
-        fileops:
+        bootstrapOperations:
           commands:
-            extractChown:
-              cwd: "/home/ec2-user"
-              command: "tar -xzf lfs309-labs.tar.gz && chown -R ec2-user:ec2-user /home/ec2-user "
+            extractFiles:
+              cwd: "/"
+              command:
+                Fn::Join:
+                - "\n"
+                - - "tar -xzf docker-ebs-autoscale.tar.gz"
+                  - "service "
     Properties:
       IamInstanceProfile:
         Ref: EC2InstanceProfile
-      ImageId: ami-f5fc2c8d
+      ImageId: !FindInMap [AWSRegionToAMI, !Ref "AWS::Region", AMI]
       InstanceType:
         Ref: InstanceType
       KeyName:

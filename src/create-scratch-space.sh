@@ -1,10 +1,11 @@
-if [  "$#" -lt 3 ]; then
-  echo "USAGE: $0 <VOLUME GROUP NAME> <LOGICAL VOLUME NAME> <MOUNT POINT>"
+if [  "$#" -lt 4 ]; then
+  echo "USAGE: $0 <DEVICE NAME> <VOLUME GROUP NAME> <LOGICAL VOLUME NAME> <MOUNT POINT>"
   exit
 fi
-VG=$1
-LV=$2
-MP=$3
+D=$1
+VG=$2
+LV=$3
+MP=$4
 
 ## Example Code
 

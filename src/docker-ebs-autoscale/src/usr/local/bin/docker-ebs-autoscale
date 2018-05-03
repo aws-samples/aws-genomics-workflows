@@ -58,9 +58,9 @@ logthis () {
 while true; do
   F=$(df -h  /dev/${VG}/${LV} | grep ${VG} | awk '{print $5}' | cut -d"%" -f1 -)
   if  [ $F -ge "80" ]; then
-    logthis "LOW: Adding more space."
+    logthis "LOW DISK ($F): Adding more."
     add_space
   fi
-  logthis "FREE % $F"
+  # logthis "FREE % $F"
   sleep 5
 done
