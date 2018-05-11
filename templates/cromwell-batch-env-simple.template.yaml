@@ -5,22 +5,21 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "Compute Environment Config"
+          default: "AWS Batch Environment Config"
         Parameters:
         - SubnetIds
         - SecurityGroupIds
         - BidPercentage
         - ImageId
-        - KeyPair
+        - Ec2KeyPair
         - MinvCpus
         - MaxvCpus
-        - DesiredvCpus
+        - RetryNumber
       - Label:
-        - default: "Cromwell Task"
+          default: "Cromwell Root Bucket"
         Parameters:
-        - Cpus
-        - Memory
-        - ContainerId
+        - CromwellRootBucketName
+
 Parameters:
   SubnetIds:
     Type: List<AWS::EC2::Subnet::Id>
@@ -37,8 +36,7 @@ Parameters:
   ImageId:
     Type: AWS::EC2::Image::Id
     Description: AMI you want your AWS Batch Compute Environment to use
-    Default:
-  KeyPair:
+  Ec2KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Name of the EC2 Key Pair for connecting to EC2 instances launched in your compute environment
   MinvCpus:
@@ -46,11 +44,6 @@ Parameters:
     Description: Minimum number of CPUs in the compute environment. Default 0.
     Default: 4
     MinValue: 0
-  DesiredvCpus:
-    Type: Number
-    Description: Desired number of CPUs in the compute environment to launch with. Default 0.
-    MinValue: 0
-    Default: 4
   MaxvCpus:
     Type: Number
     Description: Maximum number of CPUs in the compute environment. Should be >= than MinCpus
@@ -62,99 +55,57 @@ Parameters:
     MaxValue: 3
     MinValue: 0
     Default: 1
-Mappings:
-    # These are the latest ECS optimized AMIs as of Feb 2018:
-    #
-    #   amzn-ami-2017.09.h-amazon-ecs-optimized
-    #   ECS agent:    1.17.1
-    #   Docker:       17.09.1-ce
-    #   ecs-init:     1.17.1-1
-    #
-    # You can find the latest available on this page of our documentation:
-    # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
-    # (note the AMI identifier is region specific)
-    AWSRegionToAMI:
-        us-east-2:
-            AMI: ami-b86a5ddd
-        us-east-1:
-            AMI: ami-a7a242da
-        us-west-2:
-            AMI: ami-92e06fea
-        us-west-1:
-            AMI: ami-9ad4dcfa
-        eu-west-3:
-            AMI: ami-698b3d14
-        eu-west-2:
-            AMI: ami-f4e20693
-        eu-west-1:
-            AMI: ami-0693ed7f
-        eu-central-1:
-            AMI: ami-0799fa68
-        ap-northeast-2:
-            AMI: ami-a5dd70cb
-        ap-northeast-1:
-            AMI: ami-68ef940e
-        ap-southeast-2:
-            AMI: ami-ee884f8c
-        ap-southeast-1:
-            AMI: ami-0a622c76
-        ca-central-1:
-            AMI: ami-5ac94e3e
-        ap-south-1:
-            AMI: ami-2e461a41
-        sa-east-1:
-            AMI: ami-d44008b8
+  CromwellRootBucketName:
+    Type: String
+    Description: The name of the Cromwell root bucket, which will store the results of Cromwell Tasks.
 Resources:
-  lambdaBatchExecutionRole:
+  BatchServiceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: 2012-10-17
+        Version: '2012-10-17'
         Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - "lambda.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
-  lambdaBatchExecutionPolicy:
+        - Effect: Allow
+          Principal:
+            Service: batch.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole
+  CromwellRootBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref CromwellRootBucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+             SSEAlgorithm: AES256
+  CromwellS3AccessPolicy:
     Type: AWS::IAM::Policy
     Properties:
-      PolicyName: lambdaBatchExecutionPolicy
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Sid: CloudWatchPolicy
-            Effect: Allow
-            Action:
-            - "logs:CreateLogGroup"
-            - "logs:CreateLogStream"
-            - "logs:PutLogEvents"
-            Resource:
-            - "*"
-          - Sid: S3Policy
-            Effect: Allow
-            Action:
-            - "s3:List*"
-            Resource:
-            - "*"
-          - Sid: LambdaPolicy
-            Effect: Allow
-            Action:
-            - "lambda:InvokeFunction"
-            Resource:
-            - "*"
-          - Sid: BatchPolicy
-            Effect: Allow
-            Action:
-            - "batch:DescribeJobs"
-            - "batch:ListJobs"
-            - "batch:SubmitJob"
-            Resource:
-            - "*"
+      Path: "/"
       Roles:
-      - !Ref lambdaBatchExecutionRole
-  ecsTaskRole:
+        Ref: CromwellTaskRole
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+      Policies:
+        PolicyName: "CromwellS3Access"
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Deny
+              Resource: !Join ["", ["arn:aws:s3:::", !Ref CromwellRootBucketName]]
+              Action:
+                - "s3:Delete*"
+                - "s3:PutBucket*"
+            - Effect: Allow
+              Resource: !Join ["", ["arn:aws:s3:::", !Ref CromwellRootBucketName]]
+              Action:
+                - "s3:ListBucket*"
+            - Effect: Allow
+              Resource: !Join ["", ["arn:aws:s3:::", !Ref CromwellRootBucketName, "/*"]]
+              Action:
+                - "s3:*"
+  CromwellTaskRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -166,10 +117,7 @@ Resources:
                 - "ecs-tasks.amazonaws.com"
             Action:
               - "sts:AssumeRole"
-      ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
-      - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
-  ecsInstanceRole:
+  EcsInstanceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -181,17 +129,25 @@ Resources:
                 - "ec2.amazonaws.com"
             Action:
               - "sts:AssumeRole"
+      Policies:
+        PolicyName: !Sub Cromwell-Autoscale-EBS-${AWS::Region}
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            Effect: Allow
+            Action:
+              - "ec2:createVolume"
+              - "ec2:attacheVolume"
+              - "ecs:describeVolumes"
+              - "ec3:modifyInstanceAttribute"
       ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
-      - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
       - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
-  ecsInstanceProfile:
+  EcsInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Roles:
-      - !Ref ecsInstanceRole
-      InstanceProfileName: !Ref ecsInstanceRole
-  spotFleetRole:
+        - !Ref EcsInstanceRole
+  SpotFleetRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -205,176 +161,79 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
       - "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetRole"
-  awsBatchServiceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - "batch.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
-      ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole
-
-  GenomicsComputeEnvironment:
+  CromwellSpotCE:
     Type: AWS::Batch::ComputeEnvironment
     Properties:
-      ServiceRole: !GetAtt awsBatchServiceRole.Arn
+      ServiceRole:
+        Ref: BatchServiceRole
       Type: MANAGED
       State: ENABLED
       ComputeResources:
         BidPercentage: !Ref BidPercentage
-        Ec2KeyPair: !Ref KeyPair
+        Ec2KeyPair: !Ref Ec2KeyPair
         ImageId: !Ref ImageId
-        InstanceRole: !GetAtt ecsInstanceRole.Arn
+        InstanceRole:
+          Ref: EcsInstanceProfile
         InstanceTypes:
           - optimal
         MinvCpus: !Ref MinvCpus
-        DesiredvCpus: !Ref DesiredvCpus
         MaxvCpus: !Ref MaxvCpus
         SecurityGroupIds: !Ref SecurityGroupIds
-        SpotIamFleetRole: !GetAtt spotFleetRole.Arn
+        SpotIamFleetRole:
+          Ref: SpotFleetRole
         Subnets: !Ref SubnetIds
         Type: SPOT
-
-  HighPriorityQueue:
+        Tags:
+          - Name: CromwellSpot
+  CromwellOnDemandCE:
+    Type: AWS::Batch::ComputeEnvironment
+    Properties:
+      ServiceRole:
+        Ref: BatchServiceRole
+      Type: MANAGED
+      State: ENABLED
+      ComputeResources:
+        BidPercentage: !Ref BidPercentage
+        Ec2KeyPair: !Ref Ec2KeyPair
+        ImageId: !Ref ImageId
+        InstanceRole: !GetAtt EcsInstanceRole.Arn
+        InstanceTypes:
+          - optimal
+        MinvCpus: !Ref MinvCpus
+        MaxvCpus: !Ref MaxvCpus
+        SecurityGroupIds: !Ref SecurityGroupIds
+        SpotIamFleetRole:
+          Ref: SpotFleetRole
+        Subnets: !Ref SubnetIds
+        Type: EC2
+        Tags:
+          - Name: CromwellOnDemand
+  CromwelllHighPriorityQueue:
     Type: AWS::Batch::JobQueue
     Properties:
       Priority: 1000
       State: ENABLED
       ComputeEnvironmentOrder:
         - Order: 1
-          ComputeEnvironment: !Ref GenomicsComputeEnvironment
+          ComputeEnvironment: !Ref CromwellOnDemandCE
+        - Order: 2
+          ComputeEnvironment: !Ref CromwellSpotCE
 
-  LowPriorityQueue:
+  CromwellDefaultQueue:
     Type: AWS::Batch::JobQueue
     Properties:
       Priority: 1
       State: ENABLED
       ComputeEnvironmentOrder:
         - Order: 1
-          ComputeEnvironment: !Ref GenomicsComputeEnvironment
+          ComputeEnvironment: !Ref CromwellSpotCE
+        - Order: 2
+          ComputeEnvironment: !Ref CromwellOnDemandCE
 
-  IsaacJobDefinition:
-    Type: AWS::Batch::JobDefinition
-    Properties:
-      Type: container
-      RetryStrategy:
-        Attempts: !Ref RetryNumber
-      ContainerProperties:
-        Image:
-          Fn::Join:
-            - "."
-            - - !Ref AWS::AccountId
-              - "dkr.ecr"
-              - !Ref AWS::Region
-              - "amazonaws.com/isaac"
-        Vcpus: !Ref IsaacVcpus
-        Memory: !Ref IsaacMemory
-        JobRoleArn: !GetAtt ecsTaskRole.Arn
-        MountPoints:
-          - ContainerPath: "/scratch"
-            ReadOnly: false
-            SourceVolume: docker_scratch
-        Volumes:
-          - Name: docker_scratch
-            Host:
-              SourcePath: "/docker_scratch"
-  StrelkaJobDefinition:
-    Type: AWS::Batch::JobDefinition
-    Properties:
-      Type: container
-      RetryStrategy:
-        Attempts: !Ref RetryNumber
-      ContainerProperties:
-        Image:
-          Fn::Join:
-            - "."
-            - - !Ref AWS::AccountId
-              - "dkr.ecr"
-              - !Ref AWS::Region
-              - "amazonaws.com/strelka"
-        Vcpus: !Ref StrelkaVcpus
-        Memory: !Ref StrelkaMemory
-        JobRoleArn: !GetAtt ecsTaskRole.Arn
-        MountPoints:
-          - ContainerPath: "/scratch"
-            ReadOnly: false
-            SourceVolume: docker_scratch
-        Volumes:
-          - Name: docker_scratch
-            Host:
-              SourcePath: "/docker_scratch"
-
-  SnpeffJobDefinition:
-    Type: AWS::Batch::JobDefinition
-    Properties:
-      Type: container
-      RetryStrategy:
-        Attempts: !Ref RetryNumber
-      ContainerProperties:
-        Image:
-          Fn::Join:
-            - "."
-            - - !Ref AWS::AccountId
-              - "dkr.ecr"
-              - !Ref AWS::Region
-              - "amazonaws.com/snpeff"
-        Vcpus: !Ref SnpeffVcpus
-        Memory: !Ref SnpeffMemory
-        JobRoleArn: !GetAtt ecsTaskRole.Arn
-        MountPoints:
-          - ContainerPath: "/scratch"
-            ReadOnly: false
-            SourceVolume: docker_scratch
-        Volumes:
-          - Name: docker_scratch
-            Host:
-              SourcePath: "/docker_scratch"
-
-  SamtoolsStatsJobDefinition:
-    Type: AWS::Batch::JobDefinition
-    Properties:
-      Type: container
-      RetryStrategy:
-        Attempts: !Ref RetryNumber
-      ContainerProperties:
-        Image:
-          Fn::Join:
-            - "."
-            - - !Ref AWS::AccountId
-              - "dkr.ecr"
-              - !Ref AWS::Region
-              - "amazonaws.com/samtools_stats"
-        Vcpus: !Ref SamtoolsStatsVcpus
-        Memory: !Ref SamtoolsStatsMemory
-        JobRoleArn: !GetAtt ecsTaskRole.Arn
-        MountPoints:
-          - ContainerPath: "/scratch"
-            ReadOnly: false
-            SourceVolume: docker_scratch
-        Volumes:
-          - Name: docker_scratch
-            Host:
-              SourcePath: "/docker_scratch"
 Outputs:
-  LambdaBatchExecutionRoleName:
-    Value: !Ref lambdaBatchExecutionRole
-  LambdaBatchExecutionRoleArn:
-    Value: !GetAtt lambdaBatchExecutionRole.Arn
-  HighPriorityQueue:
-    Value: !Ref HighPriorityQueue
-  LowPriorityQueue:
-    Value: !Ref LowPriorityQueue
-  IsaacJobDefinition:
-    Value: !Ref IsaacJobDefinition
-  SamtoolsStatsJobDefinition:
-    Value: !Ref SamtoolsStatsJobDefinition
-  StrelkaJobDefinition:
-    Value: !Ref StrelkaJobDefinition
-  SnpeffJobDefinition:
-    Value: !Ref SnpeffJobDefinition
+  CromwellRootBucketName:
+    Value: !Ref CromwellRootBucketName
+  CromwellDefaultQueue:
+    Value: !Ref CromwellDefaultQueue
+  CromwelllHighPriorityQueue:
+    Value: !Ref CromwelllHighPriorityQueue
