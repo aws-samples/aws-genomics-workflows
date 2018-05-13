@@ -33,13 +33,13 @@ Copy the appropriate AMI ID for the next step (e.g. `ami-aff65ad2`).
 ## [Step 2.](id:step-2) Create a new Block Device Mapping
 
 ```bash
-aws ec2 describe-images --image-ids <YOUR AMI ID> \
+aws ec2 describe-images --image-ids <ECS OPTIMIZED AMI ID> \
     --output json \
     --query "Images[0].BlockDeviceMappings" \
     > block-device-mappings.json
 ```
 
-The `block-device-mappings.json` file looks like this for `ami-aff65ad2`:
+The `block-device-mappings.json` file for `ami-aff65ad2` looks like the following:
 
 ```javascript
 [
@@ -111,9 +111,18 @@ The final file should look something like below.
 
 Next, we will launch an `t2.large` instance with, adding in some more launch parameters on the command line. In particular, we want to include a EC2 user data block to bootstrap the other parts of the installation.
 
+<table>
+<tr><th>
+:pushpin:  <span style="color: blue;" >NOTE</span>
+</th><td>
+You will need information about your VPC below, such as subnet and security group IDs, and a EC2 key pair name. You can get these values from the
+<a href="prereqs"> Prerequisites </a> section of this tutorial.
+</td></tr>
+</table>
+
 ```bash
 curl -O https://cromwell-aws-batch.s3.amazonaws.com/files/custom-ami-bootstrap-userdata.txt
-aws ec2 run-instances --image-ids <ECS AMI ID FOR REGION> \
+aws ec2 run-instances --image-ids <ECS OPTIMIZED AMI ID> \
     --key-name <YOUR KEY PAIR NAME> \
     --subnet-id <YOUR SUBNET ID> \
     --security-group-ids <YOUR SECURITY GROUP FOR SSH> \
