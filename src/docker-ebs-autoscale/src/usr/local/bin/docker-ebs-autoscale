@@ -15,7 +15,7 @@ Z=$(curl -s  http://169.254.169.254/latest/meta-data/placement/availability-zone
 R=$(echo $Z | sed -e 's/[a-z]$//')
 I=$(curl -s  http://169.254.169.254/latest/meta-data/instance-id)
 # Get the Volume ID.
-D=$(pvscan | grep ${VG} | awk '{print $2}')
+D=$(pvscan | grep ${VG} | awk '{print $2}' | sed -e 's#/dev/sd#/dev/xvd#')
 
 calc_new_size() {
   local curr_size=$1
@@ -40,7 +40,10 @@ add_space () {
     logthis "Extending volume $V ($curr_size -> $new_size)"
 
     # attach the new EBS volume to this host
-    aws ec2 modify-volume --region $R --volume-id $V --size $new_size
+    aws ec2 modify-volume --region $R --volume-id $V --size ${new_size}
+
+    # Resize the Physical Volume
+    pvresize $D
 
     # get free extents in VG
     E=$(vgdisplay ${VG} |grep "Free" | awk '{print $5}')
@@ -53,11 +56,13 @@ logthis () {
   echo "[`date`] $1"
 }
 
+THRESHOLD=60
 while true; do
   F=$(df -h  /dev/${VG}/${LV} | grep ${VG} | awk '{print $5}' | cut -d"%" -f1 -)
-  if  [ $F -ge "80" ]; then
+  if  [ $F -ge "${THRESHOLD}" ]; then
     logthis "LOW DISK ($F): Adding more."
     add_space
+    THRESHOLD=80
   fi
   sleep 5
 done
