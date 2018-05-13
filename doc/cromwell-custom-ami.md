@@ -3,7 +3,6 @@
 
 Genomics, the main use case for Cromwell, is a data-heavy workload and requires some modification to the standard AWS Batch processing environment. In particular, we need to scale underlying instance storage that Tasks/Jobs run on top of to meet unpredictable runtime demands.
 
-The provided [CloudFormation template]() for creating
 Specifically we will:
 
 1. Launch and instance with a encrypted EBS volume for scratch space
@@ -31,7 +30,7 @@ You will need the AMI ID of the latest ECS-Optimized AMI. You can get a list of 
 
 Copy the appropriate AMI ID for the next step (e.g. `ami-aff65ad2`).
 
-## Step X. Query the image metadata to get the `BlockDeviceMappings`
+## [Step 2.](id:step-2) Create a new Block Device Mapping
 
 ```bash
 aws ec2 describe-images --image-ids <YOUR AMI ID> \
@@ -108,6 +107,8 @@ The final file should look something like below.
 
 ```
 
+## [Step 3.](id:step-3) Launch and configure a new instance for the custom AMI
+
 Next, we will launch an `t2.large` instance with, adding in some more launch parameters on the command line. In particular, we want to include a EC2 user data block to bootstrap the other parts of the installation.
 
 ```bash
@@ -152,6 +153,8 @@ If you want to leverage <b>private Docker registries</b>, see
 below on how to configure you instance to be able to do this prior to making an AMI image.
 </td></tr>
 </table>
+
+## [Step 4.](id:step-4) Create a new Amazon Machine Image for Batch
 
 Exit the SSH session and create a new AMI from your development machine using the AWS CLI.
 
