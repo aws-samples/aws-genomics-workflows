@@ -23,7 +23,7 @@ The current Amazon ECS-optimized AMI (amzn-ami-2017.09.l-amazon-ecs-optimized) c
 
 ## [Step 1.](id:step-1) Getting the AMI ID of an ECS-Optimized AMI for your region
 
-You will need the AMI ID of the latest ECS-Optimized AMI. You can get a list of the current AMI IDs by region on the [documentation page](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html#w301aac19c15c15c12) documentation page.
+You will need the AMI ID of the latest ECS-Optimized AMI. You can get a list of the current AMI IDs by region on the [documentation page](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html) documentation page.
 
 
 [![Table of Amazon ECS-Optimized AMIs](../images/cromwell-ecs-opt-amis-table.png)](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)
