@@ -154,16 +154,17 @@ sudo rm -rf /var/lib/ecs/data/ecs_agent_data.json
 
 Your instance is now ready for image creation.
 
+## [Step 4.](id:step-4) OPTIONAL: Configure ECS for private Docker registry use
+
 <table>
 <tr><th> :hamburger: Note </th></tr>
 <tr><td>
-If you want to leverage <b>private Docker registries</b>, see
-<A href="#XXX"> section XXX</a>
-below on how to configure you instance to be able to do this prior to making an AMI image.
+If you want to leverage <b>private Docker registries</b>, refer to the
+<a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/private-auth.html"> ECS documentation on private registry authentication. We will not cover this topic here.
 </td></tr>
 </table>
 
-## [Step 4.](id:step-4) Create a new Amazon Machine Image for Batch
+## [Step 5.](id:step-5) Create a new Amazon Machine Image for Batch
 
 Exit the SSH session and create a new AMI from your development machine using the AWS CLI.
 
