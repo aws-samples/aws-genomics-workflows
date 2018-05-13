@@ -1,0 +1,66 @@
+#!/bin/sh
+
+if [ "$#" -eq "0" ]; then
+  VG="docker_scratch"
+  LV="docker_scratch_pool"
+elif [ "$#" -eq "2" ]; then
+  VG="$1"
+  LV="$2"
+else
+  echo "USAGE: $0 [<VOLUME GROUP NAME> <LOGICAL VOLUME NAME>]"
+  exit
+fi
+
+Z=$(curl -s  http://169.254.169.254/latest/meta-data/placement/availability-zone/)
+R=$(echo $Z | sed -e 's/[a-z]$//')
+S=(64 256 512 512 1024 1024 2048 2048 2048 5120 5120)
+I=$(curl -s  http://169.254.169.254/latest/meta-data/instance-id)
+A=({a..z})
+
+add_space () {
+  # sizes of EBS volumes to allocate based on what is there already
+  # availability zone
+  # Number of volumes
+  N=$(ls /dev/xvd* | grep -v -E '[0-9]$' | wc -l)
+  # create the volume
+  V=$(aws ec2 create-volume --region $R --availability-zone $Z --volume-type gp2 --size ${S[$N - 2]} --encrypted --query "VolumeId" | sed 's/\"//g' )
+  logthis "Created new volume $V (${S[$N - 2]})"
+
+  # await volume to become available
+  until [ "$(aws ec2 describe-volumes --volume-ids $V --region $R --query "Volumes[0].State" | sed -e 's/\"//g')" == "available" ]; do
+    sleep 1
+  done
+  # attach the new EBS volume to this host
+  # Instance ID
+  D="/dev/sd${A[$N]}"
+  aws ec2 attach-volume --region $R --device $D --volume-id $V --instance-id $I
+
+  # change the DeleteOnTermination volume attribute to true
+  aws ec2 modify-instance-attribute --region $R --block-device-mappings "DeviceName=$D,Ebs={DeleteOnTermination=true,VolumeId=$V}" --instance-id $I
+
+  # wait until device is available to start adding to PV
+  until [ -b "$D" ]; do
+    sleep 0.5
+  done
+  # create the new PV
+  pvcreate $D
+  vgextend ${VG} $D
+  # get free extents in VG
+  E=$(vgdisplay ${VG} |grep "Free" | awk '{print $5}')
+  # extend the docker LV by the free extents
+  lvextend --resizefs --extents +$E /dev/${VG}/${LV}
+}
+
+logthis () {
+  echo "[`date`] $1"
+}
+
+while true; do
+  F=$(df -h  /dev/${VG}/${LV} | grep ${VG} | awk '{print $5}' | cut -d"%" -f1 -)
+  if  [ $F -ge "80" ]; then
+    logthis "LOW DISK ($F): Adding more."
+    add_space
+  fi
+  # logthis "FREE % $F"
+  sleep 5
+done

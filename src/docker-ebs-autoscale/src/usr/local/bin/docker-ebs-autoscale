@@ -13,42 +13,40 @@ fi
 
 Z=$(curl -s  http://169.254.169.254/latest/meta-data/placement/availability-zone/)
 R=$(echo $Z | sed -e 's/[a-z]$//')
-S=(64 256 512 512 1024 1024 2048 2048 2048 5120 5120)
 I=$(curl -s  http://169.254.169.254/latest/meta-data/instance-id)
-A=({a..z})
+# Get the Volume ID.
+D=$(pvscan | grep ${VG} | awk '{print $2}')
+
+calc_new_size() {
+  local curr_size=$1
+  local new_size=$curr_size
+
+  local m=$(echo "scale=0; ( $curr_size / 256 )" | bc -l)
+  if [ $m -eq 0 ]; then
+    new_size=256
+  elif [ $m -ge 16 ]; then
+    new_size=$(echo "$curr_size + 2048" | bc -l )
+  else
+    new_size=$(echo "$curr_size + (256 * $m)" | bc -l )
+  fi
+  echo $new_size
+}
 
 add_space () {
-  # sizes of EBS volumes to allocate based on what is there already
-  # availability zone
-  # Number of volumes
-  N=$(ls /dev/xvd* | grep -v -E '[0-9]$' | wc -l)
-  # create the volume
-  V=$(aws ec2 create-volume --region $R --availability-zone $Z --volume-type gp2 --size ${S[$N - 2]} --encrypted --query "VolumeId" | sed 's/\"//g' )
-  logthis "Created new volume $V (${S[$N - 2]})"
+  curr_size=$(df  -BG /dev/${VG}/${LV} | grep ${VG} |awk '{print $2} ' | cut -d'G' -f1)
+  if [ $curr_size -lt 16384 ]; then
+    new_size=$(calc_new_size $curr_size)
+    V=$(aws ec2 --region $R --output text describe-volumes --filters Name=attachment.instance-id,Values=$I,Name=attachment.device,Values=$D --query "Volumes[0].Attachments[0].VolumeId")
+    logthis "Extending volume $V ($curr_size -> $new_size)"
 
-  # await volume to become available
-  until [ "$(aws ec2 describe-volumes --volume-ids $V --region $R --query "Volumes[0].State" | sed -e 's/\"//g')" == "available" ]; do
-    sleep 1
-  done
-  # attach the new EBS volume to this host
-  # Instance ID
-  D="/dev/sd${A[$N]}"
-  aws ec2 attach-volume --region $R --device $D --volume-id $V --instance-id $I
+    # attach the new EBS volume to this host
+    aws ec2 modify-volume --region $R --volume-id $V --size $new_size
 
-  # change the DeleteOnTermination volume attribute to true
-  aws ec2 modify-instance-attribute --region $R --block-device-mappings "DeviceName=$D,Ebs={DeleteOnTermination=true,VolumeId=$V}" --instance-id $I
-
-  # wait until device is available to start adding to PV
-  until [ -b "$D" ]; do
-    sleep 0.5
-  done
-  # create the new PV
-  pvcreate $D
-  vgextend ${VG} $D
-  # get free extents in VG
-  E=$(vgdisplay ${VG} |grep "Free" | awk '{print $5}')
-  # extend the docker LV by the free extents
-  lvextend --resizefs --extents +$E /dev/${VG}/${LV}
+    # get free extents in VG
+    E=$(vgdisplay ${VG} |grep "Free" | awk '{print $5}')
+    # extend the docker LV by the free extents
+    lvextend --resizefs --extents +$E /dev/${VG}/${LV}
+  fi
 }
 
 logthis () {
@@ -61,6 +59,5 @@ while true; do
     logthis "LOW DISK ($F): Adding more."
     add_space
   fi
-  # logthis "FREE % $F"
   sleep 5
 done
