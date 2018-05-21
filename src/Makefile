@@ -1,4 +1,4 @@
-all:  upload-bootstrap-script
+all:  upload-bootstrap-scripts
 
 upload-bootstrap-scripts:
 	aws s3 cp --acl public-read custom-ami-bootstrap-userdata.txt s3://cromwell-aws-batch/files/
