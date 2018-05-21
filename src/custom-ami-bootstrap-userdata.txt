@@ -8,6 +8,7 @@ packages:
  - e2e2fsprogs
  - lvm2
  - bc
+ - sed
 
 runcmd:
- - curl -o /tmp/custom-ami-bootstrap.sh https://cromwell-aws-batch.s3.amazonaws.com/files/custom-ami-bootstrap.sh && sh /tmp/custom-ami-bootstrap.sh /dev/xvdb docker_scratch docker_scratch_pool /docker_scratch
+ - curl -o /tmp/custom-ami-bootstrap.sh https://cromwell-aws-batch.s3.amazonaws.com/files/custom-ami-bootstrap.sh && sh /tmp/custom-ami-bootstrap.sh
