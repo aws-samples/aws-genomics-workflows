@@ -138,8 +138,8 @@ Resources:
             Action:
               - "ec2:createVolume"
               - "ec2:attacheVolume"
-              - "ecs:describeVolumes"
-              - "ec3:modifyInstanceAttribute"
+              - "ec2:describeVolumes"
+              - "ec2:modifyInstanceAttribute"
       ManagedPolicyArns:
       - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
   EcsInstanceProfile:
