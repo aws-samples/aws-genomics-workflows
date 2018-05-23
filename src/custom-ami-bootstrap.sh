@@ -12,10 +12,10 @@ LV=$2
 MP=$3
 
 # download and install the /docker_scratch autoscale service
-cd /opt
+cd /tmp
 curl -o ebs-autoscale.tar.gz http://cromwell-aws-batch.s3.amazonaws.com/files/ebs-autoscale.tar.gz
 tar -xzf ebs-autoscale.tar.gz
-sh /opt/ebs-autoscale/usr/local/bin/bootstrap-ebs-autoscale.sh ${VG} ${LV} ${MP}
+sh /tmp/ebs-autoscale/bin/bootstrap-ebs-autoscale.sh ${VG} ${LV} ${MP} 2>&1 > /var/log/bootstrap-ebs-autoscale.log
 
 
 # Configure task IP Tables if needed
