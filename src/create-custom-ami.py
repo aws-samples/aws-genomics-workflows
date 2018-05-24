@@ -58,14 +58,14 @@ policy_doc = '''{
 }'''
 try:
     ebs_admin_policy  = iam.create_policy(
-        PolicyName="CromwellEbsAdmin",
+        PolicyName="CustomAmiEbsAdmin",
         PolicyDocument=policy_doc
     )
     ebs_admin_policy_arn = ebs_admin_policy["Policy"]["Arn"]
 except Exception as e:
     print(e)
     arn = iam.get_user()["User"]["Arn"].split(":")[0:5]
-    arn.append("policy/CromwellEbsAdmin")
+    arn.append("policy/CustomAmiEbsAdmin")
     ebs_admin_policy_arn = ":".join(arn)
 
 # Create role
@@ -84,32 +84,32 @@ assume_policy_doc ='''{
 }'''
 try:
     ebs_admin_role = iam.create_role(
-        RoleName="CromwellEbsAdminRole",
+        RoleName="CustomAmiEbsAdminRole",
         AssumeRolePolicyDocument=assume_policy_doc,
     )
 except Exception as e:
     print(e)
-    ebs_admin_role = iam.get_role(RoleName="CromwellEbsAdminRole")
+    ebs_admin_role = iam.get_role(RoleName="CustomAmiEbsAdminRole")
 
 iam.attach_role_policy(
-    RoleName="CromwellEbsAdminRole",
+    RoleName="CustomAmiEbsAdminRole",
     PolicyArn=ebs_admin_policy_arn
 )
 
 try:
     instance_profile = iam.create_instance_profile(
-        InstanceProfileName="CromwellEbsAdminProfile"
+        InstanceProfileName="CustomAmiEbsAdminProfile"
     )
 except Exception as e:
     print(e)
     instance_profile = iam.get_instance_profile(
-        InstanceProfileName="CromwellEbsAdminProfile"
+        InstanceProfileName="CustomAmiEbsAdminProfile"
     )
 
 try:
     iam.add_role_to_instance_profile(
-        InstanceProfileName="CromwellEbsAdminProfile",
-        RoleName="CromwellEbsAdminRole"
+        InstanceProfileName="CustomAmiEbsAdminProfile",
+        RoleName="CustomAmiEbsAdminRole"
     )
 except Exception as e:
     print(e)
@@ -120,7 +120,7 @@ except Exception as e:
 ec2 = boto3.client("ec2")
 
 ## Security Group
-sg_name = "CromwellCustomAmi-" + subnet_id
+sg_name = "CustomAmiCustomAmi-" + subnet_id
 try:
     ec2.create_security_group(
         GroupName=sg_name,
@@ -213,13 +213,15 @@ runcmd:
  - sh /tmp/custom-ami-bootstrap.sh docker_scratch docker_scratch_pool /scratch > /var/log/custom-ami-bootstrap.log
 '''
 
+instance_profile = iam.get_instance_profile(InstanceProfileName="CustomAmiEbsAdminProfile")
+ip_arn = instance_profile["InstanceProfile"]["Arn"]
 ri_args = dict(
     ImageId=ecs_ami,
     BlockDeviceMappings=block_device_mappings,
     MaxCount=1,MinCount=1,
     KeyName=args.key_pair_name,
     InstanceType="t2.large",
-    IamInstanceProfile={"Name": "CromwellEbsAdminProfile"},
+    IamInstanceProfile={"Arn": ip_arn},
     NetworkInterfaces=[{
         "DeviceIndex": 0,
         "AssociatePublicIpAddress": True,
@@ -271,7 +273,7 @@ exit
 aws ec2 create-image \\
   --instance-id {instanc_id} \\
   --name "cromwell-aws-$(date '+%Y%m%d-%H%M%S')" \\
-  --description "A custom AMI for use with Cromwell on AWS Batch"
+  --description "A custom AMI for use with AWS Batch"
 
 
 Take note the returned ImageId. We will use that for the AWS Batch setup.
