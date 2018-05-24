@@ -210,7 +210,7 @@ packages:
 
 runcmd:
  - curl -o /tmp/custom-ami-bootstrap.sh https://cromwell-aws-batch.s3.amazonaws.com/files/custom-ami-bootstrap.sh
- - sh /tmp/custom-ami-bootstrap.sh docker_scratch docker_scratch_pool /var/lib/docker/volumes/ > /var/log/custom-ami-bootstrap.log
+ - sh /tmp/custom-ami-bootstrap.sh docker_scratch docker_scratch_pool /scratch > /var/log/custom-ami-bootstrap.log
 '''
 
 ri_args = dict(
@@ -262,15 +262,19 @@ Resources that were created on your behalf:
 
 To finish off the image, issue the following commands:
 
+# Do these commands in a terminal
 ssh -i {key_pair_name}.pem ec2-user@{instance_ip}
 sudo stop ecs
-sudo rm -rf /var/lib/ecs/data/ecs_agent_data.json
+sudo stop ebs-autoscale
+sudo rm -rf /var/lib/ecs/data/ecs_agent_data.json /var/log/ebs-autoscale.log
 exit
-aws ec2 create-image --instance-id {instanc_id} \\
-                     --name "cromwell-aws-$(date '+%Y%m%d-%H%M%S')" \\
-                     --description "A custom AMI for use with Cromwell on AWS Batch"
+aws ec2 create-image \\
+  --instance-id {instanc_id} \\
+  --name "cromwell-aws-$(date '+%Y%m%d-%H%M%S')" \\
+  --description "A custom AMI for use with Cromwell on AWS Batch"
 
-Take note the returned ImageId.
+
+Take note the returned ImageId. We will use that for the AWS Batch setup.
 
 '''
 report_d = dict(

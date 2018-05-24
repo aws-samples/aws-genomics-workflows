@@ -12,4 +12,4 @@ packages:
 
 runcmd:
  - curl -o /tmp/custom-ami-bootstrap.sh https://cromwell-aws-batch.s3.amazonaws.com/files/custom-ami-bootstrap.sh
- - sh /tmp/custom-ami-bootstrap.sh docker_scratch docker_scratch_pool /var/lib/docker/volumes/
+ - sh /tmp/custom-ami-bootstrap.sh docker_scratch docker_scratch_pool /scratch 2>&1 > /var/log/custom-ami-bootstrap.log
