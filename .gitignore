@@ -1,5 +1,5 @@
 
-#********** osx template********** 
+#********** osx template**********
 
 .DS_Store
 
@@ -9,21 +9,21 @@
 # Files that might appear on external disk
 .Spotlight-V100
 .Trashes
- 
 
-#********** windows template********** 
+
+#********** windows template**********
 
 # Windows image file caches
-Thumbs.db 
+Thumbs.db
 
 # Folder config file
 Desktop.ini
 
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
- 
 
-#********** emacs template********** 
+
+#********** emacs template**********
 
 *~
 \#*\#
@@ -37,5 +37,9 @@ tramp
 # Org-mode
 .org-id-locations
 *_archive
- 
+
+#********** repo specific ignores **********
+
 tmp/
+site/
+*pem

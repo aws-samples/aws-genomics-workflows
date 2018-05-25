@@ -1,0 +1,18 @@
+site_name: AWS for Genomics Workflows
+pages:
+  - Home: index.md
+  - Setting up AWS Batch:
+    - Getting Started: configure-aws-batch-start.md
+    - Creating a custom AMI: create-custom-ami.md
+    - Configuring AWS Batch: configure-aws-batch-cfn.md
+    - Notes on Amazon VPC: aws-batch-genomics-vpc.md
+    - Notes on IAM Permissions: aws-batch-iam-permissions.md
+  - Cromwell: configuring-cromwell-aws-batch.md
+  - Nextflow: configuring-nextflow-aws-batch.md
+  - Native AWS Workflows:
+    - Getting Started: aws-native-start.md
+    - Creating a AWS Lamda function: aws-native-lambda.md
+    - Creating a AWS Step Function Workflow: aws-native-step-functions.md
+theme: readthedocs
+repo_url: https://github.com/aws-samples/aws-batch-genomics/
+repo_name: Genomics Workflows on AWS
