@@ -1,6 +1,8 @@
 ## Step 4. Creating a VPC for Cromwell
 
-While you can use an existing VPC to implement a Cromwell deployment, this tutorial assumes that you have a clean environment and VPC with public and private subnets. We recommend the use of the AWS Quickstart reference deployment for a [Modular and Scalable VPC Architecture](https://aws.amazon.com/quickstart/architecture/vpc/). This Quick Start provides a networking foundation for AWS Cloud infrastructures. It deploys an Amazon Virtual Private Cloud (Amazon VPC) according to AWS best practices and guidelines.
+While you can use an existing VPC to implement a Cromwell deployment, we strongly recommend utilizing a VPC with private subnets for the AWS Batch instances. Doing so will effectively restrict access to the instances from the internet, and help meet security and compliance requirements, such as [dbGaP](http://j.mp/aws-dbgap).
+
+We recommend the use of the AWS Quickstart reference deployment for a [Modular and Scalable VPC Architecture](https://aws.amazon.com/quickstart/architecture/vpc/). This Quick Start provides a networking foundation for AWS Cloud infrastructures. It deploys an Amazon Virtual Private Cloud (Amazon VPC) according to AWS best practices and guidelines.
 
 The Amazon VPC reference architecture includes public and private subnets. The first set of private subnets share the default network access control list (ACL) from the Amazon VPC, and a second, optional set of private subnets include dedicated custom network ACLs per subnet. The Quick Start divides the Amazon VPC address space in a predictable manner across multiple Availability Zones, and deploys either NAT instances or NAT gateways, depending on the AWS Region you deploy the Quick Start in.
 
@@ -15,17 +17,19 @@ Next, fill in a custom name for the CloudFormation stack, in this example we use
 
 ![CloudFormation stackname ](../images/prereq-vpc-2-name-subnets.png)
 
-Scroll down to the bottom of the form and choose the EC2 Key Pair Name that you created in [Step 3](#step-3).
+Scroll down to the bottom of the form and choose an existing EC2 Key Pair Name. If you don't see one, you may need to [create one](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair) and reload the page.
 
 ![CloudFormation Key Pair](../images/prereq-vpc-3-key-pair.png)
 
-Click through the rest of the wizard, the defaults are fine. Once the CloudFormation Stack creation completes, head on over to the [VPC Web console](https://console.aws.amazon.com/vpc/home?) to make note of the subnet IDs and security group for the Cromwell VPC. While we are there, we will adjust the default security group to accept SSH connections.
+Click through the rest of the wizard, the defaults are fine. Once the CloudFormation Stack creation completes, head on over to the [VPC Web console](https://console.aws.amazon.com/vpc/home?) to make note of the subnet IDs and security group for the Cromwell VPC.
+
+![CloudFormation VPC Subnets](../images/prereq-vpc-6-subnets.png)
+
+While you are there, you should create a new security group that accepts SSH connections.
 
 ![CloudFormation VPC Security Group 1](../images/prereq-vpc-4-sg-1.png)
 ![CloudFormation VPC Security Group 2](../images/prereq-vpc-5-sg-2.png)
-![CloudFormation VPC Subnets](../images/prereq-vpc-6-subnets.png)
 
-Make a note of how to get these values for later.
 
 <table>
 <tr><th>

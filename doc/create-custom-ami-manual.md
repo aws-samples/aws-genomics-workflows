@@ -97,11 +97,13 @@ Next, we will launch an `t2.large` instance with, adding in some more launch par
 :pushpin:  <span style="color: blue;" >NOTE</span>
 </th><td>
 You will need information about your VPC below, such as subnet and security group IDs, and a EC2 key pair name. You can get these values from the
-<a href="prereqs"> Prerequisites </a> section of this tutorial.
+<a href=""> AWS Web console </a> section of this tutorial.
 </td></tr>
 </table>
 
 First (so that we do not need to copy credentials around) we will create a IAM EC2 Instance Profile that can handle creation of EBS volumes on instance bootstrap. For more information on instance profiles, refer to the [documentation on Instance Profiles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html).
+
+If you are unable to create new IAM resources, for example if you use a restricted access institutional account, refer your administrator to the [Cromwell IAM Permissions](./cromwell-iam-permissions) guide.
 
 ```bash
 # Create a policy to work with EBS
@@ -251,8 +253,9 @@ Your instance is now ready for image creation.
 ## [Step 4.](id:step-4) OPTIONAL: Configure ECS for private Docker registry use
 
 <table>
-<tr><th> :hamburger: Note </th></tr>
-<tr><td>
+<tr><th>
+:pushpin:  <span style="color: blue;" >NOTE</span>
+</th><td>
 If you want to leverage <b>private Docker registries</b>, refer to the
 <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/private-auth.html"> ECS documentation on private registry authentication. We will not cover this topic here.
 </td></tr>
