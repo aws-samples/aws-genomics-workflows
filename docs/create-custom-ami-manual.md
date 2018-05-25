@@ -14,7 +14,7 @@ The current Amazon ECS-optimized AMI (amzn-ami-2017.09.l-amazon-ecs-optimized) c
 You will need the AMI ID of the latest ECS-Optimized AMI. You can get a list of the current AMI IDs by region on the [documentation page](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html) documentation page.
 
 
-[![Table of Amazon ECS-Optimized AMIs](../images/cromwell-ecs-opt-amis-table.png)](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)
+[![Table of Amazon ECS-Optimized AMIs](cromwell-ecs-opt-amis-table.png)](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)
 
 Copy the appropriate AMI ID for the next step (e.g. `ami-aff65ad2`).
 
@@ -92,14 +92,9 @@ The final file should look something like below.
 
 Next, we will launch an `t2.large` instance with, adding in some more launch parameters on the command line. In particular, we want to include a EC2 user data block to bootstrap the other parts of the installation.
 
-<table>
-<tr><th>
-:pushpin:  <span style="color: blue;" >NOTE</span>
-</th><td>
-You will need information about your VPC below, such as subnet and security group IDs, and a EC2 key pair name. You can get these values from the
-<a href=""> AWS Web console </a> section of this tutorial.
-</td></tr>
-</table>
+!!! note
+    You will need information about your VPC below, such as subnet and security group IDs, and a EC2 key pair name. You can get these values from the
+    [AWS Web console](https://console.aws.amazon.com/console/home) section of this tutorial.
 
 First (so that we do not need to copy credentials around) we will create a IAM EC2 Instance Profile that can handle creation of EBS volumes on instance bootstrap. For more information on instance profiles, refer to the [documentation on Instance Profiles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html).
 
@@ -252,14 +247,9 @@ Your instance is now ready for image creation.
 
 ## [Step 4.](id:step-4) OPTIONAL: Configure ECS for private Docker registry use
 
-<table>
-<tr><th>
-:pushpin:  <span style="color: blue;" >NOTE</span>
-</th><td>
-If you want to leverage <b>private Docker registries</b>, refer to the
-<a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/private-auth.html"> ECS documentation on private registry authentication. We will not cover this topic here.
-</td></tr>
-</table>
+!!! note
+    If you want to leverage **private** Docker registries, refer to the
+    [ECS documentation on private registry authentication](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/private-auth.html).  We will not cover this topic here.
 
 ## [Step 5.](id:step-5) Create a new Amazon Machine Image for Batch
 

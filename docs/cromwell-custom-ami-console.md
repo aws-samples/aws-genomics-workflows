@@ -9,30 +9,30 @@ Go to the AWS Web console for EC2 and click on the "Launch Instances" button
 
 We recommend that you select the `t2.medium` instance size when launching
 
-![T2.medium instance size](../images/cromwell-ecs-instance-size.png)
+![T2.medium instance size](cromwell-ecs-instance-size.png)
 
 You'll want to confirm that the instance is auto-assigned a public IP so that you can connect to it via SSH.
 
-![instance details](../images/cromwell-ami-instance-details.png)
+![instance details](cromwell-ami-instance-details.png)
 
 Next add a new 10GB EBS volume for scratch space. Make sure that you check off the box for deleting the volumes on termination, and also assign a encryption key (the default EBS one is fine).
 
-![instance volumes](../images/cromwell-ami-ebs-add.png)
-![instance volumes encryption key](../images/cromwell-ami-ebs-encryption-key.png)
+![instance volumes](cromwell-ami-ebs-add.png)
+![instance volumes encryption key](cromwell-ami-ebs-encryption-key.png)
 
 Click through the next two screens for adding tags. On Step 6. "Configuring Security Group" confirm that the instance will allow inbound SSH traffic to port 22.
 
-![instance security group](../images/cromwell-ami-sg-ssh.png)
+![instance security group](cromwell-ami-sg-ssh.png)
 
 Next, click on "Review and Launch" --> "Launch" to get to the dialog confirming that you have a EC2 Key Pair. We created one in the [Prerequisites] guide, you can use that one, but otherwise create a new key pair.
 
-![instance key pair choose](../images/cromwell-ami-key-pair-1.png)
+![instance key pair choose](cromwell-ami-key-pair-1.png)
 
-![instance key pair choose](../images/cromwell-ami-key-pair-2.png)
+![instance key pair choose](cromwell-ami-key-pair-2.png)
 
 Once the instance is running, connect to it via SSH
 
-![instance IP address](../images/cromwell-ami-public-ip.png)
+![instance IP address](cromwell-ami-public-ip.png)
 
 ```bash
 [user@machine ~]$ ssh -i MyKeyPair.pem ec2-user@123.12.12.123
@@ -146,9 +146,9 @@ ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"my_name","passw
 
 Finally, go back to the EC2 console and create the AMIs
 
-![creating the AMI 1](../images/cromwell-ami-create-image-1.png)
-![creating the AMI 2](../images/cromwell-ami-create-image-2.png)
+![creating the AMI 1](cromwell-ami-create-image-1.png)
+![creating the AMI 2](cromwell-ami-create-image-2.png)
 
 Make a note of the AMI ID using the console
 
-![Getting the AMI ID](../images/cromwell-ami-create-image-3.png)
+![Getting the AMI ID](cromwell-ami-create-image-3.png)

@@ -1,0 +1,7 @@
+Markdown==2.6.11
+mkdocs==0.17.3
+pymdown-extensions==4.10.2
+fontawesome-markdown==0.2.6
+boto3==1.7.26
+botocore==1.10.26
+awscli==1.15.26

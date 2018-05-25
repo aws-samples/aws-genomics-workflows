@@ -264,11 +264,12 @@ Resources that were created on your behalf:
 
 To finish off the image, issue the following commands:
 
-# Do these commands in a terminal
+Execute the following commands in a terminal window:
+
 ssh -i {key_pair_name}.pem ec2-user@{instance_ip}
 sudo stop ecs
 sudo stop ebs-autoscale
-sudo rm -rf /var/lib/ecs/data/ecs_agent_data.json /var/log/ebs-autoscale.log
+sudo rm -f /var/lib/ecs/data/ecs_agent_data.json /var/log/ebs-autoscale.log
 exit
 aws ec2 create-image \\
   --instance-id {instanc_id} \\

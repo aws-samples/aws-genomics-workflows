@@ -11,40 +11,31 @@ For architectural details, best practices, step-by-step instructions, and custom
 
 Click on the "Launch Quick Start" link, confirm that you are in your preferred AWS Region, and click "Next"
 
-![CloudFormation console confirm proper AWS Region](../images/prereq-vpc-1.png)
+![CloudFormation console confirm proper AWS Region](prereq-vpc-1.png)
 
 Next, fill in a custom name for the CloudFormation stack, in this example we use "Cromwell-VPC". We also select a set of VPC Availability Zones and adjust the number to match the amount we picked (up to four).
 
-![CloudFormation stackname ](../images/prereq-vpc-2-name-subnets.png)
+![CloudFormation stackname ](prereq-vpc-2-name-subnets.png)
 
 Scroll down to the bottom of the form and choose an existing EC2 Key Pair Name. If you don't see one, you may need to [create one](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair) and reload the page.
 
-![CloudFormation Key Pair](../images/prereq-vpc-3-key-pair.png)
+![CloudFormation Key Pair](prereq-vpc-3-key-pair.png)
 
 Click through the rest of the wizard, the defaults are fine. Once the CloudFormation Stack creation completes, head on over to the [VPC Web console](https://console.aws.amazon.com/vpc/home?) to make note of the subnet IDs and security group for the Cromwell VPC.
 
-![CloudFormation VPC Subnets](../images/prereq-vpc-6-subnets.png)
+![CloudFormation VPC Subnets](prereq-vpc-6-subnets.png)
 
 While you are there, you should create a new security group that accepts SSH connections.
 
-![CloudFormation VPC Security Group 1](../images/prereq-vpc-4-sg-1.png)
-![CloudFormation VPC Security Group 2](../images/prereq-vpc-5-sg-2.png)
+![CloudFormation VPC Security Group 1](prereq-vpc-4-sg-1.png)
+![CloudFormation VPC Security Group 2](prereq-vpc-5-sg-2.png)
 
+!!! tip
+    You may also want to review the [HIPAA on AWS Enterprise Accelerator](https://aws.amazon.com/quickstart/architecture/accelerator-hipaa/) for additional security best practices such as:
 
-<table>
-<tr><th>
-:bulb:  <span style="color: orange;" >TIP</span>
-</th><td>
-
-You may also want to review the  <a href="https://aws.amazon.com/quickstart/architecture/accelerator-hipaa/" > HIPAA on AWS Enterprise Accelerator </a>
-for additional security best practices such as:
-<ul>
-<li> Basic AWS Identity and Access Management (IAM) configuration with custom (IAM) policies, with associated groups, roles, and instance profiles</li>
-<li> Standard, external-facing Amazon Virtual Private Cloud (Amazon VPC) Multi-AZ architecture with separate subnets for different application tiers and private (back-end) subnets for application and database</li>
-<li> Amazon Simple Storage Service (Amazon S3) buckets for encrypted web content, logging, and backup data</li>
-<li> Standard Amazon VPC security groups for Amazon Elastic Compute Cloud (Amazon EC2) instances and load balancers used in the sample application stack</li>
-<li> A secured bastion login host to facilitate command-line Secure Shell (SSH) access to Amazon EC2 instances for troubleshooting and systems administration activities</li>
-<li> Logging, monitoring, and alerts using AWS CloudTrail, Amazon CloudWatch, and AWS Config rules</li>
-</ul>
-</td></tr>
-</table>
+    *  Basic AWS Identity and Access Management (IAM) configuration with custom (IAM) policies, with associated groups, roles, and instance profiles
+    *  Standard, external-facing Amazon Virtual Private Cloud (Amazon VPC) Multi-AZ architecture with separate subnets for different application tiers and private (back-end) subnets for application and database
+    *  Amazon Simple Storage Service (Amazon S3) buckets for encrypted web content, logging, and backup data
+    *  Standard Amazon VPC security groups for Amazon Elastic Compute Cloud (Amazon EC2) instances and load balancers used in the sample application stack
+    *  A secured bastion login host to facilitate command-line Secure Shell (SSH) access to Amazon EC2 instances for troubleshooting and systems administration activities
+    *  Logging, monitoring, and alerts using AWS CloudTrail, Amazon CloudWatch, and AWS Config rules

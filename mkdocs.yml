@@ -5,14 +5,22 @@ pages:
     - Getting Started: configure-aws-batch-start.md
     - Creating a custom AMI: create-custom-ami.md
     - Configuring AWS Batch: configure-aws-batch-cfn.md
-    - Notes on Amazon VPC: aws-batch-genomics-vpc.md
-    - Notes on IAM Permissions: aws-batch-iam-permissions.md
-  - Cromwell: configuring-cromwell-aws-batch.md
-  - Nextflow: configuring-nextflow-aws-batch.md
-  - Native AWS Workflows:
-    - Getting Started: aws-native-start.md
-    - Creating a AWS Lamda function: aws-native-lambda.md
-    - Creating a AWS Step Function Workflow: aws-native-step-functions.md
+    # - Notes on Amazon VPC: aws-genomics-vpc.md
+    - Notes on IAM Permissions: aws-batch-genomics-iam-permissions.md
+  - Cromwell: configure-cromwell-aws-batch.md
+  # - Nextflow: configure-nextflow-aws-batch.md
+  # - Native AWS Workflows:
+  #   - Getting Started: aws-native-start.md
+  #   - Creating a AWS Lamda function: aws-native-lambda.md
+  #   - Creating a AWS Step Function Workflow: aws-native-step-functions.md
 theme: readthedocs
+markdown_extensions:
+  - fontawesome_markdown
+  - admonition
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:pymdownx.emoji.to_png
+
 repo_url: https://github.com/aws-samples/aws-batch-genomics/
-repo_name: Genomics Workflows on AWS
+# repo_name: Genomics Workflows on AWS
+site_author: Angel Pizarro <pizarroa@amazon.com>
+copyright: 2018 Amazon Web Services

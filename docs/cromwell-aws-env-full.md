@@ -13,9 +13,9 @@ https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=Cromwe
 
 | Name | Description | &nbsp; |
 | :-- | :-- | :-- |
-| Full template | A complete environment including VPC, AWS Batch, and a login host preconfigured with Cromwell | [![cloudformation-launch-button](../images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=Cromwell&templateURL=https://s3.amazonaws.com/cromwell-aws-batch/templates/cromwell-vpc-batch-host.yaml) |
-| Existing VPC | Configure AWS Batch and launch a login host preconfigured with Cromwell | [![cloudformation-launch-button](../images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=Cromwell&templateURL=https://s3.amazonaws.com/cromwell-aws-batch/templates/cromwell-batch-host.yaml) |
-| Login Host Only | Assuming you have a AWS Batch Job Queue, launch a login host preconfigured with Cromwell | [![cloudformation-launch-button](../images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=Cromwell&templateURL=https://s3.amazonaws.com/cromwell-aws-batch/templates/cromwell-host.yaml) |
+| Full template | A complete environment including VPC, AWS Batch, and a login host preconfigured with Cromwell | [![cloudformation-launch-button](cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=Cromwell&templateURL=https://s3.amazonaws.com/cromwell-aws-batch/templates/cromwell-vpc-batch-host.yaml) |
+| Existing VPC | Configure AWS Batch and launch a login host preconfigured with Cromwell | [![cloudformation-launch-button](cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=Cromwell&templateURL=https://s3.amazonaws.com/cromwell-aws-batch/templates/cromwell-batch-host.yaml) |
+| Login Host Only | Assuming you have a AWS Batch Job Queue, launch a login host preconfigured with Cromwell | [![cloudformation-launch-button](cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=Cromwell&templateURL=https://s3.amazonaws.com/cromwell-aws-batch/templates/cromwell-host.yaml) |
 
 # Overview
 
