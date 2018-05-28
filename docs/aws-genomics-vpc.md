@@ -1,4 +1,4 @@
-## Step 4. Creating a VPC for Cromwell
+# Notes on VPC design for Genomics Workflows
 
 While you can use an existing VPC to implement a Cromwell deployment, we strongly recommend utilizing a VPC with private subnets for the AWS Batch instances. Doing so will effectively restrict access to the instances from the internet, and help meet security and compliance requirements, such as [dbGaP](http://j.mp/aws-dbgap).
 
