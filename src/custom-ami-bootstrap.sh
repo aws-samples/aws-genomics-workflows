@@ -1,21 +1,20 @@
 function printUsage() {
-  #statements
-  echo "USAGE: $0 <VOLUME GROUP NAME> <LOGICAL VOLUME NAME> <MOUNT POINT>"
+  echo "USAGE: $0 <MOUNT POINT> [<DEVICE NAME>]"
 }
 
-if [ "$#" -ne "3" ]; then
+if [ "$#" -lt "1" ]; then
   printUsage
   exit 1
 fi
-VG=$1
-LV=$2
-MP=$3
+MP=$1
+DV=$2
 
 # download and install the /docker_scratch autoscale service
-cd /tmp
+cd /opt
 curl -o ebs-autoscale.tar.gz http://cromwell-aws-batch.s3.amazonaws.com/files/ebs-autoscale.tar.gz
 tar -xzf ebs-autoscale.tar.gz
-sh /tmp/ebs-autoscale/bin/bootstrap-ebs-autoscale.sh ${VG} ${LV} ${MP} 2>&1 > /var/log/bootstrap-ebs-autoscale.log
+rm -f  ebs-autoscale.tar.gz
+sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh ${MP} ${DV} 2>&1 > /var/log/init-ebs-autoscale.log
 
 
 # Configure task IP Tables if needed

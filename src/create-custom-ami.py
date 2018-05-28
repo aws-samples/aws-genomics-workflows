@@ -33,88 +33,6 @@ else:
         parser.print_usage()
         exit()
 
-####### IAM section ##########
-# Create managed policy
-iam = boto3.client("iam")
-policy_doc = '''{
-"Version": "2012-10-17",
-"Statement": [
-    {
-        "Effect": "Allow",
-        "Action": [
-            "ec2:DetachVolume",
-            "ec2:AttachVolume",
-            "ec2:DeleteVolume",
-            "ec2:ModifyVolume",
-            "ec2:ModifyVolumeAttribute",
-            "ec2:DescribeVolumeStatus",
-            "ec2:DescribeVolumes",
-            "ec2:DescribeVolumeAttribute",
-            "ec2:CreateVolume"
-        ],
-        "Resource": "*"
-    }
-]
-}'''
-try:
-    ebs_admin_policy  = iam.create_policy(
-        PolicyName="CustomAmiEbsAdmin",
-        PolicyDocument=policy_doc
-    )
-    ebs_admin_policy_arn = ebs_admin_policy["Policy"]["Arn"]
-except Exception as e:
-    print(e)
-    arn = iam.get_user()["User"]["Arn"].split(":")[0:5]
-    arn.append("policy/CustomAmiEbsAdmin")
-    ebs_admin_policy_arn = ":".join(arn)
-
-# Create role
-assume_policy_doc ='''{
-    "Version": "2012-10-17",
-    "Statement": [
-    {
-        "Action": "sts:AssumeRole",
-        "Principal": {
-            "Service": "ec2.amazonaws.com"
-        },
-        "Effect": "Allow",
-        "Sid": ""
-        }
-    ]
-}'''
-try:
-    ebs_admin_role = iam.create_role(
-        RoleName="CustomAmiEbsAdminRole",
-        AssumeRolePolicyDocument=assume_policy_doc,
-    )
-except Exception as e:
-    print(e)
-    ebs_admin_role = iam.get_role(RoleName="CustomAmiEbsAdminRole")
-
-iam.attach_role_policy(
-    RoleName="CustomAmiEbsAdminRole",
-    PolicyArn=ebs_admin_policy_arn
-)
-
-try:
-    instance_profile = iam.create_instance_profile(
-        InstanceProfileName="CustomAmiEbsAdminProfile"
-    )
-except Exception as e:
-    print(e)
-    instance_profile = iam.get_instance_profile(
-        InstanceProfileName="CustomAmiEbsAdminProfile"
-    )
-
-try:
-    iam.add_role_to_instance_profile(
-        InstanceProfileName="CustomAmiEbsAdminProfile",
-        RoleName="CustomAmiEbsAdminRole"
-    )
-except Exception as e:
-    print(e)
-    pass
-
 
 ########## EC2 Instance ################
 ec2 = boto3.client("ec2")
@@ -150,14 +68,7 @@ except Exception as e:
     print(e)
     pass
 
-## ECS AMI
-# These are the latest ECS optimized AMIs as of Feb 2018:
-#
-#   amzn-ami-2017.09.h-amazon-ecs-optimized
-#   ECS agent:    1.17.1
-#   Docker:       17.09.1-ce
-#   ecs-init:     1.17.1-1
-#
+## ECS-Optimized AMI
 # You can find the latest available on this page of our documentation:
 # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
 # (note the AMI identifier is region specific)
@@ -165,22 +76,23 @@ except Exception as e:
 region  = boto3.Session().region_name
 
 region2ami  = {
-    "us-east-2": "ami-b86a5ddd",
-    "us-east-1": "ami-a7a242da",
-    "us-west-2": "ami-92e06fea",
-    "us-west-1": "ami-9ad4dcfa",
-    "eu-west-3": "ami-698b3d14",
-    "eu-west-2": "ami-f4e20693",
-    "eu-west-1": "ami-0693ed7f",
-    "eu-central-1": "ami-0799fa68",
-    "ap-northeast-2": "ami-a5dd70cb",
-    "ap-northeast-1": "ami-68ef940e",
-    "ap-southeast-2": "ami-ee884f8c",
-    "ap-southeast-1": "ami-0a622c76",
-    "ca-central-1": "ami-5ac94e3e",
-    "ap-south-1": "ami-2e461a41",
-    "sa-east-1": "ami-d44008b8"
+    "us-east-2": "ami-956e52f0",
+    "us-east-1": "ami-5253c32d",
+    "us-west-2": "ami-d2f489aa",
+    "us-west-1": "ami-6b81980b",
+    "eu-west-3": "ami-ca75c4b7",
+    "eu-west-2": "ami-3622cf51",
+    "eu-west-1": "ami-c91624b0",
+    "eu-central-1": "ami-10e6c8fb",
+    "ap-northeast-2": "ami-7c69c112",
+    "ap-northeast-1": "ami-f3f8098c",
+    "ap-southeast-2": "ami-bc04d5de",
+    "ap-southeast-1": "ami-b75a6acb",
+    "ca-central-1": "ami-da6cecbe",
+    "ap-south-1": "ami-c7072aa8",
+    "sa-east-1": "ami-a1e2becd"
 }
+
 ecs_ami = region2ami[region]
 try:
     r = ec2.create_key_pair(KeyName=args.key_pair_name)
@@ -194,34 +106,45 @@ except Exception as e:
 
 response = ec2.describe_images(ImageIds=[ecs_ami])
 
+# Create a new BlockDeviceMappings block to encrypt the docker and scratch drives
 block_device_mappings = response['Images'][0]["BlockDeviceMappings"]
+# remove the Encrypted attribute from root volume
 block_device_mappings[0]['Ebs'].pop("Encrypted",None)
+# change docker volume to be encrypted
 block_device_mappings[1]['Ebs']["Encrypted"] = True
+# add new new 20GB encrypted volume for scratch
+block_device_mappings.append({
+    'DeviceName': '/dev/xvdc',
+    'Ebs': {
+        'Encrypted': True,
+        'DeleteOnTermination': True,
+        'VolumeSize': 20,
+        'VolumeType': 'gp2'
+    }
+})
+
 user_data = '''#cloud-config
 repo_update: true
 repo_upgrade: all
 
 packages:
- - jq
- - aws-cli
- - e2e2fsprogs
- - lvm2
- - sed
+  - jq
+  - btrfs-progs
+  - python27-pip
+  - sed
 
 runcmd:
- - curl -o /tmp/custom-ami-bootstrap.sh https://cromwell-aws-batch.s3.amazonaws.com/files/custom-ami-bootstrap.sh
- - sh /tmp/custom-ami-bootstrap.sh docker_scratch docker_scratch_pool /scratch > /var/log/custom-ami-bootstrap.log
+  - pip install -U awscli boto3
+  - curl -o /tmp/custom-ami-bootstrap.sh http://cromwell-aws-batch.s3.amazonaws.com/files/custom-ami-bootstrap.sh
+  - sh /tmp/custom-ami-bootstrap.sh /scratch /dev/xvdc  2>&1 > /var/log/custom-ami-bootstrap.log
 '''
 
-instance_profile = iam.get_instance_profile(InstanceProfileName="CustomAmiEbsAdminProfile")
-ip_arn = instance_profile["InstanceProfile"]["Arn"]
 ri_args = dict(
     ImageId=ecs_ami,
     BlockDeviceMappings=block_device_mappings,
     MaxCount=1,MinCount=1,
     KeyName=args.key_pair_name,
     InstanceType="t2.large",
-    IamInstanceProfile={"Arn": ip_arn},
     NetworkInterfaces=[{
         "DeviceIndex": 0,
         "AssociatePublicIpAddress": True,
