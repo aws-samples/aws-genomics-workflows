@@ -82,17 +82,15 @@ key_pair_name=args.key_pair_name
 kp_fname = "{0}.pem".format(key_pair_name)
 key_pair = ec2.KeyPair(key_pair_name)
 try:
-    key_pair = ec2.KeyPair(key_pair_name)
-    kp_fname = "{0}.pem".format(key_pair_name)
+    key_pair.reload()
     print("Key Pair [", key_pair_name,"] exists.")
-    # print("We will assume you know where to find it on your local filesystem. If you do not, you may need to run this program again with a new key pair name.\n")
-except InvalidKeyPair.NotFound as e:
+except Exception as e:
     print("Key Pair {0} does not exist. Creating.".format(key_pair_name))
     key_pair = ec2.create_key_pair(KeyName=key_pair_name)
     pem = open(kp_fname,'w')
     pem.write(key_pair.key_material)
     pem.close()
-    os.lchmod(kpfname,0600)
+    os.lchmod(kp_fname,0600)
     print("Key Pair PEM file written to ", kp_fname)
 
 
@@ -101,7 +99,7 @@ except InvalidKeyPair.NotFound as e:
 # You can find the latest available on this page of our documentation:
 # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
 # (note the AMI identifier is region specific)
-
+print("Launching a new EC2 instance.")
 region  = boto3.Session().region_name
 
 region2ami  = {
@@ -177,6 +175,7 @@ ri_args = dict(
 instances = ec2.create_instances(**ri_args)
 instance = instances[0]
 print("Waiting on instance to have a IP...", end="")
+sys.stdout.flush()
 instance.wait_until_running()
 instance.reload()
 instance_ip = instance.public_ip_address
@@ -194,23 +193,27 @@ while len(status["InstanceStatuses"]) == 0 or not status["InstanceStatuses"][0][
     status =  client.describe_instance_status(InstanceIds=[instance_id])
 
 ## New AMI creation
-print("Instance available and healthy. Minting a new AMI...", end="")
+print("instance available and healthy.\nMinting a new AMI...", end="")
 sys.stdout.flush()
-
+time.sleep(30)
 instance.reload()
 image = instance.create_image(
     Name="genomics-ami-{0}".format(time.strftime('%Y%m%d-%H%M%S')),
     Description="A custom AMI for use with AWS Batch with genomics workflows"
 )
-image.wait_until_exists()
-image.reload()
+while image.state != "available":
+    print(".",end="")
+    sys.stdout.flush()
+    time.sleep(5)
+    image.reload()
 image_id = image.image_id
 print("new AMI [{0}] created.".format(image_id))
 
 if args.terminate_instance:
     print("Terminating instance...",end="")
-    instance.terminate()
+    sys.stdout.flush()
     instance.reload()
+    instance.terminate()
     instance.wait_until_terminated()
     instance.reload()
     print("terminated.")
