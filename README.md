@@ -18,23 +18,20 @@ Follow the [Prerequisites Guide](./doc/prereqs) to create these resources. All f
 
 Genomics, the main use case for Cromwell, is a data-heavy workload and requires some modification to the standard AWS Batch processing environment. In particular, we need to scale underlying instance storage that Tasks/Jobs run on top of to meet unpredictable runtime demands.
 
-Follow the directions in the ["Creating a custom AMI for genomics"](./doc/cromwell-custom-ami) guide.
+Follow the directions in the ["Creating a custom AMI for genomics"](./doc/create-custom-ami.md) guide.
 
 ## [Step 2.](id:step-2) Launch and configure an AWS reference architecture for use with Cromwell
 
-Once you have a custom AMI ID, such as `ami-a7a242da`, you  can launch the reference architecture CloudFormation stack in your account, using one of the links below. A full description of what is going on is described in the ["Deploying AWS Batch"](./doc/cromwell-aws-env-full) guide.
+Once you have a custom AMI ID, such as `ami-a7a242da`, you  can launch the reference architecture CloudFormation stack in your account, using one of the links below. A full description of what is going on is described in the ["Deploying AWS Batch"](./doc/cofigure-aws-batch-start.md) guide.
 
+![AWS Batch environment for genomics](https://d2908q01vomqb2.cloudfront.net/1b6453892473a467d07372d45eb05abc2031647a/2018/04/23/Picture2.png)
 
 ## [Step 3.](id:step-3) Configuring Cromwell for AWS
 
-Deploying the full CloudFormation stack from [Step 2](#step-2) sets up a
+Once you have a suitable AWS Batch environment for genomics workflows, you can leverage it with other systems, such as AWS Step Functions, [Cromwell](LINK), and  [Nextflow.io](https://nextflow.io).
 
-## Overview
+* **[Configure AWS Lambda and AWS Step Functions](./docs/configure-aws-native.md)**
+* **[Configure Cromwell](./docs/configure-cromwell-aws-batch.md)**
+<!-- * **[Configure Nextflow.io](./configure-nextflow-aws-batch.md)** -->
 
-![AWS Reference Architecture](./images/refarch.png)
-
-The repository consists of a set nested templates that deploy the following:
-
-1. A tiered VPC with public and private subnets, spanning an AWS region.
-2. A AWS Batch environment
-3. A Linux bastion host to SSH into, preconfigured with Cromwell pre-configured to work with AWS Batch
+ 
