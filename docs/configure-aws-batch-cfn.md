@@ -21,4 +21,20 @@ The individual components from above are available as stand-alone CloudFormation
 | Amazon IAM   | Create the necessary IAM Roles. This is useful to hand to someone with the right permissions to create these on your behalf. _You will need to provide a S3 bucket name_. |  [:fa-eye:](https://s3.amazonaws.com/cromwell-aws-batch/templates/cromwell-iam.yaml) | [![cloudformation-launch-button](./images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=Cromwell-IAM&templateURL=https://s3.amazonaws.com/cromwell-aws-batch/templates/cromwell-iam.yaml) |
 | AWS Batch | Creates AWS Batch Job Queues and Compute Environments. You will need to provide the details on IAM roles and instance profiles, and the IDs for a VPC and subnets. |  [:fa-eye:](https://s3.amazonaws.com/cromwell-aws-batch/templates/cromwell-fullstack.yaml) | [![cloudformation-launch-button](./images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=Cromwell-Batch&templateURL=https://s3.amazonaws.com/cromwell-aws-batch/templates/cromwell-fullstack.yaml) |
 
-## Look at what you just did!
+## CloudFormation deploy walk-through
+
+Here we provide a walkthrough launching the `Full Stack` CloudFormation template. 
+
+### Step 1. Launch the template
+
+### Step 2. Choose a good name for the stack
+
+### Step 3. Fill out the parameters
+
+### Step 4. Take a break
+
+### Step 5. Get the AWS Batch Job Queue
+
+Now that the CloudFormation stack is launched, note the output default AWS Batch Job Queue name and ARN. You will need these when configuring a workflow system, such as Cromwell or Nextflow, to use AWS Batch as a backend for task distribution. 
+
+![AWS Batch Job Queue names and ARNs](./images/cfn-batch-jq-name-arn.png)
