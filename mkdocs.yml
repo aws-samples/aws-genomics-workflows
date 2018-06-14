@@ -3,13 +3,17 @@ pages:
   - Home: index.md
   - Setting up AWS Batch:
     - Getting Started: configure-aws-batch-start.md
-    - Creating a custom AMI: create-custom-ami.md
+    - Creating a custom AMI:
+      - Using a Python script: create-custom-ami.md
+      - Using the AWS web console: create-custom-ami-manual.md
     - Configuring AWS Batch: configure-aws-batch-cfn.md
     - Notes on Amazon VPC: aws-genomics-vpc.md
     - Notes on IAM Permissions: aws-batch-genomics-iam-permissions.md
-  - Cromwell: configure-cromwell-aws-batch.md
-  - Nextflow: configure-nextflow-aws-batch.md
-  - AWS Step Functions: configure-step-functions-aws-batch.md
+  - Setting up a genomics workflow environment:
+    - Introduction: genomics-workflows-intro.md
+    - AWS Step Functions: configure-step-functions-aws-batch.md
+    - Cromwell: configure-cromwell-aws-batch.md
+    - Nextflow: configure-nextflow-aws-batch.md
 theme: readthedocs
 markdown_extensions:
   - fontawesome_markdown

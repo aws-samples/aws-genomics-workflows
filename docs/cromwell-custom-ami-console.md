@@ -7,32 +7,32 @@ If you want to instead configure a custom AMI using a manual process and the AWS
 
 Go to the AWS Web console for EC2 and click on the "Launch Instances" button
 
-We recommend that you select the `t2.medium` instance size when launching
+We recommend that you select the `t2.micro` or `t2.medium` instance size when launching
 
-![T2.medium instance size](cromwell-ecs-instance-size.png)
+![T2.medium instance size](./images/cromwell-ecs-instance-size.png)
 
 You'll want to confirm that the instance is auto-assigned a public IP so that you can connect to it via SSH.
 
-![instance details](cromwell-ami-instance-details.png)
+![instance details](./images/cromwell-ami-instance-details.png)
 
 Next add a new 10GB EBS volume for scratch space. Make sure that you check off the box for deleting the volumes on termination, and also assign a encryption key (the default EBS one is fine).
 
-![instance volumes](cromwell-ami-ebs-add.png)
-![instance volumes encryption key](cromwell-ami-ebs-encryption-key.png)
+![instance volumes](./images/cromwell-ami-ebs-add.png)
+![instance volumes encryption key](./images/cromwell-ami-ebs-encryption-key.png)
 
 Click through the next two screens for adding tags. On Step 6. "Configuring Security Group" confirm that the instance will allow inbound SSH traffic to port 22.
 
-![instance security group](cromwell-ami-sg-ssh.png)
+![instance security group](./images/cromwell-ami-sg-ssh.png)
 
 Next, click on "Review and Launch" --> "Launch" to get to the dialog confirming that you have a EC2 Key Pair. We created one in the [Prerequisites] guide, you can use that one, but otherwise create a new key pair.
 
-![instance key pair choose](cromwell-ami-key-pair-1.png)
+![instance key pair choose](./images/cromwell-ami-key-pair-1.png)
 
-![instance key pair choose](cromwell-ami-key-pair-2.png)
+![instance key pair choose](./images/cromwell-ami-key-pair-2.png)
 
 Once the instance is running, connect to it via SSH
 
-![instance IP address](cromwell-ami-public-ip.png)
+![instance IP address](./images/cromwell-ami-public-ip.png)
 
 ```bash
 [user@machine ~]$ ssh -i MyKeyPair.pem ec2-user@123.12.12.123

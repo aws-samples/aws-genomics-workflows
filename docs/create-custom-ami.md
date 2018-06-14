@@ -45,7 +45,7 @@ python create-custom-ami.py --help
 
 The `--key-pair-name` parameter defaults to `"genomics-ami"`. The script will create the key pair if it does not exist and write out a PEM file (`genomics-ami.pem`) to the same directory as where you ran the script. If the key pair already exists, we assume that you know how to find it for your use.
 
-By default, the script leaves the new instance up for you to SSH into and review. If you provide the `--terminate-instance` parameter, the script will terminate the instance for you after the AMI is successfully created. 
+By default, the script leaves the new instance up for you to SSH into and review. If you provide the `--terminate-instance` parameter, the script will terminate the instance for you after the AMI is successfully created.
 
 
 Most new accounts have a [default VPC](https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/default-vpc.html), but if this is not the case, or if you want to leverage a non-default VPC, then supply **both** the `--vpc-id` and `--subnet-id` parameters.
