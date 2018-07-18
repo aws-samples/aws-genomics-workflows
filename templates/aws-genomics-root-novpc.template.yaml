@@ -1,0 +1,138 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Scalable genomics workflows environment
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Genomics Environment for AWS Batch Parameters"
+        Parameters:
+          - S3BucketName
+          - VpcId
+          - SubnetIds
+          - KeyPairName
+          - CustomAmiId
+          - SpotBidPercentage
+          - DefaultCEMinvCpus
+          - DefaultCEMaxvCpus
+          - HighPriorityCEMinvCpus
+          - HighPriorityCEMaxvCpus
+          - DefaultRetryNumber
+    ParameterLabels:
+      S3BucketName:
+        default: S3 Bucket Name
+      VpcId:
+        default: VPC ID
+      SubnetIds:
+        default: VPC Subnet IDs
+      KeyPairName:
+        default: EC2 Key Pair Name
+      CustomAmiId:
+        default: Custom AMI ID
+      SpotBidPercentage:
+        default: Spot Bid %
+      DefaultCEMinvCpus:
+        default: Default Min vCPU
+      DefaultCEMaxvCpus:
+        default: Default Max vCPU
+      HighPriorityCEMinvCpus:
+        default: High Priority Min vCPU
+      HighPriorityCEMaxvCpus:
+        default: High Priority Max vCPU
+      DefaultRetryNumber:
+        default: Job Retry Attempts
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: 'The VPC to create security groups and deploy AWS Batch to. NOTE: Must be the same VPC as the provided subnet IDs.'
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: 'Subnets you want your batch compute environment to launch in. We recommend private subnets. NOTE: Must be from the VPC provided.'
+  S3BucketName:
+    Description: A S3 bucket name for storing analysis results
+    Type: String
+  KeyPairName:
+    Description: Key Pair name
+    Type: AWS::EC2::KeyPair::KeyName
+  CustomAmiId:
+    Description: The AMI ID for the custom AWS Batch Compute Resource AMI.
+    Type: AWS::EC2::Image::Id
+  SpotBidPercentage:
+    Description: The percent of on-demand pricing for max bid for Spot intances
+    Type: Number
+    Default: 100
+  DefaultCEMinvCpus:
+    Description: The minimum number of CPUs for the default Batch Compute Environment
+    Type: Number
+    Default: 0
+  DefaultCEMaxvCpus:
+    Description: The maximum number of CPUs for the default Batch Compute Environment
+    Type: Number
+    Default: 100
+  HighPriorityCEMinvCpus:
+    Description: The minimum number of CPUs for the high-priority Batch Compute Environment
+    Type: Number
+    Default: 0
+  HighPriorityCEMaxvCpus:
+    Description: The maximum number of CPUs for the high-priority Batch Compute Environment
+    Type: Number
+    Default: 100
+  DefaultRetryNumber:
+    Description: The default number of Job retry attempts
+    Type: Number
+    Default: 1
+Resources:
+  S3Stack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://aws-genomics-workflows.s3.amazonaws.com/templates/aws-genomics-s3.template.yaml
+      TimeoutInMinutes: '5'
+      Parameters:
+        S3BucketName: !Ref S3BucketName
+  IamStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: S3Stack
+    Properties:
+      TemplateURL: https://aws-genomics-workflows.s3.amazonaws.com/templates/aws-genomics-iam.template.yaml
+      TimeoutInMinutes: '10'
+      Parameters:
+        S3BucketName: !Ref S3BucketName
+  BatchStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - IamStack
+    Properties:
+      TemplateURL: https://aws-genomics-workflows.s3.amazonaws.com/templates/aws-genomics-batch.template.yaml
+      TimeoutInMinutes: "10"
+      Parameters:
+        CustomAmiId: !Ref CustomAmiId
+        Ec2KeyPairName: !Ref KeyPairName
+        VpcId: !Ref VpcId
+        SubnetIds: !Join [",", !Ref SubnetIds ]
+        SpotBidPercentage: !Ref SpotBidPercentage
+        DefaultCEMinvCpus: !Ref DefaultCEMinvCpus
+        DefaultCEMaxvCpus: !Ref DefaultCEMaxvCpus
+        HighPriorityCEMinvCpus: !Ref HighPriorityCEMinvCpus
+        HighPriorityCEMaxvCpus: !Ref HighPriorityCEMaxvCpus
+        DefaultRetryNumber: !Ref DefaultRetryNumber
+        BatchServiceRoleArn: !Sub ${IamStack.Outputs.BatchServiceRoleArn}
+        Ec2InstanceProfileArn: !Sub ${IamStack.Outputs.BatchInstanceProfileArn}
+        SpotFleetRoleArn: !Sub ${IamStack.Outputs.BatchSpotFleetRoleArn}
+Outputs:
+  GenomicsEnvS3Bucket:
+    Value: !Sub ${S3Stack.Outputs.BucketName}
+    Export:
+        Name: !Sub "${AWS::StackName}-Genomics-S3Bucket"
+  GenomicsEnvBatchJobRoleArn:
+    Value: !Sub ${IamStack.Outputs.BatchJobRoleArn}
+    Export:
+        Name: !Sub "${AWS::StackName}-Genomics-BatchJobRoleArn"
+  GenomicsEnvDefaultJobQueueArn:
+    Value: !Sub ${BatchStack.Outputs.DefaultJobQueueArn}
+    Export:
+        Name: !Sub "${AWS::StackName}-Genomics-DefaultJobQueueArn"
+  GenomicsEnvHighPriorityJobQueueArn:
+    Value: !Sub ${BatchStack.Outputs.HighPriorityJobQueueArn}
+    Export:
+        Name: !Sub "${AWS::StackName}-Genomics-HighPriorityJobQueueArn"

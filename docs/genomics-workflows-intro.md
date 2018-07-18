@@ -8,11 +8,10 @@ In order to process data, we will need to handle the cases for serial and parall
 
 The domain logic for workflows should live outside of the code for any individual task. There are a couple of systems that researchers can use to define and execute repeatable data analysis pipelines on AWS Batch:
 
-1. [Native AWS services](./configure-step-functions-aws-batch.md) such as AWS Lambda and AWS Step Functions.
-2. [Cromwell](./configure-cromwell-aws-batch.md), a workflow management system from the Broad Institute
-3. [Nextflow](./configure-nextflow-aws-batch.md), another workflow management system well used by the bioinformatics community.
+1. [Native AWS services](./step-functions/intro-step-functions.md) such as AWS Lambda and AWS Step Functions.
+
+<!-- 2. [Cromwell](./cromwell/cromwell-aws-batch.md), a workflow management system from the Broad Institute -->
+
+<!-- 3. [Nextflow](./nextflow/nextflow-aws-batch.md), another workflow management system well used by the bioinformatics community. -->
 
 Follow one of the links above to configure a full genomics workflows computing environment on AWS.
-
-!!! note
-    We do not cover other systems such as Galaxy or SnakeMake as they do not support AWS Batch (yet).

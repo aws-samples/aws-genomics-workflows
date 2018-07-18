@@ -1,7 +1,14 @@
-# Creating a AWS environment for Cromwell
+# Large scale genomics workflows on AWS
 
-Welcome! This tutorial walks through how to set up Cromwell to leverage an AWS environment for running analyses. We make a few assumptions:
+Welcome! This tutorial walks through how to set up [Amazon Web Services](http://aws.amazon.com) ([AWS](http://aws.amazon.com)) products, such as [Amazon S3](http://aws.amazon.com/s3), [AWS Batch](http://aws.amazon.com/batch), etc., for running large scale genomics analyses. A typical genomics workflow is represented by the diagram below:
 
+![Typical genomics workflow](./images/genomics-workflow.png)
+
+Specifically, we want to create a system that handles packaging applications, executing individual tasks, and orchastrating the data between tasks.
+
+## Prerequisites
+
+We make a few assumptions on your experience:
 
 1. You are familiar with the Linux command line
 3. You can use SSH to log into a Linux server
@@ -19,7 +26,11 @@ The above tutorials will demonstrate the basics of AWS, as well as set up your d
     We **strongly** recommend following the [IAM Security Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)for securing your root AWS account and IAM users.
 
 
-AWS Batch itself is built on top of other AWS services, such as [Amazon EC2](https://aws.amazon.com/ec2) and [Amazon ECS](https://aws.amazon.com/ec2), and as such has a few requirements for escalated privileges to get started from scratch.  For example, you will need to be able to create some [IAM Roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html). AWS [Identity and Access Management (IAM)](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html)
+## Setting up an AWS environment for genomics
+
+There are several services at AWS that can be used for genomics. In this tutorial, we focus on [AWS Batch](http://aws.amazon.com/batch). AWS Batch itself is built on top of other AWS services, such as [Amazon EC2](https://aws.amazon.com/ec2) and [Amazon ECS](https://aws.amazon.com/ec2), and as such has a few requirements for escalated privileges to get started from scratch.
+
+For example, you will need to be able to create some [IAM Roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html). AWS [Identity and Access Management (IAM)](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html)
 is a web service that helps you securely control access to AWS resources. You use IAM to control who is authenticated (signed in) and authorized (has permissions) to use resources.
 
 We have provided some [CloudFormation](https://aws.amazon.com/cloudformation/) templates to make the initial environment setup less painful. We show how to use these in [step 2](#step-2).
@@ -29,23 +40,4 @@ We have provided some [CloudFormation](https://aws.amazon.com/cloudformation/) t
 
     If this is the case, you will need to work with your account administrator to set up a AWS Batch environment for you. That means less work for you! Just point them at this guide, and hae them provide you with a [AWS Batch Job Queue ARN](https://docs.aws.amazon.com/batch/latest/userguide/job_queues.html), and a [Amazon S3 Bucket](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html) that you can write results to. Move on to [Step 3](#step-3).
 
-
-## [Step 1.](id:step-1) Setting up a custom AMI for genomics workflows
-
-Genomics, the main use case for Cromwell, is a data-heavy workload and requires some modification to the standard AWS Batch processing environment. In particular, we need to scale underlying instance storage that Tasks/Jobs run on top of to meet unpredictable runtime demands.
-
-**[Create a custom AMI for genomics workloads](./create-custom-ami.md)**
-
-## [Step 2.](id:step-2) Setting up your AWS Batch environment
-
-Once you have a custom AMI (or if you do not need one and can use the default), it is time to set up AWS Batch.
-
-**[Setting up a new AWS Batch environment](./configure-aws-batch-start.md)**
-
-## [Step 3.](id:step-3) Configuring a workflow management system to use your AWS Batch environment
-
-Now that we have a AWS Batch environment (that may utilize the custom AMI for a [Compute Resource AMI](https://docs.aws.amazon.com/batch/latest/userguide/compute_resource_AMIs.html)), we can now configure a workflow management system to use it.
-
-* **[Configure AWS Lambda and AWS Step Functions](./configure-aws-native.md)**
-* **[Configure Cromwell](./configure-cromwell-aws-batch.md)**
-<!-- * **[Configure Nextflow.io](./configure-nextflow-aws-batch.md)** -->
+Assuming that you have the proper permissions, you are ready for [Setting up AWS Batch](aws-batch/configure-aws-batch-start.md).

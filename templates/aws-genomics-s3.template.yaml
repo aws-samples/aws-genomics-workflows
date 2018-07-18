@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: A S3 bucket for storing results from genomics analysis
+Parameters:
+  S3BucketName:
+    Type: String
+Resources:
+  GenomicsEnvS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref S3BucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+             SSEAlgorithm: AES256
+Outputs:
+  BucketName:
+    Value: !Ref GenomicsEnvS3Bucket
+  BucketArn:
+    Value: !GetAtt GenomicsEnvS3Bucket.Arn

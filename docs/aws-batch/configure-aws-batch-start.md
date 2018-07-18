@@ -1,14 +1,14 @@
-# Introduction on using AWS CloudFormation to configure AWS Batch for genomics workflows
+# Introduction on AWS Batch for genomics workflows
 
 ## TL;DR
 
-For the impatient, skip to [the next part](./configure-aws-batch-cfn.md).
+AWS Batch provides a queue to send jobs to, and will manage the underlying compute necessary to run those jobs. For the impatient, skip to the next step ["Creating a custom AMI for genomics"](./create-custom-ami.md).
 
-## The Detailed Explaination
-
-We will be leveraging [AWS CloudFormation](https://aws.amazon.com/cloudformation/), which allows developers and systems administrators to easily create and manage a collection of related AWS resources (called a CloudFormation stack) by provisioning and updating them in an orderly and predictable way.
+## The detailed explaination
 
 [AWS Batch](https://aws.amazon.com/batch/) is a managed service that helps you efficiently run batch computing workloads on the AWS Cloud. Users submit jobs to job queues, specifying the application to be run and their jobs’ CPU and memory requirements. AWS Batch is responsible for launching the appropriate quantity and types of instances needed to run your jobs.
+
+
 
 AWS Batch removes the undifferentiated heavy lifting of configuring and managing compute infrastructure, allowing you to instead focus on your applications and users. This is demonstrated in the [How AWS Batch Works](https://www.youtube.com/watch?v=T4aAWrGHmxQ) video.
 
@@ -29,7 +29,10 @@ The following diagram shows a general overview of how the AWS Batch resources in
 
 ![AWS Batch environment](https://d2908q01vomqb2.cloudfront.net/1b6453892473a467d07372d45eb05abc2031647a/2018/04/23/AWSBatchresoucreinteract-diagram.png)
 
-The CloudFormation templates in the [next section](./configure-aws-batch-cfn.md) will create the necessary resource for AWS within your Amazon VPC.
+We will be leveraging [AWS CloudFormation](https://aws.amazon.com/cloudformation/), which allows developers and systems administrators to easily create and manage a collection of related AWS resources (called a CloudFormation stack) by provisioning and updating them in an orderly and predictable way.
+
+
+The provided CloudFormation templates will create the necessary resource for AWS within your Amazon VPC.
 
 ![AWS CloudFormation Stack launching a AWS Batch Environment](https://d2908q01vomqb2.cloudfront.net/1b6453892473a467d07372d45eb05abc2031647a/2018/04/23/Picture1-1.png)
 
@@ -47,4 +50,9 @@ Here is a conceptual diagram of the proposed architecture:
 
 ![AWS Batch environment for genomics](https://d2908q01vomqb2.cloudfront.net/1b6453892473a467d07372d45eb05abc2031647a/2018/04/23/Picture2.png)
 
-Now you are ready to [**configure a AWS Batch environment for genomics**](./configure-aws-batch-cfn.md)
+
+## Next Step: Setting up a custom AMI for genomics workflows
+
+Genomics is a data-heavy workload and requires some modification to the standard AWS Batch processing environment. In particular, we need to scale underlying instance storage that Tasks/Jobs run on top of to meet unpredictable runtime demands.
+
+**[Create a custom AMI for genomics workloads](./create-custom-ami.md)**
