@@ -1,0 +1,35 @@
+ssh -i ~/.aws/batch-east1.pem ec2-user@54.209.247.152
+
+yum install -y jq python27-pip btrfs-progs parallel e2fsprogs lvm2
+pip install -U  awscli boto3
+
+
+# really small test
+parallel -j 8 docker run -d -m 1g --name md5-{#} -v /scratch:/tmp delagoya/md5checker \
+https://example.com 09b9c392dc1f6e914cea287cb6be34b0 http://example.com http://example.com 1 \
+::: {1..20}
+
+parallel docker logs md5-{#} ::: {1..20}
+parallel docker rm md5-{#} ::: {1..20}
+
+# medium test
+
+parallel -j 8 docker run -d -m 1g --name md5-{#} -v /scratch:/tmp delagoya/md5checker \
+https://angelfiles.s3.amazonaws.com/bcftools.tgz \
+0fd33318019a20bf7ad34f292dbe26b8 \
+https://polon4imue.execute-api.us-east-1.amazonaws.com/api/success \
+https://polon4imue.execute-api.us-east-1.amazonaws.com/api/error \
+1 \
+::: {1..24}
+parallel docker stop md5-{#} ::: {1..24}
+parallel docker logs md5-{#} ::: {1..24}
+parallel docker rm md5-{#} ::: {1..24}
+
+
+## LARGE test
+
+parallel -j 8 docker run --rm -a stderr -a stdout -m 1g --name md5-{#} -v /scratch:/tmp delagoya/md5checker \
+https://1000genomes.s3.amazonaws.com/phase3/data/NA21128/sequence_read/ERR251678_2.filt.fastq.gz d79eee3112dc8e5109c77f99989f9181 https://polon4imue.execute-api.us-east-1.amazonaws.com/api/success https://polon4imue.execute-api.us-east-1.amazonaws.com/api/error 1 \
+::: {1..250}
+
+parallel docker logs md5-{#} ::: {1..250}

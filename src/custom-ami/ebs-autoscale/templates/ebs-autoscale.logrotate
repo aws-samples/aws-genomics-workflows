@@ -1,0 +1,11 @@
+/var/log/ebs-autoscale.log  {
+  daily
+  missingok
+  rotate 2
+  compress
+  notifempty
+  create 0644 root root
+  postrotate
+    service ebs-autoscale restart
+  endscript
+}
