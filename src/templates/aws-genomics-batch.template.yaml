@@ -118,16 +118,16 @@ Resources:
       FromPort: '22'
       ToPort: '22'
       CidrIp: 0.0.0.0/0
-  SGSSHEgress:
+  SGAllTcpEgress:
     Type: AWS::EC2::SecurityGroupEgress
     DependsOn: GenomicsBatchSecurityGroup
     Properties:
       GroupId: !Ref GenomicsBatchSecurityGroup
       IpProtocol: tcp
-      FromPort: '22'
-      ToPort: '22'
+      FromPort: '0'
+      ToPort: '65535'
       CidrIp: 0.0.0.0/0
-  SGSelfAllTcpTraffic:
+  SGAllTcpSelfIngress:
     Type: AWS::EC2::SecurityGroupIngress
     DependsOn: GenomicsBatchSecurityGroup
     Properties:
