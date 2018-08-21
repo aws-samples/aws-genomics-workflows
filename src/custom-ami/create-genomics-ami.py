@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import os, sys
+import os, sys, stat
 import time
 import json
 import boto3
 import argparse
+from textwrap import dedent
+
+def _dedent(string):
+    return dedent(string).strip()
 
 ##### Parameters ###########
 def str2bool(v):
@@ -16,7 +20,8 @@ def str2bool(v):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 parser = argparse.ArgumentParser(description="Custom AMI for genomics bootstrap script")
-parser.add_argument("--scratch_mount_point", type=str, default="/scratch")
+parser.add_argument("--profile", type=str, default=None)
+parser.add_argument("--scratch-mount-point", type=str, default="/scratch")
 parser.add_argument("--key-pair-name", type=str, default="genomics-ami")
 parser.add_argument("--vpc-id", type=str)
 parser.add_argument("--subnet-id", type=str)
@@ -27,8 +32,12 @@ parser.set_defaults(terminate_instance=True)
 
 args = parser.parse_args()
 
+session = boto3.Session(profile_name=args.profile)
+ec2 = session.resource('ec2')
+
+print('Using profile: {}'.format(session.profile_name))
+
 ########## VPC and Subnet ##################
-ec2 = boto3.resource("ec2")
 
 vpc_id = None
 subnet_id = None
@@ -96,16 +105,77 @@ except Exception as e:
     print(kp_fname)
     pem.close()
     # os.lchmod(kp_fname, 0600)
-    os.lchmod(kp_fname, 600)
+    os.lchmod(kp_fname, stat.S_IRUSR | stat.S_IWUSR)
     print("Key Pair PEM file written to ", kp_fname)
 
+# IAM Role
+# need to add the following policy to the instance created to avoid ecs-agent errors
+# arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+
+print('Creating IAM role and instance profile: ', end='')
+iam = session.client('iam')
+
+TIMESTAMP = time.strftime('%Y%m%dT%H%M%S')
+IAM_PREFIX = 'GenomicsAMICreation'
+IAM_ROLE_NAME = IAM_PREFIX + 'Role_' + TIMESTAMP
+IAM_INSTANCE_PROFILE_NAME = IAM_PREFIX + 'Instance_' + TIMESTAMP
+iam.create_role(
+    RoleName=IAM_ROLE_NAME,
+    Description='Role used to create a custom AMI for genomics workloads',
+    AssumeRolePolicyDocument=_dedent(
+        """
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Action": "sts:AssumeRole",
+                    "Effect": "Allow",
+                    "Principal": {
+                        "Service": "ec2.amazonaws.com"
+                    }
+                }
+            ]
+        }
+        """
+    )
+)
+iam.attach_role_policy(
+    RoleName=IAM_ROLE_NAME,
+    PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role'
+)
+iam.create_instance_profile(
+    InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
+)
+iam.add_role_to_instance_profile(
+    InstanceProfileName=IAM_INSTANCE_PROFILE_NAME,
+    RoleName=IAM_ROLE_NAME
+)
+
+instance_profile = iam.get_instance_profile(
+    InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
+    )['InstanceProfile']
+
+print(
+    '[ROLE]: {role}; [INSTANCE PROFILE]: {instance_profile}'.format(
+        role=IAM_ROLE_NAME, instance_profile=IAM_INSTANCE_PROFILE_NAME
+    )
+)
+
+## cleanup procedures
+# iam.remove_role_from_instance_profile(
+#     InstanceProfileName=IAM_INSTANCE_PROFILE_NAME,
+#     RoleName=IAM_ROLE_NAME
+# )
+# iam.delete_instance_profile(
+#     InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
+# )
 
 ## ECS-Optimized AMI
 # You can find the latest available on this page of our documentation:
 # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
 # (note the AMI identifier is region specific)
 print("Launching a new EC2 instance.")
-region  = boto3.Session().region_name
+region  = session.region_name
 
 region2ami  = {
     "us-east-2": "ami-956e52f0",
@@ -124,6 +194,7 @@ region2ami  = {
     "ap-south-1": "ami-c7072aa8",
     "sa-east-1": "ami-a1e2becd"
 }
+
 
 ecs_ami_id = region2ami[region]
 ecs_image = ec2.Image(ecs_ami_id)
@@ -160,6 +231,9 @@ runcmd:
   - pip install -U awscli boto3
   - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/aws-batch-genomics.tar.gz && tar -xzf aws-batch-genomics.tar.gz
   - sh /opt/aws-batch-genomics/src/custom-ami/ebs-autoscale/bin/init-ebs-autoscale.sh  {0} /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
+  - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/aws-cromwell-containers.tgz && tar -xzf aws-cromwell-containers.tgz
+  - cd /opt/containers/ecs-proxy && sh ./build-proxy
+  - docker pull elerch/amazon-ecs-agent:latest && docker tag amazon/amazon-ecs-agent:latest amazon/amazon-ecs-agent:1.19.1 && docker tag elerch/amazon-ecs-agent:latest amazon/amazon-ecs-agent:latest && docker kill ecs-agent && sleep 10
 '''.format(args.scratch_mount_point)
 
 ri_args = dict(
@@ -188,7 +262,7 @@ instance_ip = instance.public_ip_address
 instance_id = instance.id
 print("[", instance_ip,"].")
 
-client = boto3.client("ec2")
+client = session.client("ec2")
 
 status =  client.describe_instance_status(InstanceIds=[instance_id])
 print("Waiting on instance to pass health checks.", end="")
@@ -197,6 +271,14 @@ while len(status["InstanceStatuses"]) == 0 or not status["InstanceStatuses"][0][
     sys.stdout.flush()
     time.sleep(5)
     status =  client.describe_instance_status(InstanceIds=[instance_id])
+
+
+print("Associating instance profile.")
+client.associate_iam_instance_profile(
+    IamInstanceProfile={'Arn': instance_profile['Arn']},
+    InstanceId=instance_id
+)
+
 
 ## New AMI creation
 print("instance available and healthy.\nMinting a new AMI...", end="")
@@ -224,18 +306,25 @@ if args.terminate_instance:
     instance.reload()
     print("terminated.")
 
-report ='''
-Resources that were created on your behalf:
+report =_dedent(
+    """
+    Resources that were created on your behalf:
 
-    * EC2 Key Pair: {key_pair_name}
-    * EC2 Security Group: {security_group_id}
-    * EC2 Instance ID: {instance_id}
-    * EC2 AMI ImageId: {image_id}
+        * IAM Instance Profile: {instance_profile_name}
+        * IAM Role: {role_name}
 
-Take note the returned EC2 AMI ImageId. We will use that for the AWS Batch setup.
-'''
+        * EC2 Key Pair: {key_pair_name}
+        * EC2 Security Group: {security_group_id}
+        * EC2 Instance ID: {instance_id}
+        * EC2 AMI ImageId: {image_id}
+
+    Take note the returned EC2 AMI ImageId. We will use that for the AWS Batch setup.
+    """
+)
 
 report_d = dict(
+    instance_profile_name=IAM_INSTANCE_PROFILE_NAME,
+    role_name=IAM_ROLE_NAME,
     key_pair_name=args.key_pair_name,
     security_group_id=security_group_id,
     image_id=image_id,
@@ -247,8 +336,20 @@ report_d = dict(
 print(report.format(**report_d))
 
 if not args.terminate_instance:
-    print("If you want to poke around the system, you can log into it via SSH:")
-    print("\n\tssh -i {kp_fname} ec2-user@{instance_ip}".format(**report_d))
-    print("\n\nAfter you are done, you can terminate the instance with the AWS Web console or the AWS CLI")
-    print("\n\taws ec2 terminate-instances --instance-ids {instance_id}".format(**report_d))
-    print("\n\nCheers!")
+    if args.profile:
+        report_d['profile_name'] = '--profile ' + args.profile
+    else:
+        report_d['profile_name'] = ''
+    
+    print(_dedent(
+        """
+        If you want to poke around the system, you can log into it via SSH:
+
+            ssh -i {kp_fname} ec2-user@{instance_ip}
+        
+        After you are done, you can terminate the instance with the AWS Web console or the AWS CLI
+
+            aws {profile_name} ec2 terminate-instances --instance-ids {instance_id}
+        """
+        ).format(**report_d)
+    )
