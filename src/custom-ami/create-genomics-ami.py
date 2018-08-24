@@ -1,38 +1,184 @@
 #!/usr/bin/env python
+"""
+This script creates a custom AMI based on the ECS optimized AMI
+"""
+
 from __future__ import print_function
 import os, sys, stat
 import time
 import json
-import boto3
 import argparse
 from textwrap import dedent
 
+import boto3
+from botocore.exceptions import ClientError
+
+TIMESTAMP = time.strftime('%Y%m%d-%H%M%S')
+DEFAULT_CLOUD_INIT_FILE = './default-genomics-ami.cloud-init.yaml'
+
 def _dedent(string):
+    """utility function for long strings"""
     return dedent(string).strip()
 
-##### Parameters ###########
-def str2bool(v):
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+parser = argparse.ArgumentParser(
+    description="Creates a custom AMI for genomics workloads")
 
-parser = argparse.ArgumentParser(description="Custom AMI for genomics bootstrap script")
-parser.add_argument("--profile", type=str, default=None)
-parser.add_argument("--scratch-mount-point", type=str, default="/scratch")
-parser.add_argument("--key-pair-name", type=str, default="genomics-ami")
-parser.add_argument("--vpc-id", type=str)
-parser.add_argument("--subnet-id", type=str)
-parser.add_argument("--security-group-id", type=str)
-parser.add_argument("--terminate-instance", dest='terminate_instance', action='store_true', help="Do not terminate the instance after minting a new AMI")
-parser.add_argument("--no-terminate-instance", dest='terminate_instance', action='store_false', help="Do not terminate the instance after minting a new AMI")
-parser.set_defaults(terminate_instance=True)
+parser.add_argument(
+    "--profile", 
+    type=str, 
+    default=None,
+    help="""
+        AWS profile to use instead of \"default\". Create one using the AWS 
+        CLI e.g. aws configure --profile <profile>
+    """
+)
+
+parser.add_argument(
+    "--region",
+    dest="region_name",
+    type=str,
+    help="""
+        AWS region name to use when creating resources.  
+        If not specified, uses the configured default region for the current 
+        profile.  See: \"aws configure\".
+    """
+)
+
+parser.add_argument(
+    "--scratch-mount-point", 
+    type=str, 
+    default="/scratch",
+    help="Path for the scratch mount point in the instance (default: %(default)s)")
+
+parser.add_argument(
+    "--key-pair-name", type=str, default="genomics-ami")
+
+parser.add_argument(
+    "--cloud-init-file",
+    type=str,
+    default=DEFAULT_CLOUD_INIT_FILE,
+    help="""
+        Cloud Init spec file (yaml format) for provisioning the instance on 
+        first boot.  (default: %(default)s)
+    """
+)
+
+parser.add_argument(
+    "--src-ami-id",
+    type=str,
+    help="""
+        AMI ID to start the instance with and customize.  Note this must be 
+        available in the region you launch your instance in.  If unspecified, 
+        will default to the latest region specific version of the ECS Optimized AMI.
+    """
+)
+
+parser.add_argument(
+    "--vpc-id", 
+    type=str,
+    help='EC2 instance VPC ID')
+
+parser.add_argument(
+    "--subnet-id", 
+    type=str,
+    help="EC2 instance subnet ID")
+
+parser.add_argument(
+    "--security-group-id", 
+    type=str,
+    help="EC2 instance security group ID")
+
+parser.add_argument(
+    "--instance-profile-name",
+    type=str,
+    help="IAM instance profile name to associate with the instance"
+)
+
+parser.add_argument(
+    "--max-instance-creation-attempts",
+    type=int,
+    default=10,
+    help="""
+        Maximum number of times to attempt to create the instance.
+        (default: %(default)d)
+    """
+)
+
+encryption_group = parser.add_mutually_exclusive_group()
+
+encryption_group.add_argument(
+    "--ebs-encryption",
+    dest="ebs_encryption",
+    action='store_true',
+    help="Encrypt attached EBS volumes and snapshots (default)"
+)
+
+encryption_group.add_argument(
+    "--no-ebs-encryption",
+    dest="ebs_encryption",
+    action='store_false',
+    help="Do not encrypt attached EBS volumes and snapshots"
+)
+
+parser.add_argument(
+    "--no-ami",
+    dest='create_ami',
+    action='store_false',
+    help="Do not create an AMI, used for testing purposes"
+)
+
+parser.add_argument(
+    "--ami-name",
+    default="genomics-ami",
+    help="""
+        Name for the AMI.  A timestamp will be appended to this name.
+        (default: %(default)s)
+    """
+)
+
+parser.add_argument(
+    "--ami-description",
+    default="A custom AMI for use with AWS Batch with genomics workflows",
+    help="""
+        Description for the AMI.
+        (default: \"%(default)s\") 
+    """
+)
+
+parser.add_argument(
+    "--iam-cleanup",
+    action="store_true",
+    help="""
+        Remove role and instance profile when done.  Only valid if no
+        --instance-profile-name is provided and --terminate-instance is set.
+    """
+)
+
+termination_group = parser.add_mutually_exclusive_group()
+
+termination_group.add_argument(
+    "--terminate-instance", 
+    dest='terminate_instance', 
+    action='store_true', 
+    help="Terminate the instance when complete (default)")
+
+termination_group.add_argument(
+    "--no-terminate-instance", 
+    dest='terminate_instance', 
+    action='store_false', 
+    help="Do not terminate the instance when complete")
+
+parser.set_defaults(
+    ebs_encryption=True,
+    terminate_instance=True,
+    create_ami=True,
+    iam_cleanup=False
+)
 
 args = parser.parse_args()
 
-session = boto3.Session(profile_name=args.profile)
+session = boto3.Session(profile_name=args.profile, region_name=args.region_name)
+ssm = session.client('ssm')
 ec2 = session.resource('ec2')
 
 print('Using profile: {}'.format(session.profile_name))
@@ -90,6 +236,7 @@ else:
         )
     security_group.reload()
     security_group_id = security_group.id
+
 ## Key Pair
 key_pair_name=args.key_pair_name
 kp_fname = "{0}.pem".format(key_pair_name)
@@ -100,202 +247,202 @@ try:
 except Exception as e:
     print("Key Pair {0} does not exist. Creating.".format(key_pair_name))
     key_pair = ec2.create_key_pair(KeyName=key_pair_name)
-    pem = open(kp_fname,'w')
-    pem.write(key_pair.key_material)
-    print(kp_fname)
-    pem.close()
-    # os.lchmod(kp_fname, 0600)
+    
+    with open(kp_fname, 'w') as pem:
+        pem.write(key_pair.key_material)
+    
     os.lchmod(kp_fname, stat.S_IRUSR | stat.S_IWUSR)
     print("Key Pair PEM file written to ", kp_fname)
+
 
 # IAM Role
 # need to add the following policy to the instance created to avoid ecs-agent errors
 # arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
-
-print('Creating IAM role and instance profile: ', end='')
 iam = session.client('iam')
 
-TIMESTAMP = time.strftime('%Y%m%dT%H%M%S')
-IAM_PREFIX = 'GenomicsAMICreation'
-IAM_ROLE_NAME = IAM_PREFIX + 'Role_' + TIMESTAMP
-IAM_INSTANCE_PROFILE_NAME = IAM_PREFIX + 'Instance_' + TIMESTAMP
-iam.create_role(
-    RoleName=IAM_ROLE_NAME,
-    Description='Role used to create a custom AMI for genomics workloads',
-    AssumeRolePolicyDocument=_dedent(
-        """
-        {
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Action": "sts:AssumeRole",
-                    "Effect": "Allow",
-                    "Principal": {
-                        "Service": "ec2.amazonaws.com"
+if args.instance_profile_name:
+    IAM_INSTANCE_PROFILE_NAME = args.instance_profile_name
+
+else:
+    IAM_PREFIX = 'GenomicsAMICreation'
+    IAM_ROLE_NAME = IAM_PREFIX + 'Role_' + TIMESTAMP
+    IAM_INSTANCE_PROFILE_NAME = IAM_ROLE_NAME
+    
+    print(
+        'Creating IAM role and instance profile: {instance_profile} '.format(
+            instance_profile=IAM_INSTANCE_PROFILE_NAME
+        ),
+        end='')
+    
+    iam.create_role(
+        RoleName=IAM_ROLE_NAME,
+        Description='Role used to create a custom AMI for genomics workloads',
+        AssumeRolePolicyDocument=_dedent(
+            """
+            {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Action": "sts:AssumeRole",
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "ec2.amazonaws.com"
+                        }
                     }
-                }
-            ]
-        }
-        """
+                ]
+            }
+            """
+        )
     )
-)
-iam.attach_role_policy(
-    RoleName=IAM_ROLE_NAME,
-    PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role'
-)
-iam.create_instance_profile(
-    InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
-)
-iam.add_role_to_instance_profile(
-    InstanceProfileName=IAM_INSTANCE_PROFILE_NAME,
-    RoleName=IAM_ROLE_NAME
-)
+    print('.', end='')
+    iam.attach_role_policy(
+        RoleName=IAM_ROLE_NAME,
+        PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role'
+    )
+    print('.', end='')
+    iam.create_instance_profile(
+        InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
+    )
+    print('.', end='')
+    iam.add_role_to_instance_profile(
+        InstanceProfileName=IAM_INSTANCE_PROFILE_NAME,
+        RoleName=IAM_ROLE_NAME
+    )
+    print('.', end='')
+    print(' done')
+
 
 instance_profile = iam.get_instance_profile(
     InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
     )['InstanceProfile']
 
-print(
-    '[ROLE]: {role}; [INSTANCE PROFILE]: {instance_profile}'.format(
-        role=IAM_ROLE_NAME, instance_profile=IAM_INSTANCE_PROFILE_NAME
-    )
-)
+if args.src_ami_id:
+    ecs_ami_id = args.src_ami_id
 
-## cleanup procedures
-# iam.remove_role_from_instance_profile(
-#     InstanceProfileName=IAM_INSTANCE_PROFILE_NAME,
-#     RoleName=IAM_ROLE_NAME
-# )
-# iam.delete_instance_profile(
-#     InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
-# )
+else:
+    # Retrieve the region specific ECS-Optimized AMI using the SSM API
+    # to ensure that the most current AMI is used
+    ecs_ami_id = ssm.get_parameter(
+        Name='/aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id')['Parameter']['Value']
 
-## ECS-Optimized AMI
-# You can find the latest available on this page of our documentation:
-# http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
-# (note the AMI identifier is region specific)
-print("Launching a new EC2 instance.")
-region  = session.region_name
-
-region2ami  = {
-    "us-east-2": "ami-956e52f0",
-    "us-east-1": "ami-5253c32d",
-    "us-west-2": "ami-d2f489aa",
-    "us-west-1": "ami-6b81980b",
-    "eu-west-3": "ami-ca75c4b7",
-    "eu-west-2": "ami-3622cf51",
-    "eu-west-1": "ami-c91624b0",
-    "eu-central-1": "ami-10e6c8fb",
-    "ap-northeast-2": "ami-7c69c112",
-    "ap-northeast-1": "ami-f3f8098c",
-    "ap-southeast-2": "ami-bc04d5de",
-    "ap-southeast-1": "ami-b75a6acb",
-    "ca-central-1": "ami-da6cecbe",
-    "ap-south-1": "ami-c7072aa8",
-    "sa-east-1": "ami-a1e2becd"
-}
-
-
-ecs_ami_id = region2ami[region]
 ecs_image = ec2.Image(ecs_ami_id)
+print("Source AMI ID:", ecs_ami_id)
 
 # Create a new BlockDeviceMappings block to encrypt the docker and scratch drives
 block_device_mappings = ecs_image.block_device_mappings
+
 # remove the Encrypted attribute from root volume
 block_device_mappings[0]['Ebs'].pop("Encrypted",None)
-# change docker volume to be encrypted
-block_device_mappings[1]['Ebs']["Encrypted"] = True
-# add new new 20GB encrypted volume for scratch
+
+# set docker volume encryption
+block_device_mappings[1]['Ebs']["Encrypted"] = args.ebs_encryption
+
+# add 20GB volume for scratch
 block_device_mappings.append({
     'DeviceName': '/dev/sdc',
     'Ebs': {
-        'Encrypted': True,
+        'Encrypted': args.ebs_encryption,
         'DeleteOnTermination': True,
         'VolumeSize': 20,
         'VolumeType': 'gp2'
     }
 })
 
-user_data = '''#cloud-config
-repo_update: true
-repo_upgrade: all
+with open(args.cloud_init_file, 'r') as f:
+    user_data = f.read().format(scratch_mount_point=args.scratch_mount_point)
 
-packages:
-  - jq
-  - btrfs-progs
-  - python27-pip
-  - sed
-  - wget
+MAX_CREATION_ATTEMPTS = args.max_instance_creation_attempts
+creation_attempts = 0
+print('Creating EC2 instance ', end='')
+instances = None
+while not instances and creation_attempts < MAX_CREATION_ATTEMPTS:
+    print('.', end='')
+    try:
+        ri_args = dict(
+            ImageId=ecs_ami_id,
+            BlockDeviceMappings=block_device_mappings,
+            MaxCount=1,MinCount=1,
+            KeyName=key_pair_name,
+            InstanceType="t2.micro",
+            NetworkInterfaces=[{
+                "DeviceIndex": 0,
+                "AssociatePublicIpAddress": True,
+                "Groups": [security_group_id],
+                "DeleteOnTermination": True,
+                "SubnetId": subnet_id
+            }],
+            IamInstanceProfile={'Arn': instance_profile['Arn']},
+            UserData=user_data
+        )
 
-runcmd:
-  - pip install -U awscli boto3
-  - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/aws-batch-genomics.tar.gz && tar -xzf aws-batch-genomics.tar.gz
-  - sh /opt/aws-batch-genomics/src/custom-ami/ebs-autoscale/bin/init-ebs-autoscale.sh  {0} /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
-  - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/aws-cromwell-containers.tgz && tar -xzf aws-cromwell-containers.tgz
-  - cd /opt/containers/ecs-proxy && sh ./build-proxy
-  - docker pull elerch/amazon-ecs-agent:latest && docker tag amazon/amazon-ecs-agent:latest amazon/amazon-ecs-agent:1.19.1 && docker tag elerch/amazon-ecs-agent:latest amazon/amazon-ecs-agent:latest && docker kill ecs-agent && sleep 10
-'''.format(args.scratch_mount_point)
+        instances = ec2.create_instances(**ri_args)
+    except ClientError as err:
+        pass
+    
+    creation_attempts += 1
+    
+    sys.stdout.flush()
+    time.sleep(5)
 
-ri_args = dict(
-    ImageId=ecs_ami_id,
-    BlockDeviceMappings=block_device_mappings,
-    MaxCount=1,MinCount=1,
-    KeyName=key_pair_name,
-    InstanceType="t2.micro",
-    NetworkInterfaces=[{
-        "DeviceIndex": 0,
-        "AssociatePublicIpAddress": True,
-        "Groups": [security_group_id],
-        "DeleteOnTermination": True,
-        "SubnetId": subnet_id
-    }],
-    UserData=user_data
-)
+if creation_attempts >= MAX_CREATION_ATTEMPTS:
+    raise RuntimeError(
+        'Maximum creation instance creation attempts ({max_creation_attempts}) reached'.format(
+            max_creation_attempts=MAX_CREATION_ATTEMPTS
+        )
+    )
 
-instances = ec2.create_instances(**ri_args)
+print(' done')
+    
+
 instance = instances[0]
-print("Waiting on instance to have a IP...", end="")
+print("Getting EC2 instance IP ... ", end="")
 sys.stdout.flush()
 instance.wait_until_running()
 instance.reload()
 instance_ip = instance.public_ip_address
 instance_id = instance.id
-print("[", instance_ip,"].")
+print("[", instance_ip, "]")
 
 client = session.client("ec2")
 
 status =  client.describe_instance_status(InstanceIds=[instance_id])
-print("Waiting on instance to pass health checks.", end="")
+print("Checking EC2 Instance health ", end="")
 while len(status["InstanceStatuses"]) == 0 or not status["InstanceStatuses"][0]["InstanceStatus"]["Status"] == "ok":
     print(".",end="")
     sys.stdout.flush()
     time.sleep(5)
     status =  client.describe_instance_status(InstanceIds=[instance_id])
 
-
-print("Associating instance profile.")
-client.associate_iam_instance_profile(
-    IamInstanceProfile={'Arn': instance_profile['Arn']},
-    InstanceId=instance_id
-)
+print(" available and healthy")
 
 
-## New AMI creation
-print("instance available and healthy.\nMinting a new AMI...", end="")
-sys.stdout.flush()
-time.sleep(30)
-instance.reload()
-image = instance.create_image(
-    Name="genomics-ami-{0}".format(time.strftime('%Y%m%d-%H%M%S')),
-    Description="A custom AMI for use with AWS Batch with genomics workflows"
-)
-while image.state != "available":
-    print(".",end="")
+image_id = None
+image_name = None
+image_desc = None
+if args.create_ami:
+    ## New AMI creation
+    print("Creating AMI ", end="")
     sys.stdout.flush()
-    time.sleep(5)
-    image.reload()
-image_id = image.image_id
-print("new AMI [{0}] created.".format(image_id))
+    time.sleep(30) # why wait this long?
+    instance.reload()
+    
+    image_name = "{ami_name}-{timestamp}".format(
+        ami_name=args.ami_name,
+        timestamp=TIMESTAMP)
+    image_desc = args.ami_description
+
+    image = instance.create_image(
+        Name=image_name,
+        Description=image_desc
+    )
+
+    while image.state != "available":
+        print(".",end="")
+        sys.stdout.flush()
+        time.sleep(5)
+        image.reload()
+    image_id = image.image_id
+    print("new AMI [{0}] created.".format(image_id))
 
 if args.terminate_instance:
     print("Terminating instance...",end="")
@@ -306,17 +453,28 @@ if args.terminate_instance:
     instance.reload()
     print("terminated.")
 
+    if args.iam_cleanup and not args.instance_profile_name:
+        iam.remove_role_from_instance_profile(
+            InstanceProfileName=IAM_INSTANCE_PROFILE_NAME,
+            RoleName=IAM_ROLE_NAME
+        )
+        iam.delete_instance_profile(
+            InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
+        )
+
+
 report =_dedent(
     """
     Resources that were created on your behalf:
 
         * IAM Instance Profile: {instance_profile_name}
-        * IAM Role: {role_name}
 
         * EC2 Key Pair: {key_pair_name}
         * EC2 Security Group: {security_group_id}
         * EC2 Instance ID: {instance_id}
         * EC2 AMI ImageId: {image_id}
+            * name: {image_name}
+            * description: {image_desc}
 
     Take note the returned EC2 AMI ImageId. We will use that for the AWS Batch setup.
     """
@@ -324,7 +482,6 @@ report =_dedent(
 
 report_d = dict(
     instance_profile_name=IAM_INSTANCE_PROFILE_NAME,
-    role_name=IAM_ROLE_NAME,
     key_pair_name=args.key_pair_name,
     security_group_id=security_group_id,
     image_id=image_id,
