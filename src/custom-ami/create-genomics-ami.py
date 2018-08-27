@@ -445,7 +445,7 @@ if args.create_ami:
     print("new AMI [{0}] created.".format(image_id))
 
 if args.terminate_instance:
-    print("Terminating instance...",end="")
+    print("Terminating instance ...",end="")
     sys.stdout.flush()
     instance.reload()
     instance.terminate()
@@ -485,6 +485,8 @@ report_d = dict(
     key_pair_name=args.key_pair_name,
     security_group_id=security_group_id,
     image_id=image_id,
+    image_name=image_name,
+    image_desc=image_desc,
     instance_id=instance_id,
     instance_ip=instance_ip,
     kp_fname=kp_fname
