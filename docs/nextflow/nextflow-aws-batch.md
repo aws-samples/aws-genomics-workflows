@@ -17,4 +17,4 @@ The following CloudFormation template will launch a EC2 instance pre-configured 
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | -- |
-| Login Host Nextflow | Launch a EC2 instance preconfigured for Nextflow and AWS Batch. |  [:fa-eye:](https://raw.githubusercontent.com/aws-samples/aws-batch-genomics/master/src/templates/login-host-nextflow.yaml) | [![cloudformation-launch-button](./images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=LoginHost-Nextflow&templateURL=https://raw.githubusercontent.com/aws-samples/aws-batch-genomics/master/src/templates/login-host-nextflow.yaml) |
+| Login Host Nextflow | Launch a EC2 instance preconfigured for Nextflow and AWS Batch. |  [:fa-eye:](https://raw.githubusercontent.com/aws-samples/aws-batch-genomics/master/src/templates/login-host-nextflow.yaml) | [![cloudformation-launch-button](../images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=LoginHost-Nextflow&templateURL=https://raw.githubusercontent.com/aws-samples/aws-batch-genomics/master/src/templates/login-host-nextflow.yaml) |
