@@ -1,0 +1,16 @@
+#cloud-config
+repo_update: true
+repo_upgrade: all
+
+packages:
+  - jq
+  - btrfs-progs
+  - python27-pip
+  - sed
+  - wget
+
+
+runcmd:
+  - pip install -U awscli boto3
+  - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/aws-batch-genomics.tar.gz && tar -xzf aws-batch-genomics.tar.gz
+  - sh /opt/aws-batch-genomics/src/custom-ami/ebs-autoscale/bin/init-ebs-autoscale.sh  /scratch 2>&1 > /var/log/init-ebs-autoscale.log

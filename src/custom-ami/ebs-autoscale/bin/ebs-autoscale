@@ -1,0 +1,119 @@
+#!/bin/sh
+# Copyright 2018 Amazon.com, Inc. or its affiliates.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#
+#  1. Redistributions of source code must retain the above copyright notice,
+#  this list of conditions and the following disclaimer.
+#
+#  2. Redistributions in binary form must reproduce the above copyright
+#  notice, this list of conditions and the following disclaimer in the
+#  documentation and/or other materials provided with the distribution.
+#
+#  3. Neither the name of the copyright holder nor the names of its
+#  contributors may be used to endorse or promote products derived from
+#  this software without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+#  BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+#  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+#  THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+#  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+#  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+#  STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+#  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#  POSSIBILITY OF SUCH DAMAGE.
+
+if [ "$#" -ne "1" ]; then
+  echo "USAGE: $0 <MOUNT POINT>"
+  exit 1
+fi
+
+logthis () {
+  echo "[`date`] $1"
+}
+
+MP=$1
+BASEDIR=$(dirname $0)
+AZ=$(curl -s  http://169.254.169.254/latest/meta-data/placement/availability-zone/)
+while [ -z "${AZ}" ]; do
+  logthis "Metadata service did not return AZ. Trying again."
+  sleep 1
+  AZ=$(curl -s  http://169.254.169.254/latest/meta-data/placement/availability-zone/)
+done
+RG=$(echo ${AZ} | sed -e 's/[a-z]$//')
+logthis "Region = $RG."
+IN=$(curl -s  http://169.254.169.254/latest/meta-data/instance-id)
+DRIVE_LETTERS=({a..z})
+
+# make sure that this device is mounted.
+until [ -d "${MP}" ]; do
+  sleep 1
+done
+calc_threshold() {
+  local num_devices=$(ls /dev/sd* | grep -v -E '[0-9]$' | wc -l)
+  local threshold=50
+  if [ "$num_devices" -gt "4" ] && [ "$num_devices" -le "6" ]; then
+    threshold=80
+  elif [ "$num_devices" -gt "6" ] && [ "$num_devices" -le "10"   ]; then
+    threshold=90
+  else
+    threshold=50
+  fi
+  echo ${threshold}
+}
+calc_new_size() {
+  local num_devices=$1
+  local new_size=50
+
+  if [ "$num_devices" -ge "4" ] && [ "$num_devices" -le "6" ]; then
+    new_size=100
+  elif [ "$num_devices" -gt "6" ] && [ "$num_devices" -le "10" ]; then
+    new_size=500
+  elif [ "$num_devices" -gt "10" ]; then
+    new_size=1000
+  else
+    new_size=50
+  fi
+  echo ${new_size}
+}
+
+add_space () {
+  local num_devices=$(ls /dev/sd* | grep -v -E '[0-9]$' | wc -l)
+  if [ "${num_devices}" -ge "16" ]; then
+    logthis "No more volumes can be safely added."
+    return 0
+  fi
+  local curr_size=$(df  -BG ${MP} | grep ${MP} | awk '{print $2} ' | cut -d'G' -f1)
+  if [ "${curr_size}" -lt "16384" ]; then
+    local vol_size=$(calc_new_size ${num_devices})
+    logthis "Extending LV ${MP} by  ${vol_size}GB"
+
+    DV=$(python ${BASEDIR}/create-ebs-volume.py -s ${vol_size})
+    btrfs device add ${DV} ${MP}
+    btrfs balance start -m ${MP}
+
+  fi
+  logthis "Finished extending device."
+}
+
+COUNT=300
+THRESHOLD=$(calc_threshold)
+while true; do
+  F=$(df -BG  ${MP} | grep -v Filesystem | awk '{print $5}' | cut -d"%" -f1 -)
+  if  [ $F -ge "${THRESHOLD}" ]; then
+    logthis "LOW DISK ($F): Adding more."
+    add_space
+  fi
+  if [ "${COUNT}" -ge "300" ]; then
+    logthis "Threshold -> ${THRESHOLD} :: Used% -> ${F}%"
+    COUNT=0
+  fi
+  THRESHOLD=$(calc_threshold)
+  COUNT=$(expr $COUNT + 1 )
+  sleep 1
+done
