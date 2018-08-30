@@ -251,7 +251,7 @@ except Exception as e:
     with open(kp_fname, 'w') as pem:
         pem.write(key_pair.key_material)
     
-    os.lchmod(kp_fname, stat.S_IRUSR | stat.S_IWUSR)
+    os.chmod(kp_fname, stat.S_IRUSR | stat.S_IWUSR)
     print("Key Pair PEM file written to ", kp_fname)
 
 
@@ -467,6 +467,8 @@ report =_dedent(
     """
     Resources that were created on your behalf:
 
+        * AWS Region: {region_name}
+
         * IAM Instance Profile: {instance_profile_name}
 
         * EC2 Key Pair: {key_pair_name}
@@ -481,6 +483,7 @@ report =_dedent(
 )
 
 report_d = dict(
+    region_name=session.region_name,
     instance_profile_name=IAM_INSTANCE_PROFILE_NAME,
     key_pair_name=args.key_pair_name,
     security_group_id=security_group_id,
