@@ -14,7 +14,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 TIMESTAMP = time.strftime('%Y%m%d-%H%M%S')
-DEFAULT_CLOUD_INIT_FILE = './default-genomics-ami.cloud-init.yaml'
+DEFAULT_USER_DATA_FILE = './default-genomics-ami.cloud-init.yaml'
 
 def _dedent(string):
     """utility function for long strings"""
@@ -54,9 +54,10 @@ parser.add_argument(
     "--key-pair-name", type=str, default="genomics-ami")
 
 parser.add_argument(
-    "--cloud-init-file",
+    "--user-data",
+    dest="user_data_file",
     type=str,
-    default=DEFAULT_CLOUD_INIT_FILE,
+    default=DEFAULT_USER_DATA_FILE,
     help="""
         Cloud Init spec file (yaml format) for provisioning the instance on 
         first boot.  (default: %(default)s)
@@ -121,6 +122,13 @@ encryption_group.add_argument(
 )
 
 parser.add_argument(
+    "--no-health-checks",
+    dest="check_health",
+    action="store_false",
+    help="Do not wait for instance health checks to complete"
+)
+
+parser.add_argument(
     "--no-ami",
     dest='create_ami',
     action='store_false',
@@ -171,6 +179,7 @@ termination_group.add_argument(
 parser.set_defaults(
     ebs_encryption=True,
     terminate_instance=True,
+    check_health=True,
     create_ami=True,
     iam_cleanup=False
 )
@@ -197,10 +206,12 @@ else:
     vpc = None
     for i in ec2.vpcs.filter(Filters=[{"Name": "isDefault","Values": ['true']}]):
         vpc = i
+    
     if not vpc:
         print("No default VPC found. You must provide *both* VPC and Subnet IDs that are able to access public IP domains on CLI")
         parser.print_usage()
         exit()
+    
     else:
         vpc_id = vpc.id
         subnet = [x for x in vpc.subnets.all()][0]
@@ -216,7 +227,7 @@ if security_group_id is not None:
     security_group.reload()
 else:
     sg_name = "GenomicsAmiSG-" + subnet_id
-    print("Getting the security group from name", sg_name)
+    print("Getting security group named:", sg_name)
     security_group=None
     try:
         security_groups = [x for x in ec2.security_groups.filter(Filters=[{'Name': 'group-name', "Values": [sg_name]}])]
@@ -251,7 +262,7 @@ except Exception as e:
     with open(kp_fname, 'w') as pem:
         pem.write(key_pair.key_material)
     
-    os.lchmod(kp_fname, stat.S_IRUSR | stat.S_IWUSR)
+    os.chmod(kp_fname, stat.S_IRUSR | stat.S_IWUSR)
     print("Key Pair PEM file written to ", kp_fname)
 
 
@@ -348,7 +359,8 @@ block_device_mappings.append({
     }
 })
 
-with open(args.cloud_init_file, 'r') as f:
+print('Using user-data file: ', args.user_data_file)
+with open(args.user_data_file, 'r') as f:
     user_data = f.read().format(scratch_mount_point=args.scratch_mount_point)
 
 MAX_CREATION_ATTEMPTS = args.max_instance_creation_attempts
@@ -405,15 +417,16 @@ print("[", instance_ip, "]")
 
 client = session.client("ec2")
 
-status =  client.describe_instance_status(InstanceIds=[instance_id])
-print("Checking EC2 Instance health ", end="")
-while len(status["InstanceStatuses"]) == 0 or not status["InstanceStatuses"][0]["InstanceStatus"]["Status"] == "ok":
-    print(".",end="")
-    sys.stdout.flush()
-    time.sleep(5)
+if args.check_health:
     status =  client.describe_instance_status(InstanceIds=[instance_id])
+    print("Checking EC2 Instance health ", end="")
+    while len(status["InstanceStatuses"]) == 0 or not status["InstanceStatuses"][0]["InstanceStatus"]["Status"] == "ok":
+        print(".",end="")
+        sys.stdout.flush()
+        time.sleep(5)
+        status =  client.describe_instance_status(InstanceIds=[instance_id])
 
-print(" available and healthy")
+    print(" available and healthy")
 
 
 image_id = None
@@ -467,6 +480,8 @@ report =_dedent(
     """
     Resources that were created on your behalf:
 
+        * AWS Region: {region_name}
+
         * IAM Instance Profile: {instance_profile_name}
 
         * EC2 Key Pair: {key_pair_name}
@@ -475,12 +490,12 @@ report =_dedent(
         * EC2 AMI ImageId: {image_id}
             * name: {image_name}
             * description: {image_desc}
-
-    Take note the returned EC2 AMI ImageId. We will use that for the AWS Batch setup.
+    
     """
 )
 
 report_d = dict(
+    region_name=session.region_name,
     instance_profile_name=IAM_INSTANCE_PROFILE_NAME,
     key_pair_name=args.key_pair_name,
     security_group_id=security_group_id,

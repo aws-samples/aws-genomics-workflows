@@ -50,6 +50,7 @@ tramp
 
 tmp/
 site/
+artifacts/
 *pem
 *tar.gz
 Makefile
