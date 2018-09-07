@@ -23,11 +23,19 @@ then
     rm -v ${ARTIFACT_PATH}/aws-custom-ami.tgz
 fi
 
+if [ -f ${ARTIFACT_PATH}/aws-ecs-patches.tgz ];
+then
+    echo "asset [ecs-patches]: removing previous build:"
+    rm -v ${ARTIFACT_PATH}/aws-ecs-patches.tgz
+fi
+
 
 echo "repackaging:"
 cd ${SOURCE_PATH}
 tar -czvf ${ARTIFACT_PATH}/aws-ebs-autoscale.tgz ./ebs-autoscale/
 tar -czvf ${ARTIFACT_PATH}/aws-custom-ami.tgz ./custom-ami/
+tar -czvf ${ARTIFACT_PATH}/aws-ecs-patches.tgz ./ecs-patches/
+
 
 cd ${CWD}
 
