@@ -13,26 +13,5 @@ runcmd:
 - pip install -U awscli boto3
 - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
 - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh  {scratch_mount_point} /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
-- echo "=== (re)starting ecs ==="
-- stop ecs
-- start ecs
-- sleep 10
-- docker images
-- docker ps
-- docker logs ecs-agent
-- echo "=== pulling custom images ==="
-- docker pull elerch/amazon-ecs-agent
-- docker pull quay.io/broadinstitute/cromwell-aws-proxy
-- docker images
-- echo "=== tagging custom images ==="
-- [docker, image, tag, "amazon/amazon-ecs-agent:latest", "amazon/amazon-ecs-agent:upstream"]
-- [docker, image, tag, "elerch/amazon-ecs-agent:latest", "amazon/amazon-ecs-agent:latest"]
-- [docker, image, tag, "quay.io/broadinstitute/cromwell-aws-proxy:latest", "ecs-agent-proxy:latest"]
-- docker images
-- echo "=== restarting ecs-agent ==="
-- docker images
-- docker ps
-- docker kill ecs-agent
-- sleep 10
-- docker images
-- docker ps
+- cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ecs-patches.tgz && tar -xzf aws-ecs-patches.tgz
+- sh /opt/ecs-patches/ecs-patches.sh
