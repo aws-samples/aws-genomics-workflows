@@ -24,22 +24,33 @@ The script will:
 
 
 ```bash
-# Download the source directory and install the requirements
-curl -O https://aws-genomics-workflows.s3.amazonaws.com/aws-batch-genomics.tar.gz
-tar -xzf aws-batch-genomics.tar.gz && rm aws-batch-genomics.tar.gz
-cd aws-batch-genomics/src/custom-ami
+# Download the source and install the requirements
+curl -O https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-custom-ami.tgz
+tar -xzf aws-custom-ami.tgz && rm aws-custom-ami.tgz
+cd aws-custom-ami
 pip install -r requirements.txt
 
 
 # Run the script to see the help
-python create-custom-ami.py --help
+./create-custom-ami.py --help
 # Output:
-# No default VPC found. You must provide *both* VPC and Subnet IDs that are able to access public IP domains on CLI
-# usage: create-genomics-ami.py [-h] [--scratch_mount_point SCRATCH_MOUNT_POINT]
+# usage: create-genomics-ami.py [-h] [--profile PROFILE] [--region REGION_NAME]
+#                               [--scratch-mount-point SCRATCH_MOUNT_POINT]
 #                               [--key-pair-name KEY_PAIR_NAME]
-#                               [--vpc-id VPC_ID] [--subnet-id SUBNET_ID]
+#                               [--user-data USER_DATA_FILE]
+#                               [--src-ami-id SRC_AMI_ID] [--vpc-id VPC_ID]
+#                               [--subnet-id SUBNET_ID]
 #                               [--security-group-id SECURITY_GROUP_ID]
-#                               [--terminate-instance] [--no-terminate-instance]
+#                               [--instance-profile-name INSTANCE_PROFILE_NAME]
+#                               [--max-instance-creation-attempts MAX_INSTANCE_CREATION_ATTEMPTS]
+#                               [--ebs-encryption | --no-ebs-encryption]
+#                               [--no-health-checks] [--no-ami]
+#                               [--ami-name AMI_NAME]
+#                               [--ami-description AMI_DESCRIPTION]
+#                               [--iam-cleanup]
+#                               [--terminate-instance | --no-terminate-instance]
+#
+# Creates a custom AMI for genomics workloads
 ```
 
 
@@ -57,31 +68,39 @@ The script takes about 10 minutes to run, you may want to take a :coffee: or :te
 Here is example output from running the script, providing a value for the key pair name (_values for ID's have been changed_):
 
 ```bash
-$ python create-genomics-ami.py --key-pair-name genomics-ami-west2
+$ ./create-genomics-ami.py \
+    --key-pair-name my-key-pair \
+    --instance-profile-name GenomicsAMICreationRole_20180827-155952 \
+    --user-data ./cromwell-genomics-ami.cloud-init.yaml
 
-Getting the security group from name GenomicsAmiSG-subnet-123ab123
-Security Group GenomicsAmiSG-subnet-123ab123 does not exist. Creating.
-Key Pair genomics-ami-west2 does not exist. Creating.
-Key Pair PEM file written to  genomics-ami-west2.pem
-Launching a new EC2 instance.
-Waiting on instance to have a IP...[ 111.222.111.222 ].
-Waiting on instance to pass health checks.................................instance available and healthy.
-Minting a new AMI...........................new AMI [ami-123abc123] created.
-Terminating instance...terminated.
-
+Using profile: default
+Getting security group named: GenomicsAmiSG-subnet-********
+Key Pair [ my-key-pair ] exists.
+Source AMI ID: ami-093381d21a4fc38d1
+Using user-data file:  ./cromwell-genomics-ami.cloud-init.yaml
+Creating EC2 instance . done
+Getting EC2 instance IP ... [ ***.***.***.*** ]
+Checking EC2 Instance health .................................................... available and healthy
+Creating AMI ........................new AMI [ami-*****************] created.
+Terminating instance ...terminated.
 Resources that were created on your behalf:
 
-    * EC2 Key Pair: genomics-ami-west2
-    * EC2 Security Group: sg-12ab1234
-    * EC2 Instance ID: i-01234abcde2134
-    * EC2 AMI ImageId: ami-123abc123
+    * AWS Region: us-west-2
 
-Take note the returned EC2 AMI ImageId. We will use that for the AWS Batch setup.
+    * IAM Instance Profile: GenomicsAMICreationRole_20180827-155952
 
+    * EC2 Key Pair: pwyming
+    * EC2 Security Group: sg-*****************
+    * EC2 Instance ID: i-*****************
+    * EC2 AMI ImageId: ami-*****************    <== NOTE THIS ID
+        * name: genomics-ami-20180907-153312
+        * description: A custom AMI for use with AWS Batch with genomics workflows
 ```
 
-Once the script completes, you have a new AMI ID to give to AWS Batch. Make a note of the AMI ID that was returned, we will need it for future sections. If you chose to not terminate the instance,  you can also SSH into the server to review the services. Be sure to terminate the instance after you are done. Here is an example using the AWS CLI.
+Once the script completes, you have a new AMI ID to give to AWS Batch. Make a note of the AMI ID that was returned, we will need it for future sections.
+
+If you chose to not terminate the instance,  you can also SSH into the server to review the services. Be sure to terminate the instance after you are done. Here is an example using the AWS CLI.
 
 ```bash
-aws ec2 terminate-instances --instance-ids i-01234abcde2134
+aws ec2 terminate-instances --instance-ids i-*****************
 ```
