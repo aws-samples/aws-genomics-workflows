@@ -69,8 +69,8 @@ Here is example output from running the script, providing a value for the key pa
 
 ```bash
 $ ./create-genomics-ami.py \
+    --region us-west-2 \
     --key-pair-name my-key-pair \
-    --instance-profile-name GenomicsAMICreationRole_20180827-155952 \
     --user-data ./cromwell-genomics-ami.cloud-init.yaml
 
 Using profile: default
@@ -89,7 +89,7 @@ Resources that were created on your behalf:
 
     * IAM Instance Profile: GenomicsAMICreationRole_20180827-155952
 
-    * EC2 Key Pair: pwyming
+    * EC2 Key Pair: my-key-pair
     * EC2 Security Group: sg-*****************
     * EC2 Instance ID: i-*****************
     * EC2 AMI ImageId: ami-*****************    <== NOTE THIS ID
