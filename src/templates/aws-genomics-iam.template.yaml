@@ -55,7 +55,7 @@ Resources:
               Effect: Allow
               Action:
                 - "ec2:createVolume"
-                - "ec2:attacheVolume"
+                - "ec2:attachVolume"
                 - "ec2:modifyInstanceAttribute"
                 - "ec2:describeVolumes"
               Resource: "*"
