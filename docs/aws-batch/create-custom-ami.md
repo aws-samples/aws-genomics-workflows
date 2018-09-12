@@ -12,7 +12,7 @@ We have provided a script (see [the next section](#create-a-custom-ami)) that cu
 
 ## Create a custom AMI
 
-We have provided a Python script that sets up the above.
+We have provided a [Python script](https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-custom-ami.tgz) that sets up the above.
 
 The script will:
 
