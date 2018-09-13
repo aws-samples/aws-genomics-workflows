@@ -67,7 +67,7 @@ def get_metadata(key):
 
 
 # create a EBS volume
-def create_and_attach_volume(size=10, vol_type="gp2", encrypted=True):
+def create_and_attach_volume(size=10, vol_type="gp2", encrypted=True, max_attached_volumes=16, max_created_volumes=256):
     instance_id  = get_metadata("instance-id")
     availability_zone = get_metadata("placement/availability-zone")
     region =  availability_zone[0:-1]
@@ -76,6 +76,16 @@ def create_and_attach_volume(size=10, vol_type="gp2", encrypted=True):
     ec2 = session.resource("ec2")
     client = session.client("ec2")
     instance = ec2.Instance(instance_id)
+
+    # TODO: put a limit on the number of created volumes from this instance
+    # use tagging by instance-id for filtering
+
+    # limit the number of volumes that can be attached to the instance
+    attached_volumes = [v.id for v in instance.volumes.all()]
+    if len(attached_volumes) > max_attached_volumes:
+        raise RuntimeError(
+            "maximum number of attached volumes reached ({})".format(max_attached_volumes)
+        )
 
     # Attempt to create the volume
     # A ClientError is thrown if there are insufficient permissions or if
