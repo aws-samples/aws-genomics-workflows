@@ -27,7 +27,7 @@ The script will:
 # Download the source and install the requirements
 curl -O https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-custom-ami.tgz
 tar -xzf aws-custom-ami.tgz && rm aws-custom-ami.tgz
-cd aws-custom-ami
+cd custom-ami
 pip install -r requirements.txt
 
 
