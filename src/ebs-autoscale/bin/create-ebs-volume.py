@@ -30,9 +30,11 @@
 
 from __future__ import print_function
 import glob, re, os, sys, time
-import boto3
 import urllib
 import argparse
+
+import boto3
+from botocore.exceptions import ClientError
 
 ## TODO: CLI arguments
 parameters = argparse.ArgumentParser(description="Create a new EBS Volume and attach it to the current instance")
@@ -69,8 +71,16 @@ def create_and_attach_volume(size=10, vol_type="gp2", encrypted=True):
     instance_id  = get_metadata("instance-id")
     availability_zone = get_metadata("placement/availability-zone")
     region =  availability_zone[0:-1]
-    ec2 = boto3.resource("ec2", region_name=region)
+    session = boto3.Session(region_name=region)
+
+    ec2 = session.resource("ec2")
+    client = session.client("ec2")
     instance = ec2.Instance(instance_id)
+
+    # Attempt to create the volume
+    # A ClientError is thrown if there are insufficient permissions or if
+    # service limits are reached (e.g. hitting the limit for a storage class in a region)
+    # It's ok for this error to be uncaught.
     volume = ec2.create_volume(
         AvailabilityZone=availability_zone,
         Encrypted=encrypted,
@@ -85,16 +95,25 @@ def create_and_attach_volume(size=10, vol_type="gp2", encrypted=True):
             time.sleep(1)
 
     device = get_next_logical_device()
-    instance.attach_volume(
-        VolumeId=volume.volume_id,
-        Device=device
-    )
+
+    # Need to assure that the created volume is successfully attached to be
+    # cost efficient.  If attachment fails, delete the volume.
+    try:
+        instance.attach_volume(
+            VolumeId=volume.volume_id,
+            Device=device
+        )
+    except ClientError as e:
+        client.delete_volume(VolumeId=volume.volume_id)
+        raise e
+
     # wait until device exists
     while True:
         if device_exists(device):
             break
         else:
             time.sleep(1)
+    
     instance.modify_attribute(
         Attribute="blockDeviceMapping",
         BlockDeviceMappings=[{"DeviceName": device,

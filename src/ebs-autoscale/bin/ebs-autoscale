@@ -94,11 +94,19 @@ add_space () {
     logthis "Extending LV ${MP} by  ${vol_size}GB"
 
     DV=$(python ${BASEDIR}/create-ebs-volume.py -s ${vol_size})
-    btrfs device add ${DV} ${MP}
-    btrfs balance start -m ${MP}
+
+    exit_status = $?
+    if [ $exit_status -eq 0 ]; then
+      logthis "adding volume to filesystem"
+      btrfs device add ${DV} ${MP}
+      btrfs balance start -m ${MP}
+      logthis "Finished extending device."
+
+    else
+      logthis "Error creating or attaching volume"
+    fi
 
   fi
-  logthis "Finished extending device."
 }
 
 COUNT=300
