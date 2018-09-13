@@ -95,7 +95,7 @@ add_space () {
 
     DV=$(python ${BASEDIR}/create-ebs-volume.py -s ${vol_size})
 
-    exit_status = $?
+    exit_status=$?
     if [ $exit_status -eq 0 ]; then
       logthis "adding volume to filesystem"
       btrfs device add ${DV} ${MP}
