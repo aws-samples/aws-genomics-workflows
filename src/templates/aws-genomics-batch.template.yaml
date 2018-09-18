@@ -61,7 +61,7 @@ Parameters:
     MinValue: 5
     Default: 100
   CustomAmiId:
-    Type: AWS::EC2::Instance::ImageId
+    Type: AWS::EC2::Image::Id
     Description: AMI you want your AWS Batch Compute Environment to use
   Ec2KeyPairName:
     Type: AWS::EC2::KeyPair::KeyName
