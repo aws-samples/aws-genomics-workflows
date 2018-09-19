@@ -48,6 +48,14 @@ Resources:
             Action:
               - "sts:AssumeRole"
       Policies:
+        - PolicyName: !Sub GenomicsEnv-S3Bucket-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              Effect: Allow
+              Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+              Action:
+                - "s3:*"
         - PolicyName: !Sub GenomicsEnv-Autoscale-EBS-${AWS::Region}
           PolicyDocument:
             Version: 2012-10-17
