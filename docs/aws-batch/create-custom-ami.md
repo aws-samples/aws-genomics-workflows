@@ -71,13 +71,11 @@ Here is example output from running the script, providing a value for the key pa
 $ ./create-genomics-ami.py \
     --region us-west-2 \
     --key-pair-name my-key-pair \
-    --user-data ./cromwell-genomics-ami.cloud-init.yaml
 
 Using profile: default
 Getting security group named: GenomicsAmiSG-subnet-********
 Key Pair [ my-key-pair ] exists.
 Source AMI ID: ami-093381d21a4fc38d1
-Using user-data file:  ./cromwell-genomics-ami.cloud-init.yaml
 Creating EC2 instance . done
 Getting EC2 instance IP ... [ ***.***.***.*** ]
 Checking EC2 Instance health .................................................... available and healthy
