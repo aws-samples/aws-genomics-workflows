@@ -10,7 +10,7 @@ The domain logic for workflows should live outside of the code for any individua
 
 1. [Native AWS services](./step-functions/intro-step-functions.md) such as AWS Lambda and AWS Step Functions.
 
-<!-- 2. [Cromwell](./cromwell/cromwell-aws-batch.md), a workflow management system from the Broad Institute -->
+2. [Cromwell](./cromwell/cromwell-aws-batch.md), a workflow management system from the [Broad Institute](https://www.broadinstitute.org/)
 
 <!-- 3. [Nextflow](./nextflow/nextflow-aws-batch.md), another workflow management system well used by the bioinformatics community. -->
 
