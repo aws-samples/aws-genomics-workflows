@@ -32,7 +32,7 @@ pip install -r requirements.txt
 
 
 # Run the script to see the help
-./create-custom-ami.py --help
+./create-genomics-ami.py --help
 # Output:
 # usage: create-genomics-ami.py [-h] [--profile PROFILE] [--region REGION_NAME]
 #                               [--scratch-mount-point SCRATCH_MOUNT_POINT]
@@ -41,6 +41,7 @@ pip install -r requirements.txt
 #                               [--src-ami-id SRC_AMI_ID] [--vpc-id VPC_ID]
 #                               [--subnet-id SUBNET_ID]
 #                               [--security-group-id SECURITY_GROUP_ID]
+#                               [--use-instance-profile]
 #                               [--instance-profile-name INSTANCE_PROFILE_NAME]
 #                               [--max-instance-creation-attempts MAX_INSTANCE_CREATION_ATTEMPTS]
 #                               [--ebs-encryption | --no-ebs-encryption]
@@ -85,7 +86,7 @@ Resources that were created on your behalf:
 
     * AWS Region: us-west-2
 
-    * IAM Instance Profile: GenomicsAMICreationRole_20180827-155952
+    * IAM Instance Profile: None
 
     * EC2 Key Pair: my-key-pair
     * EC2 Security Group: sg-*****************
