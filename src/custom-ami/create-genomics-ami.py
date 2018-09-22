@@ -90,6 +90,15 @@ parser.add_argument(
     help="EC2 instance security group ID")
 
 parser.add_argument(
+    "--use-instance-profile",
+    action="store_true",
+    help="""
+        Use an IAM instance profile to create the AMI.  Note: this requires
+        privileges to create IAM roles.
+    """
+)
+
+parser.add_argument(
     "--instance-profile-name",
     type=str,
     help="IAM instance profile name to associate with the instance"
@@ -177,6 +186,7 @@ termination_group.add_argument(
     help="Do not terminate the instance when complete")
 
 parser.set_defaults(
+    use_instance_profile=False,
     ebs_encryption=True,
     terminate_instance=True,
     check_health=True,
@@ -266,66 +276,71 @@ except Exception as e:
     print("Key Pair PEM file written to ", kp_fname)
 
 
-# IAM Role
-# need to add the following policy to the instance created to avoid ecs-agent errors
-# arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
-iam = session.client('iam')
-
-if args.instance_profile_name:
-    IAM_INSTANCE_PROFILE_NAME = args.instance_profile_name
+if not args.use_instance_profile:
+    instance_profile = None
+    IAM_INSTANCE_PROFILE_NAME = None
 
 else:
-    IAM_PREFIX = 'GenomicsAMICreation'
-    IAM_ROLE_NAME = IAM_PREFIX + 'Role_' + TIMESTAMP
-    IAM_INSTANCE_PROFILE_NAME = IAM_ROLE_NAME
-    
-    print(
-        'Creating IAM role and instance profile: {instance_profile} '.format(
-            instance_profile=IAM_INSTANCE_PROFILE_NAME
-        ),
-        end='')
-    
-    iam.create_role(
-        RoleName=IAM_ROLE_NAME,
-        Description='Role used to create a custom AMI for genomics workloads',
-        AssumeRolePolicyDocument=_dedent(
-            """
-            {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Action": "sts:AssumeRole",
-                        "Effect": "Allow",
-                        "Principal": {
-                            "Service": "ec2.amazonaws.com"
+    # IAM Role
+    # need to add the following policy to the instance created to avoid ecs-agent errors
+    # arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+    iam = session.client('iam')
+
+    if args.instance_profile_name:
+        IAM_INSTANCE_PROFILE_NAME = args.instance_profile_name
+
+    else:
+        IAM_PREFIX = 'GenomicsAMICreation'
+        IAM_ROLE_NAME = IAM_PREFIX + 'Role_' + TIMESTAMP
+        IAM_INSTANCE_PROFILE_NAME = IAM_ROLE_NAME
+        
+        print(
+            'Creating IAM role and instance profile: {instance_profile} '.format(
+                instance_profile=IAM_INSTANCE_PROFILE_NAME
+            ),
+            end='')
+        
+        iam.create_role(
+            RoleName=IAM_ROLE_NAME,
+            Description='Role used to create a custom AMI for genomics workloads',
+            AssumeRolePolicyDocument=_dedent(
+                """
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Action": "sts:AssumeRole",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "ec2.amazonaws.com"
+                            }
                         }
-                    }
-                ]
-            }
-            """
+                    ]
+                }
+                """
+            )
         )
-    )
-    print('.', end='')
-    iam.attach_role_policy(
-        RoleName=IAM_ROLE_NAME,
-        PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role'
-    )
-    print('.', end='')
-    iam.create_instance_profile(
+        print('.', end='')
+        iam.attach_role_policy(
+            RoleName=IAM_ROLE_NAME,
+            PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role'
+        )
+        print('.', end='')
+        iam.create_instance_profile(
+            InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
+        )
+        print('.', end='')
+        iam.add_role_to_instance_profile(
+            InstanceProfileName=IAM_INSTANCE_PROFILE_NAME,
+            RoleName=IAM_ROLE_NAME
+        )
+        print('.', end='')
+        print(' done')
+
+
+    instance_profile = iam.get_instance_profile(
         InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
-    )
-    print('.', end='')
-    iam.add_role_to_instance_profile(
-        InstanceProfileName=IAM_INSTANCE_PROFILE_NAME,
-        RoleName=IAM_ROLE_NAME
-    )
-    print('.', end='')
-    print(' done')
-
-
-instance_profile = iam.get_instance_profile(
-    InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
-    )['InstanceProfile']
+        )['InstanceProfile']
 
 if args.src_ami_id:
     ecs_ami_id = args.src_ami_id
@@ -370,6 +385,10 @@ instances = None
 while not instances and creation_attempts < MAX_CREATION_ATTEMPTS:
     print('.', end='')
     try:
+        iam_instance_profile = {}
+        if instance_profile:
+            iam_instance_profile = {'Arn': instance_profile['Arn']}
+        
         ri_args = dict(
             ImageId=ecs_ami_id,
             BlockDeviceMappings=block_device_mappings,
@@ -383,7 +402,7 @@ while not instances and creation_attempts < MAX_CREATION_ATTEMPTS:
                 "DeleteOnTermination": True,
                 "SubnetId": subnet_id
             }],
-            IamInstanceProfile={'Arn': instance_profile['Arn']},
+            IamInstanceProfile=iam_instance_profile,
             UserData=user_data
         )
 
@@ -466,14 +485,15 @@ if args.terminate_instance:
     instance.reload()
     print("terminated.")
 
-    if args.iam_cleanup and not args.instance_profile_name:
-        iam.remove_role_from_instance_profile(
-            InstanceProfileName=IAM_INSTANCE_PROFILE_NAME,
-            RoleName=IAM_ROLE_NAME
-        )
-        iam.delete_instance_profile(
-            InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
-        )
+    if args.iam_cleanup and args.use_instance_profile:
+        if not args.instance_profile_name:
+            iam.remove_role_from_instance_profile(
+                InstanceProfileName=IAM_INSTANCE_PROFILE_NAME,
+                RoleName=IAM_ROLE_NAME
+            )
+            iam.delete_instance_profile(
+                InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
+            )
 
 
 report =_dedent(
