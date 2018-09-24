@@ -40,6 +40,9 @@ logthis () {
 MP=$1
 BASEDIR=$(dirname $0)
 AZ=$(curl -s  http://169.254.169.254/latest/meta-data/placement/availability-zone/)
+
+logthis "EBS Autoscaling mountpoint: ${MP}"
+
 while [ -z "${AZ}" ]; do
   logthis "Metadata service did not return AZ. Trying again."
   sleep 1
