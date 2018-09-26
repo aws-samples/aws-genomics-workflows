@@ -36,7 +36,7 @@ As your jobs complete and write the output back to S3, it is a good idea to dele
 
 ## Job management using a container
 
-Since these requirements are commonplace, other bioinformatics-focused workflow systems, such as [Nextflow](../nextflow/nextflow-aws-batch.md), have support for data staging, etc. For a system based on AWS Step Functions and AWS Lambda, we will leverage a Docker container to handle the data staging and multitenancy requirements. The container will launch the application of interest, such as SAMTools, as a sibling container process.
+Since these requirements are commonplace, other bioinformatics-focused workflow systems, such as [Nextflow](https://www.nextflow.io), have support for data staging, etc. For a system based on AWS Step Functions and AWS Lambda, we will leverage a Docker container to handle the data staging and multitenancy requirements. The container will launch the application of interest, such as SAMTools, as a sibling container process.
 
 Separating the application's container from the AWS Batch requirements of running an application allows for leveraging 3rd party tools easier, and also allows for management of the functionality of the workflow system to be independent from the application's runtime needs. The diagram below represents the interaction between AWS Batch, Amazon S3, the job management container (`BatchJobRunner`), and the application's container (`samtools`):
 
