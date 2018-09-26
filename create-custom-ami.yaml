@@ -101,7 +101,7 @@ Resources:
               command:
                 Fn::If:
                   - UseCromwell
-                  - !Join [" ", ["sh", "/opt/ecs-patches/ecs-patches.sh"]]
+                  - !Join [" ", ["sh", "/opt/ecs-patches/ecs-additions-cromwell.sh"]]
                   - echo "OK"
               env:
                 PATH: "/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin"
