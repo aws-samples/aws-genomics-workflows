@@ -194,7 +194,7 @@ Resources:
                .then((data)=>
                  ec2.createImage({
                    InstanceId: instanceId,
-                   Name: event.RequestId
+                   Name: '${AMIName}'
                  }).promise()
                ).then((data)=>
                  wait({
