@@ -14,4 +14,4 @@ runcmd:
 - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
 - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh  {scratch_mount_point} /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
 - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ecs-patches.tgz && tar -xzf aws-ecs-patches.tgz
-- sh /opt/ecs-patches/ecs-patches.sh
+- sh /opt/ecs-patches/ecs-additions-cromwell.sh
