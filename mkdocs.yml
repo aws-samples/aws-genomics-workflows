@@ -12,7 +12,7 @@ pages:
     - AWS Step Functions:
       - Introduction and requirements: step-functions/intro-step-functions.md
       - Creating a job management container: step-functions/create-batchjobrunner-container.md
-      - An example workflow: step-functions/create-example-sfl-workflow.md
+      # - An example workflow: step-functions/create-example-sfl-workflow.md
     # - Cromwell: cromwell/cromwell-aws-batch.md
     # - Nextflow: nextflow/nextflow-aws-batch.md
 theme: readthedocs
