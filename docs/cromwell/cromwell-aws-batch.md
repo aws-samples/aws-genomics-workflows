@@ -24,50 +24,15 @@ these setup.
 
 ## Custom AMI with Cromwell Additions
 
-Use the [custom AMI script](/aws-batch/create-custom-ami/) to create an AMI 
-specific to running cromwell tasks on EC2 instances.
+Follow the [instructions on creating custom AMI script](/aws-batch/create-custom-ami/)
+with the following changes:
 
-In order for instances launched with this AMI to work with Cromwell, you must
-specify the `--scratch-mount-point` as `/cromwell_root` and use the provided
-`cromwell-genomics-ami.cloud-init.yaml` as `user-data` when creating the AMI.
+* specify the scratch mount point as `/cromwell_root`
+* make sure that cromwell additions are included in the ami
+  * select "cromwell" as the AMI type if using the CloudFormation template
+  * use `cromwell-genomics-ami.cloud-init.yaml` as `user-data` with the python script
 
-```bash
-$ ./create-genomics-ami.py \
-    --region us-west-2 \
-    --key-pair-name my-key-pair \
-    --scratch-mount-point /cromwell_root \
-    --user-data ./cromwell-genomics-ami.cloud-init.yaml
-```
-
-Output from the above command should look like:
-
-```
-Using profile: default
-Getting security group named: GenomicsAmiSG-subnet-********
-Key Pair [ my-key-pair ] exists.
-Source AMI ID: ami-093381d21a4fc38d1
-Using user-data file:  ./cromwell-genomics-ami.cloud-init.yaml
-Creating EC2 instance . done
-Getting EC2 instance IP ... [ ***.***.***.*** ]
-Checking EC2 Instance health ............................ available and healthy
-Creating AMI ........................new AMI [ami-*****************] created.
-Terminating instance ...terminated.
-Resources that were created on your behalf:
-
-    * AWS Region: us-west-2
-
-    * IAM Instance Profile: GenomicsAMICreationRole_20180827-155952
-
-    * EC2 Key Pair: my-key-pair
-    * EC2 Security Group: sg-*****************
-    * EC2 Instance ID: i-*****************
-    * EC2 AMI ImageId: ami-*****************    <== NOTE THIS ID
-        * name: genomics-ami-20180907-153312
-        * description: A custom AMI for use with AWS Batch with genomics workflows
-```
-
-Once the script completes, you will have a new AMI ID to give to AWS Batch to
-setup compute environments.
+Once complete, you will have a new AMI ID to give to AWS Batch to setup compute environments.
 
 ## Launch CloudFormation Stacks
 
@@ -82,29 +47,41 @@ use the [CloudFormation templates](/aws-batch/configure-aws-batch-cfn) provided 
 
 ## Cromwell Server
 
-Since the crucial pieces of AWS infrastructure are an S3 bucket and an AWS Batch
-queue, you could run Cromwell as a server on your local machine but configured
-to execute jobs on AWS.  However, that means you would have to keep your local
-machine (e.g. a laptop), on and connected to the internet until the workflow 
-completes.  Thus, it is best to use a remote machine, such as an EC2 instance
-as your Cromwell server.
+To ensure the highest level of security, and robustness for long running workflows,
+it is recommended that you use an EC2 instance as your Cromwell server for submitting
+workflows to AWS Batch.
 
 A couple things to note:
 
 * This server does not need to be permanent. In fact,
-  when you are not running workflows, you should ideally terminate the instance
+  when you are not running workflows, you should stop or terminate the instance
   so that you are not paying for resources you are not using.
 
-* You can also launch a Cromwell server just for yourself and exactly when you
-  need it.
+* You can launch a Cromwell server just for yourself and exactly when you need it.
 
 * This server does not need to be in the same VPC as the one that Batch will
   launch instances in.  However, it would be helpful if you want to debug
   running tasks on task instances.
 
+This instance will need the following:
+
+* Java 8 (per Cromwell's requirements)
+* The latest version of Cromwell with AWS Batch backend support (v35+)
+* Permissions to
+    * read from the S3 bucket used for input and output data
+    * submit / describe / cancel / terminate jobs to AWS Batch queues
+
+To get this setup quickly use the following CloudFormation template.
+
+| Name | Description | Source | Launch Stack |
+| -- | -- | :--: | -- |
+{{ cfn_stack_row("Cromwell Server", "CromwellServer", "cromwell/cromwell-server.template.yaml", "Create an EC2 instance and an IAM instance profile to run Cromwell") }}
+
+
 ### Configuring Cromwell on AWS Batch
 
-The following is an example `*.conf` file for Cromwell to use its `AWSBackend`.
+Log into your server using SSH and create a Cromwell application configuration file.
+The following is an example `*.conf` file use the `AWSBackend`.
 
 ```java
 // aws.conf
@@ -172,19 +149,20 @@ with Cromwell's REST API from your local machine:
 $ ssh -L localhost:8000:localhost:8000 ec2-user@<cromwell server host or ip>
 ```
 
-Install the release of Cromwell you wish to use (this is typically just downloading
-a `*.jar` file).
-
-!!! note
-    The AWS Backend is only supported on Cromwell 35 and higher
+This port tunnel only needs to be open for submitting workflows.  You do not 
+need to be connected to the server while a workflow is running.
 
 Launch the server using the following command:
 
 ```bash
-$ java -Dconfig.file=aws.conf -jar cromwell-XX.jar server
+$ java -Dconfig.file=aws.conf -jar cromwell-35.jar server
 ```
 
-where `XX` is the version of you installed.
+!!! note
+    If you plan on having this server run for a while, it is recommended you use
+    a utility like `screen` or `tmux` so that you can log out while keeping
+    Cromwell running.  Alternatively, you could start Cromwell as a detached
+    process in the background using `nohup`.
 
 You should now be able to access Cromwell's SwaggerUI from a web browser on
 your local machine by navigating to:

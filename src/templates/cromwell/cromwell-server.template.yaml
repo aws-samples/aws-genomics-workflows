@@ -1,0 +1,134 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Creates an EC2 Instance and Roles for a Cromwell Server
+
+# Parameters
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: Recommended to use the Default VPC here
+  PublicSubnetID:
+    Type: AWS::EC2::Subnet::Id
+    Description: Select a public subnet to launch into
+  LatestAmazonLinuxAMI:
+    Description: The latest Amazon Linux AMI
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
+    AllowedValues:
+      - /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
+  InstanceName:
+    Type: String
+    Default: cromwell-server
+    Description: The name of the instance that is created
+
+# Resources
+Resources:
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Custom AMI instance
+      VpcId: !Ref VpcId
+      Tags:
+        - Key: Name
+          Value: genomics-base-sg
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              jq: []
+              btrfs-progs: []
+              python27-pip: []
+              sed: []
+              wget: []
+              openjdk: []
+          commands:
+            00InstallBoto3:
+              command: pip install -U awscli boto3
+            01InstallCromwell:
+              command: wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
+              cwd: /opt
+            
+    Properties:
+      ImageId: !Ref LatestAmazonLinuxAMI
+      InstanceType: t2.large
+      Tags:
+        - Key: Name
+          Value: !Ref InstanceName
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -x
+          yum -y update
+          yum install -y aws-cfn-bootstrap
+          /opt/aws/bin/cfn-init --verbose --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
+          shutdown -h now
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: "0"
+          GroupSet:
+            - !Ref EC2SecurityGroup
+          SubnetId: !Ref PublicSubnetID
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+  
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: [lambda.amazonaws.com] }
+            Action: ["sts:AssumeRole"]
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+      Policies:
+        - PolicyName: EC2Policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ec2:DescribeInstances"
+                  - "ec2:DescribeImages"
+                  - "ec2:CreateImage"
+                  - "ec2:DeregisterImage"
+                  - "ec2:DescribeSnapshots"
+                  - "ec2:DeleteSnapshot"
+                Resource: ["*"]
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Network Configuration"
+        Parameters:
+          - VpcId
+          - PublicSubnetID
+      - Label:
+          default: "Instance Configuration"
+        Parameters:
+          - LatestAmazonLinuxAMI
+      - Label:
+          default: "Outputs"
+        Parameters:
+          - AMIName
+    ParameterLabels:
+      VpcId:
+        default: "VPC ID"
+      PublicSubnetID:
+        default: "Public Subnet ID"
+      InstanceName:
+        default: "Instance Name"
+      LatestAmazonLinuxAMI:
+        default: "Latest Amazon Linux AMI"
+
+Outputs:
+  EC2Instance:
+    Description: The EC2 Instance ID of your Cromwell Server
+    Value: !Ref EC2Instance
