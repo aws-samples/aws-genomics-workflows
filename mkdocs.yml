@@ -12,7 +12,7 @@ pages:
     - AWS Step Functions:
       - Introduction and requirements: step-functions/intro-step-functions.md
       - Creating a job management container: step-functions/create-batchjobrunner-container.md
-      - An example workflow: step-functions/create-example-sfl-workflow.md
+      # - An example workflow: step-functions/create-example-sfl-workflow.md
     - Cromwell: cromwell/cromwell-aws-batch.md
     # - Nextflow: nextflow/nextflow-aws-batch.md
 theme: readthedocs
@@ -22,7 +22,21 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_generator: !!python/name:pymdownx.emoji.to_png
 
-repo_url: https://github.com/aws-samples/aws-batch-genomics/
+# repo_url: https://github.com/aws-samples/aws-batch-genomics/
 # repo_name: Genomics Workflows on AWS
-site_author: Angel Pizarro <pizarroa@amazon.com>
+# site_author: Angel Pizarro <pizarroa@amazon.com>
 copyright: 2018 Amazon Web Services
+
+plugins:
+- search
+- macros
+
+extra:
+  staging: develop
+  develop:
+    s3: 
+      bucket: aws-genomics-workflows
+  production:
+    s3:
+      bucket: docs.opendata.aws
+      prefix: genomics-workflows

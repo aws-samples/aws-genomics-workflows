@@ -12,7 +12,23 @@ We have provided a script (see [the next section](#create-a-custom-ami)) that cu
 
 ## Create a custom AMI
 
-We have provided a [Python script](https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-custom-ami.tgz) that sets up the above.
+### Using a CloudFormation template
+
+For a "single-click" solution we have provided a CloudFormation template
+that performs these tasks via CloudFormation's UI.
+
+| Name | Description | Source | Launch Stack |
+| -- | -- | :--: | -- |
+| Custom AMI (New VPC) | Creates a custom AMI that EC2 instances can be based on for processing genomics workflow tasks.  The creation process will happen in its own VPC |   {{ download_button("templates/create-genomics-ami/create-custom-ami-new-vpc.yaml") }} | {{ cfn_button("GenomicsWorkflow-AMI", "create-genomics-ami/create-custom-ami-new-vpc.yaml") }} |
+| Custom AMI (Existing VPC) | Creates a custom AMI that EC2 instances can be based on for processing genomics workflow tasks.  The creation process will happen in a VPC you specify |   {{ download_button("templates/create-genomics-ami/create-custom-ami-existing-vpc.yaml") }} | {{ cfn_button("GenomicsWorkflow-AMI", "create-genomics-ami/create-custom-ami-existing-vpc.yaml") }} |
+
+### Using a python script
+
+If you are interested in how this can be automated using AWS SDKs, we have provided a Python script that sets up the above.
+
+| Name | Description | Source |
+| -- | -- | :--: |
+| Custom AMI (Script) | Python script to create a custom AMI | {{ download_button("artifacts/aws-custom-ami.tgz") }} |
 
 The script will:
 
@@ -20,8 +36,6 @@ The script will:
 2. Adjust the system settings to mount the scratch on instance start.
 3. Install and configure a small service to monitor and automatically expand the scratch space by adding new EBS volume
 4. Make the necessary adjustments to the Amazon Elastic Container Service (ECS) agent to work with AWS Batch
-5. Adjust the network settings to allow for containers to query instance metadata for their Task IAM roles.
-
 
 ```bash
 # Download the source and install the requirements
@@ -66,7 +80,7 @@ Most new accounts have a [default VPC](https://docs.aws.amazon.com/AmazonVPC/lat
 
 The script takes about 10 minutes to run, you may want to take a :coffee: or :tea:  break at this point.
 
-Here is example output from running the script, providing a value for the key pair name (_values for ID's have been changed_):
+Here is example output from running the script, providing a value for the key pair name and the region to create the ami in (_values for ID's have been redacted for security where appropriate_):
 
 ```bash
 $ ./create-genomics-ami.py \
