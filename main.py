@@ -17,13 +17,6 @@ def declare_variables(variables, macro):
 
     @macro
     @dedented
-    def test():
-        return """
-        <img src="/images/cloudformation-launch-stack.png" alt="cloudformation-launch-button" />
-        """
-    
-    @macro
-    @dedented
     def cfn_button(name, template):
         """
         create an cloudformation launch button
@@ -38,7 +31,7 @@ def declare_variables(variables, macro):
             "https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=",
             name,
             "&templateURL=",
-            "https://{bucket}.s3.amazonaws.com/{object}".format(**s3),
+            "https://s3.amazonaws.com/{bucket}/{object}".format(**s3),
         ])
 
         return """
@@ -57,7 +50,7 @@ def declare_variables(variables, macro):
             filter(None, [s3.get('prefix'), path])
         )
 
-        src_url = "https://{bucket}.s3.amazonaws.com/{object}".format(**s3)
+        src_url = "https://s3.amazonaws.com/{bucket}/{object}".format(**s3)
         
         return """
         [:{icon}:]({url})
