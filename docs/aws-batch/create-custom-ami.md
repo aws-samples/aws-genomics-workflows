@@ -19,8 +19,8 @@ that performs these tasks via CloudFormation's UI.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | -- |
-| Custom AMI (New VPC) | Creates a custom AMI that EC2 instances can be based on for processing genomics workflow tasks.  The creation process will happen in its own VPC |   {{ download_button("templates/create-genomics-ami/create-custom-ami-new-vpc.yaml") }} | {{ cfn_button("GenomicsWorkflow-AMI", "create-genomics-ami/create-custom-ami-new-vpc.yaml") }} |
-| Custom AMI (Existing VPC) | Creates a custom AMI that EC2 instances can be based on for processing genomics workflow tasks.  The creation process will happen in a VPC you specify |   {{ download_button("templates/create-genomics-ami/create-custom-ami-existing-vpc.yaml") }} | {{ cfn_button("GenomicsWorkflow-AMI", "create-genomics-ami/create-custom-ami-existing-vpc.yaml") }} |
+{{ cfn_stack_row("Custom AMI (New VPC)", "GenomicsWorkflow-AMI", "create-genomics-ami/create-custom-ami-new-vpc.yaml", "Creates a custom AMI that EC2 instances can be based on for processing genomics workflow tasks.  The creation process will happen in its own VPC.  <br /><br />_Make sure that you have permissions to create a VPC and that you have not reached the VPC soft-limit in your account_") }}
+{{ cfn_stack_row("Custom AMI (Existing VPC)", "GenomicsWorkflow-AMI", "create-genomics-ami/create-custom-ami-existing-vpc.yaml", "Creates a custom AMI that EC2 instances can be based on for processing genomics workflow tasks.  The creation process will happen in a VPC you specify") }}
 
 ### Using a python script
 

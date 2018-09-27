@@ -1,7 +1,3 @@
-{% macro cfn_stack_row(name, stack_name, template, description) -%}
-| {{ name }} | {{ description }} | {{ download_button("templates/" + template) }} | {{ cfn_button(stack_name, template) }} |
-{%- endmacro %}
-
 ## Launching the CloudFormation stacks
 
 The links below provide CloudFormation templates to deploy a base AWS Batch environment for genomics workflows. The `Full Stack` template is self-contained and will create all of the AWS resources, including VPC network, security groups, etc. The template defaults to using two Availability Zones for deploying instances. If you need more than this, leverage the next template.

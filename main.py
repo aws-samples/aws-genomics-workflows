@@ -24,7 +24,7 @@ def declare_variables(variables, macro):
 
         s3 = _variables['s3']
         s3['object'] = "/".join(
-            filter(None, [s3.get('prefix'), 'template', template])
+            filter(None, [s3.get('prefix'), 'templates', template])
         )
 
         cfn_url = "".join([
@@ -55,3 +55,16 @@ def declare_variables(variables, macro):
         return """
         [:{icon}:]({url})
         """.format(icon=icon, url=src_url)
+    
+    @macro
+    @dedented
+    def cfn_stack_row(name, stack_name, template, description):
+        return """
+        | {name} | {description} | {download_button} | {cfn_button} |
+        """.format(
+            name=name,
+            stack_name=stack_name,
+            download_button=download_button("templates/" + template),
+            cfn_button=cfn_button(stack_name, template),
+            description=description
+        )
