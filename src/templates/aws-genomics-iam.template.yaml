@@ -64,8 +64,8 @@ Resources:
                 Action:
                   - "s3:PutObject"
                 Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
-                Condition:
-                  Null: { "s3:x-amz-server-side-encryption": true }
+                Condition: 
+                  "Null" : { "s3:x-amz-server-side-encryption": true }
               - Sid: S3BucketAllowAllObjectOps
                 Effect: Allow
                 Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
