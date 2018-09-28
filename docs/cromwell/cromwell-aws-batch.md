@@ -24,13 +24,13 @@ these setup.
 
 ## Custom AMI with Cromwell Additions
 
-Follow the [instructions on creating custom AMI script](/aws-batch/create-custom-ami/)
+Follow the [instructions on creating a custom AMI](/aws-batch/create-custom-ami/)
 with the following changes:
 
 * specify the scratch mount point as `/cromwell_root`
 * make sure that cromwell additions are included in the ami
-  * select "cromwell" as the AMI type if using the CloudFormation template
-  * use `cromwell-genomics-ami.cloud-init.yaml` as `user-data` with the python script
+    * select "cromwell" as the AMI type if using the CloudFormation template
+    * use `cromwell-genomics-ami.cloud-init.yaml` as `user-data` with the python script
 
 Once complete, you will have a new AMI ID to give to AWS Batch to setup compute environments.
 
@@ -69,19 +69,62 @@ This instance will need the following:
 * The latest version of Cromwell with AWS Batch backend support (v35+)
 * Permissions to
     * read from the S3 bucket used for input and output data
-    * submit / describe / cancel / terminate jobs to AWS Batch queues
+    * submit / describe / cancel / terminate jobs to your AWS Batch queues
 
-To get this setup quickly use the following CloudFormation template.
+The permissions above can be added to the instance via policies in an [instance profile](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html).
+Example policies are shown below:
 
-| Name | Description | Source | Launch Stack |
-| -- | -- | :--: | -- |
-{{ cfn_stack_row("Cromwell Server", "CromwellServer", "cromwell/cromwell-server.template.yaml", "Create an EC2 instance and an IAM instance profile to run Cromwell") }}
+### Access to AWS Batch
+Lets the Cromwell server instance submit and get info about jobs to a specific
+AWS Batch job queues.
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "CromwellServer-BatchPolicy",
+            "Effect": "Allow",
+            "Action": [
+                "batch:DeregisterJobDefinition",
+                "batch:TerminateJob",
+                "batch:DescribeJobs",
+                "batch:CancelJob",
+                "batch:SubmitJob",
+                "batch:RegisterJobDefinition"
+            ],
+            "Resource": [
+              "<high-priority-queue-arn>",
+              "<default-queue-arn>"
+            ]
+        }
+    ]
+}
+```
+
+### Access S3
+Lets the Cromwell server instance read data from S3 - i.e. the return codes (written
+to `rc.txt` files) for each job.
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "CromwellServer-S3Policy",
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::<bucket-name>/*"
+        }
+    ]
+}
+```
 
 
 ### Configuring Cromwell on AWS Batch
 
 Log into your server using SSH and create a Cromwell application configuration file.
-The following is an example `*.conf` file use the `AWSBackend`.
+The following is an example `*.conf` file to use the `AWSBackend`.
 
 ```java
 // aws.conf
