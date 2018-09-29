@@ -63,7 +63,28 @@ A couple things to note:
   launch instances in.  However, it would be helpful if you want to debug
   running tasks on task instances.
 
-This instance will need the following:
+The following CloudFormation template will create a CromwellServer instance with
+Cromwell installed and preconfigured to operate with an S3 Bucket and Batch
+Queue that you define at launch.
+
+| Name | Description | Source | Launch Stack |
+| -- | -- | :--: | -- |
+{{ cfn_stack_row("Cromwell Server", "CromwellServer", "cromwell/cromwell-server.template.yaml", "Create an EC2 instance and an IAM instance profile to run Cromwell") }}
+
+Once the stack is created, you can SSH to the instance and start the server with
+the following command:
+
+```bash
+$ cd ~
+$ ./run_cromwell_server.sh
+```
+
+For details of how this instance was constructed - e.g. if you want to customize
+it for your purposes, checkout the template source and read the sections below.
+
+### Cromwell server requirements
+
+This instance needs the following:
 
 * Java 8 (per Cromwell's requirements)
 * The latest version of Cromwell with AWS Batch backend support (v35+)
