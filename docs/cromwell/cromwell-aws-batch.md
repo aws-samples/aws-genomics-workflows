@@ -96,8 +96,7 @@ The permissions above can be added to the instance via policies in an [instance 
 Example policies are shown below:
 
 ### Access to AWS Batch
-Lets the Cromwell server instance submit and get info about jobs to a specific
-AWS Batch job queues.
+Lets the Cromwell server instance submit and get info about AWS Batch jobs.
 
 ```json
 {
@@ -107,17 +106,18 @@ AWS Batch job queues.
             "Sid": "CromwellServer-BatchPolicy",
             "Effect": "Allow",
             "Action": [
-                "batch:DeregisterJobDefinition",
-                "batch:TerminateJob",
-                "batch:DescribeJobs",
-                "batch:CancelJob",
-                "batch:SubmitJob",
+                "batch:DescribeJobQueues"
+                "batch:DeregisterJobDefinition"
+                "batch:TerminateJob"
+                "batch:DescribeJobs"
+                "batch:CancelJob"
+                "batch:SubmitJob"
                 "batch:RegisterJobDefinition"
+                "batch:DescribeJobDefinitions"
+                "batch:ListJobs"
+                "batch:DescribeComputeEnvironments"
             ],
-            "Resource": [
-              "<high-priority-queue-arn>",
-              "<default-queue-arn>"
-            ]
+            "Resource": "*"
         }
     ]
 }
