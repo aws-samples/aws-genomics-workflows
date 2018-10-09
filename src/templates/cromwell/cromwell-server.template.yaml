@@ -69,22 +69,18 @@ Resources:
             Version: 2012-10-17
             Statement:
               Effect: Allow
-              Resource: 
-               !Join
-                - ":"
-                - - "arn"
-                  - !Ref "AWS::Partition"
-                  - "batch"
-                  - !Ref "AWS::Region"
-                  - !Ref "AWS::AccountId"
-                  - "job-queue/*"
+              Resource: "*"
               Action:
+                - "batch:DescribeJobQueues"
+                - "batch:DeregisterJobDefinition"
                 - "batch:TerminateJob"
                 - "batch:DescribeJobs"
                 - "batch:CancelJob"
                 - "batch:SubmitJob"
                 - "batch:RegisterJobDefinition"
-                - "batch:DeleteJobQueue"
+                - "batch:DescribeJobDefinitions"
+                - "batch:ListJobs"
+                - "batch:DescribeComputeEnvironments"
 
         - PolicyName: !Sub CromwellServer-S3Bucket-Access-${AWS::Region}
           PolicyDocument:
