@@ -321,7 +321,7 @@ workflow wf_hello {
 }
 ```
 
-#### hello-aws.inputs.json
+#### hello-aws.json
 ```json
 {
     "wf_hello.hello.addressee": "World!"
@@ -333,8 +333,8 @@ Submit this workflow using:
 ```bash
 $ curl -X POST "http://localhost:8000/api/workflows/v1" \
     -H  "accept: application/json" \
-    -F "workflowSource=@hello.wdl" \
-    -F "workflowInputs=@hello.inputs"
+    -F "workflowSource=@hello-aws.wdl" \
+    -F "workflowInputs=@hello-aws.json"
 ```
 
 ### Using data on S3
