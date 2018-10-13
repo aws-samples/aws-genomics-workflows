@@ -34,9 +34,13 @@ def declare_variables(variables, macro):
             "https://s3.amazonaws.com/{bucket}/{object}".format(**s3),
         ])
 
+        img_src = "/" + "/".join(
+            filter(None, [s3.get('prefix'), 'images/cloudformation-launch-stack.png'])
+        )
+
         return """
-        <a href="{url}" target="_blank"><img src="/images/cloudformation-launch-stack.png" alt="Launch {name}" /></a>
-        """.format(name=name, url=cfn_url)
+        <a href="{url}" target="_blank" class="launch-button"><i class="fa fa-play fa-xs"></i></a>
+        """.format(name=name, img=img_src, url=cfn_url)
     
     @macro
     @dedented

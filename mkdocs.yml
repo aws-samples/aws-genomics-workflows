@@ -15,6 +15,7 @@ pages:
       # - An example workflow: step-functions/create-example-sfl-workflow.md
     - Cromwell: cromwell/cromwell-aws-batch.md
     # - Nextflow: nextflow/nextflow-aws-batch.md
+extra_css: [extra.css]
 theme: readthedocs
 markdown_extensions:
   - fontawesome_markdown

@@ -68,7 +68,7 @@ Cromwell installed and preconfigured to operate with an S3 Bucket and Batch
 Queue that you define at launch.
 
 | Name | Description | Source | Launch Stack |
-| -- | -- | :--: | -- |
+| -- | -- | :--: | :--: |
 {{ cfn_stack_row("Cromwell Server", "CromwellServer", "cromwell/cromwell-server.template.yaml", "Create an EC2 instance and an IAM instance profile to run Cromwell") }}
 
 Once the stack is created, you can SSH to the instance and start the server with
