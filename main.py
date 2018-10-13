@@ -35,12 +35,12 @@ def declare_variables(variables, macro):
         ])
 
         return """
-        [![cloudformation-launch-button](/images/cloudformation-launch-stack.png)]({url})
-        """.format(url=cfn_url)
+        <a href="{url}" target="_blank"><img src="/images/cloudformation-launch-stack.png" alt="Launch {name}" /></a>
+        """.format(name=name, url=cfn_url)
     
     @macro
     @dedented
-    def download_button(path, icon="fa-download"):
+    def download_button(path, icon="fa-download", size="fa-lg"):
         """
         create a download button
         """
@@ -52,8 +52,11 @@ def declare_variables(variables, macro):
 
         src_url = "https://s3.amazonaws.com/{bucket}/{object}".format(**s3)
         
+        if size:
+            icon = " ".join([icon, size])
+
         return """
-        [:{icon}:]({url})
+        <a href="{url}"><i class="fa {icon}"></i></a>
         """.format(icon=icon, url=src_url)
     
     @macro
