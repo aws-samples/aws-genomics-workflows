@@ -87,9 +87,11 @@ Resources:
             Version: 2012-10-17
             Statement:
               Effect: Allow
-              Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+              Resource:
+                - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName]] 
+                - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
               Action:
-                - "s3:GetObject"
+                - "s3:*"
 
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
