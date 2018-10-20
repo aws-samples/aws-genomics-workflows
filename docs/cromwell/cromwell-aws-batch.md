@@ -63,7 +63,28 @@ A couple things to note:
   launch instances in.  However, it would be helpful if you want to debug
   running tasks on task instances.
 
-This instance will need the following:
+The following CloudFormation template will create a CromwellServer instance with
+Cromwell installed and preconfigured to operate with an S3 Bucket and Batch
+Queue that you define at launch.
+
+| Name | Description | Source | Launch Stack |
+| -- | -- | :--: | :--: |
+{{ cfn_stack_row("Cromwell Server", "CromwellServer", "cromwell/cromwell-server.template.yaml", "Create an EC2 instance and an IAM instance profile to run Cromwell") }}
+
+Once the stack is created, you can SSH to the instance and start the server with
+the following command:
+
+```bash
+$ cd ~
+$ ./run_cromwell_server.sh
+```
+
+For details of how this instance was constructed - e.g. if you want to customize
+it for your purposes, checkout the template source and read the sections below.
+
+### Cromwell server requirements
+
+This instance needs the following:
 
 * Java 8 (per Cromwell's requirements)
 * The latest version of Cromwell with AWS Batch backend support (v35+)
@@ -75,8 +96,7 @@ The permissions above can be added to the instance via policies in an [instance 
 Example policies are shown below:
 
 ### Access to AWS Batch
-Lets the Cromwell server instance submit and get info about jobs in AWS Batch 
-job queues.
+Lets the Cromwell server instance submit and get info about AWS Batch jobs.
 
 ```json
 {
@@ -86,15 +106,15 @@ job queues.
             "Sid": "CromwellServer-BatchPolicy",
             "Effect": "Allow",
             "Action": [
-                "batch:DescribeJobQueues",
-                "batch:DeregisterJobDefinition",
-                "batch:TerminateJob",
-                "batch:DescribeJobs",
-                "batch:CancelJob",
-                "batch:SubmitJob",
-                "batch:RegisterJobDefinition",
-                "batch:DescribeJobDefinitions",
-                "batch:ListJobs",
+                "batch:DescribeJobQueues"
+                "batch:DeregisterJobDefinition"
+                "batch:TerminateJob"
+                "batch:DescribeJobs"
+                "batch:CancelJob"
+                "batch:SubmitJob"
+                "batch:RegisterJobDefinition"
+                "batch:DescribeJobDefinitions"
+                "batch:ListJobs"
                 "batch:DescribeComputeEnvironments"
             ],
             "Resource": "*"
@@ -224,169 +244,4 @@ To submit a workflow to your Cromwell server, you can use:
 After submitting a workflow, you can monitor the progress of tasks via the
 AWS Batch console.
 
-Some example workflows you can test with are shown below.
-
-### Simple Hello World
-
-This is a single file workflow.  It simply echos "Hello AWS!" to `stdout` and exits.
-
-#### simple-hello.wdl
-```java
-task echoHello{
-    command {
-        echo "Hello AWS!"
-    }
-    runtime {
-        docker: "ubuntu:latest"
-    }
-
-}
-
-workflow printHelloAndGoodbye {
-    call echoHello
-}
-
-```
-
-To submit this workflow via `curl` use the following command:
-
-```bash
-$ curl -X POST "http://localhost:8000/api/workflows/v1" \
-    -H  "accept: application/json" \
-    -F "workflowSource=@/path/to/simple-hello.wdl"
-```
-
-You should receive a response like the following:
-
-```json
-{"id":"104d9ade-6461-40e7-bc4e-227c3a49e98b","status":"Submitted"}
-```
-
-If the workflow completes successfully, the server will log the following:
-
-```
-2018-09-21 04:07:42,928 cromwell-system-akka.dispatchers.engine-dispatcher-25 INFO  - WorkflowExecutionActor-7eefeeed-157e-4307-9267-9b4d716874e5 [UUID(7eefeeed)]: Workflow w complete. Final Outputs:
-{
-  "w.echo.f": "s3://aws-cromwell-test-us-east-1/cromwell-execution/w/7eefeeed-157e-4307-9267-9b4d716874e5/call-echo/echo-stdout.log"
-}
-2018-09-21 04:07:42,931 cromwell-system-akka.dispatchers.engine-dispatcher-25 INFO  - WorkflowManagerActor WorkflowActor-7eefeeed-157e-4307-9267-9b4d716874e5 is in a terminal state: WorkflowSucceededState
-```
-
-### Hello World with inputs
-
-This workflow is virtually the same as the single file workflow above, but
-uses an input file to define parameters in the workflow.
-
-#### hello-aws.wdl
-```java
-task hello {
-  String addressee
-  command {
-    echo "Hello ${addressee}! Welcome to Cromwell . . . on AWS!"
-  }
-  output {
-    String message = read_string(stdout())
-  }
-  runtime {
-    docker: "ubuntu:latest"
-  }
-}
-
-workflow wf_hello {
-  call hello
-
-  output {
-     hello.message
-  }
-}
-```
-
-#### hello-aws.inputs.json
-```json
-{
-    "wf_hello.hello.addressee": "World!"
-}
-```
-
-Submit this workflow using:
-
-```bash
-$ curl -X POST "http://localhost:8000/api/workflows/v1" \
-    -H  "accept: application/json" \
-    -F "workflowSource=@hello.wdl" \
-    -F "workflowInputs=@hello.inputs"
-```
-
-### Using data on S3
-
-This workflow demonstrates how to use data from S3.
-
-First, create some data:
-
-```bash
-$ curl "https://baconipsum.com/api/?type=all-meat&paras=1&format=text" > meats.txt
-```
-
-and upload it to your S3 bucket:
-
-
-```bash
-$ aws s3 cp meats.txt s3://<your-bucket-name>/
-```
-
-Create the following `wdl` and input `json` files.
-
-#### s3inputs.wdl
-
-```java
-task read_file {
-  File file
-
-  command {
-    cat ${file}
-  }
-
-  output {
-    String contents = read_string(stdout())
-  }
-
-  runtime {
-    docker: "ubuntu:latest"
-  }
-}
-
-workflow ReadFile {
-  call read_file
-
-  output {
-    read_file.contents
-  }
-}
-```
-
-#### s3inputs.json
-
-```json
-{
-  "ReadFile.read_file.file": "s3://aws-cromwell-test-us-east-1/meats.txt"
-}
-```
-
-Submit the workflow via `curl`:
-
-```bash
-$ curl -X POST "http://localhost:8000/api/workflows/v1" \
-    -H  "accept: application/json" \
-    -F "workflowSource=@s3inputs.wdl" \
-    -F "workflowInputs=@s3inputs.json"
-```
-
-If successful the server should log the following:
-
-```
-2018-09-21 05:04:15,478 cromwell-system-akka.dispatchers.engine-dispatcher-25 INFO  - WorkflowExecutionActor-1774c9a2-12bf-42ea-902d-3dbe2a70a116 [UUID(1774c9a2)]: Workflow ReadFile complete. Final Outputs:
-{
-  "ReadFile.read_file.contents": "Strip steak venison leberkas sausage fatback pork belly short ribs.  Tail fatback prosciutto meatball sausage filet mignon tri-tip porchetta cupim doner boudin.  Meatloaf jerky short loin turkey beef kielbasa kevin cupim burgdoggen short ribs spare ribs flank doner chuck.  Cupim prosciutto jerky leberkas pork loin pastrami.  Chuck ham pork loin, prosciutto filet mignon kevin brisket corned beef short loin shoulder jowl porchetta venison.  Hamburger ham hock tail swine andouille beef ribs t-bone turducken tenderloin burgdoggen capicola frankfurter sirloin ham."
-}
-2018-09-21 05:04:15,481 cromwell-system-akka.dispatchers.engine-dispatcher-28 INFO  - WorkflowManagerActor WorkflowActor-1774c9a2-12bf-42ea-902d-3dbe2a70a116 is in a terminal state: WorkflowSucceededState
-```
+The next section provides some examples of running Crommwell on AWS.

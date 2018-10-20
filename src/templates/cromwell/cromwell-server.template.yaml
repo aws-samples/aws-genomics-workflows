@@ -3,59 +3,223 @@ Description: Creates an EC2 Instance and Roles for a Cromwell Server
 
 # Parameters
 Parameters:
+  InstanceType:
+    Description: >-
+      EC2 instance type.  Cromwell itself does not require much compute power. 
+      A t2.medium should be sufficient.  If you want to run this server on the 
+      free tier, use a t2.micro.
+    Type: String
+    Default: t2.medium
+    AllowedValues:
+    - t2.micro
+    - t2.medium
+    - t2.large
+    ConstraintDescription: "Must be 't2.micro', 't2.medium', or 't2.large'."
+  
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: Recommended to use the Default VPC here
+  
   PublicSubnetID:
     Type: AWS::EC2::Subnet::Id
     Description: Select a public subnet to launch into
+  
   LatestAmazonLinuxAMI:
     Description: The latest Amazon Linux AMI
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Default: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
+    Default: /aws/service/ami-amazon-linux-latest/amzn-ami-hvm-x86_64-gp2
     AllowedValues:
-      - /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
+      - /aws/service/ami-amazon-linux-latest/amzn-ami-hvm-x86_64-gp2
+
   InstanceName:
     Type: String
     Default: cromwell-server
     Description: The name of the instance that is created
+  
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair that is on your local machine.
+  
+  SSHLocation:
+    Description: " The IP address range that can be used to SSH to the EC2 instances"
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  
+  S3BucketName:
+    Description: S3 bucket you are using for workflow inputs and outputs
+    Type: String
+  
+  BatchQueue:
+    Description: ARN of the AWS Batch Job Queue this server will use by default
+    Type: String
 
 # Resources
 Resources:
+  Ec2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Policies:
+        - PolicyName: !Sub CromwellServer-BatchQueue-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              Effect: Allow
+              Resource: "*"
+              Action:
+                - "batch:DescribeJobQueues"
+                - "batch:DeregisterJobDefinition"
+                - "batch:TerminateJob"
+                - "batch:DescribeJobs"
+                - "batch:CancelJob"
+                - "batch:SubmitJob"
+                - "batch:RegisterJobDefinition"
+                - "batch:DescribeJobDefinitions"
+                - "batch:ListJobs"
+                - "batch:DescribeComputeEnvironments"
+
+        - PolicyName: !Sub CromwellServer-S3Bucket-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              Effect: Allow
+              Resource:
+                - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName]] 
+                - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+              Action:
+                - "s3:*"
+
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: ec2.amazonaws.com
+          Action: sts:AssumeRole
+  
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+        - Ref: Ec2InstanceRole
+  
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for Custom AMI instance
+      GroupDescription: Enable SSH access via port 22
       VpcId: !Ref VpcId
       Tags:
         - Key: Name
-          Value: genomics-base-sg
+          Value: cromwell-server-sg
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp:
+          Ref: SSHLocation
+
   EC2Instance:
     Type: AWS::EC2::Instance
     Metadata:
       AWS::CloudFormation::Init:
-        config:
+        configSets:
+          default:
+            - config1
+            - config2
+
+        config1:
           packages:
             yum:
               jq: []
-              btrfs-progs: []
-              python27-pip: []
-              sed: []
-              wget: []
-              openjdk: []
+          
           commands:
-            00InstallBoto3:
-              command: pip install -U awscli boto3
-            01InstallCromwell:
-              command: wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
-              cwd: /opt
+            00_install_java8:
+              command: yum install -y java-1.8.0
+            01_alternatives_set_java:
+              command: alternatives --set java /usr/lib/jvm/jre-1.8.0-openjdk.x86_64/bin/java
+
+          files:
+            "/home/ec2-user/get_cromwell.sh":
+              content: !Sub |
+                  #!/bin/bash
+                  url=$(curl --silent "https://api.github.com/repos/broadinstitute/cromwell/releases/latest" | jq -r .assets[0].browser_download_url)
+                  curl -LO $url
+                  ln -s $(find . | grep "cromwell.*\.jar") cromwell-latest.jar
+
+              mode: "000755"
+              owner: "ec2-user"
+              group: "ec2-user"
+
+            "/home/ec2-user/aws.conf":
+              content: !Sub |
+                include required(classpath("application"))
+
+                aws {
+                  application-name = "cromwell"
+                  auths = [{
+                      name = "default"
+                      scheme = "default"
+                  }]
+                  region = "default"
+                }
+
+                engine { filesystems { s3 { auth = "default" } } }
+
+                backend {
+                  default = "AWSBATCH"
+                  providers {
+                    AWSBATCH {
+                      actor-factory = "cromwell.backend.impl.aws.AwsBatchBackendLifecycleActorFactory"
+                      config {
+                        numSubmitAttempts = 3
+                        numCreateDefinitionAttempts = 3
+                        root = "s3://${S3BucketName}/cromwell-execution"
+                        auth = "default"
+                        concurrent-job-limit = 16
+                        default-runtime-attributes { queueArn = "${BatchQueue}" }
+                        filesystems { s3 { auth = "default" } }
+                      }
+                    }
+                  }
+                }
+              mode: "000644"
+              owner: "ec2-user"
+              group: "ec2-user"
+
+            "/home/ec2-user/run_cromwell_server.sh":
+              content: !Sub |
+                #!/bin/bash
+                java -Dconfig.file=aws.conf -jar cromwell-latest.jar server
+
+              mode: "000755"
+              owner: "ec2-user"
+              group: "ec2-user"
+
+        config2:
+          commands:
+            00_get_cromwell:
+              cwd: "/home/ec2-user/"
+              command: "./get_cromwell.sh"
+            
+            01_chown_cromwell:
+              cwd: "/home/ec2-user/"
+              command: "chown ec2-user:ec2-user cromwell*.jar"
+        
             
     Properties:
       ImageId: !Ref LatestAmazonLinuxAMI
-      InstanceType: t2.large
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      KeyName: !Ref KeyName
       Tags:
         - Key: Name
           Value: !Ref InstanceName
+      
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -x
@@ -63,44 +227,17 @@ Resources:
           yum install -y aws-cfn-bootstrap
           /opt/aws/bin/cfn-init --verbose --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
-          shutdown -h now
+      
       NetworkInterfaces:
         - AssociatePublicIpAddress: true
           DeviceIndex: "0"
           GroupSet:
             - !Ref EC2SecurityGroup
           SubnetId: !Ref PublicSubnetID
+
     CreationPolicy:
       ResourceSignal:
         Timeout: PT15M
-  
-  LambdaExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal: { Service: [lambda.amazonaws.com] }
-            Action: ["sts:AssumeRole"]
-      Path: /
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
-      Policies:
-        - PolicyName: EC2Policy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "ec2:DescribeInstances"
-                  - "ec2:DescribeImages"
-                  - "ec2:CreateImage"
-                  - "ec2:DeregisterImage"
-                  - "ec2:DescribeSnapshots"
-                  - "ec2:DeleteSnapshot"
-                Resource: ["*"]
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -114,10 +251,17 @@ Metadata:
           default: "Instance Configuration"
         Parameters:
           - LatestAmazonLinuxAMI
+          - InstanceType
+          - InstanceName
+          - KeyName
+          - SSHLocation
+
       - Label:
-          default: "Outputs"
+          default: "Cromwell Configuration"
         Parameters:
-          - AMIName
+          - S3BucketName
+          - BatchQueue
+      
     ParameterLabels:
       VpcId:
         default: "VPC ID"
@@ -127,8 +271,25 @@ Metadata:
         default: "Instance Name"
       LatestAmazonLinuxAMI:
         default: "Latest Amazon Linux AMI"
+      SSHLocation:
+        default: "SSH Address Range"
+      KeyName:
+        default: "Key Pair Name"
+      S3BucketName:
+        default: "S3 Bucket Name"
+      BatchQueue:
+        default: "Default Batch Queue"
 
 Outputs:
   EC2Instance:
     Description: The EC2 Instance ID of your Cromwell Server
     Value: !Ref EC2Instance
+
+  PublicIp:
+    Value: !GetAtt EC2Instance.PublicIp
+    Description: Cromwell server public IP address
+  
+  HostName:
+    Value: !GetAtt EC2Instance.PublicDnsName
+    Description: Cromwell server public DNS name
+
