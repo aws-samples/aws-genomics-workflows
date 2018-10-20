@@ -90,7 +90,7 @@ This instance needs the following:
 * The latest version of Cromwell with AWS Batch backend support (v35+)
 * Permissions to
     * read from the S3 bucket used for input and output data
-    * submit / describe / cancel / terminate jobs to your AWS Batch queues
+    * submit / describe / cancel / terminate jobs to AWS Batch queues
 
 The permissions above can be added to the instance via policies in an [instance profile](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html).
 Example policies are shown below:
