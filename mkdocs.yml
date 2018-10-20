@@ -13,7 +13,9 @@ pages:
       - Introduction and requirements: step-functions/intro-step-functions.md
       - Creating a job management container: step-functions/create-batchjobrunner-container.md
       # - An example workflow: step-functions/create-example-sfl-workflow.md
-    - Cromwell: cromwell/cromwell-aws-batch.md
+    - Cromwell:
+      - Overview: cromwell/cromwell-aws-batch.md
+      - Examples: cromwell/cromwell-examples.md
     # - Nextflow: nextflow/nextflow-aws-batch.md
 extra_css: [extra.css]
 theme: readthedocs
