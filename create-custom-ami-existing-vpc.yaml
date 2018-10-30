@@ -63,6 +63,8 @@ Resources:
       AWS::CloudFormation::Init:
         config:
           packages:
+            rpm:
+              ssm-agent: "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm"
             yum:
               jq: []
               btrfs-progs: []
