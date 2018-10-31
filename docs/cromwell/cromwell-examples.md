@@ -1,3 +1,6 @@
+The following provides some example workflows you can use to test Cromwell on AWS.
+The `curl` commands assume that you have access to a Cromwell server via `localhost:8000`.
+
 # Simple Hello World
 
 This is a single file workflow.  It simply echos "Hello AWS!" to `stdout` and exits.

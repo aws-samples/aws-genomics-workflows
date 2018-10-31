@@ -60,24 +60,24 @@ A couple things to note:
 * You can launch a Cromwell server just for yourself and exactly when you need it.
 
 * This server does not need to be in the same VPC as the one that Batch will
-  launch instances in.  However, it would be helpful if you want to debug
-  running tasks on task instances.
+  launch instances in.
 
 The following CloudFormation template will create a CromwellServer instance with
-Cromwell installed and preconfigured to operate with an S3 Bucket and Batch
+Cromwell installed, running, and preconfigured to operate with an S3 Bucket and Batch
 Queue that you define at launch.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
 {{ cfn_stack_row("Cromwell Server", "CromwellServer", "cromwell/cromwell-server.template.yaml", "Create an EC2 instance and an IAM instance profile to run Cromwell") }}
 
-Once the stack is created, you can SSH to the instance and start the server with
-the following command:
+Once the stack is created, you can access the server in a web browser via the 
+instance's hostname.  There you should see Cromwell's SwaggerUI, which provides
+a simple web interface for submitting workflows.
 
-```bash
-$ cd ~
-$ ./run_cromwell_server.sh
-```
+The CloudFormation template above also configures the server with integration to
+[Amazon CloudWatch](https://aws.amazon.com/cloudwatch/) for monitoring Cromwell's 
+log output and [AWS Systems Manager](https://aws.amazon.com/systems-manager/) for
+performing any maintenance, or gaining terminal access.
 
 For details of how this instance was constructed - e.g. if you want to customize
 it for your purposes, checkout the template source and read the sections below.
@@ -123,9 +123,9 @@ Lets the Cromwell server instance submit and get info about AWS Batch jobs.
 }
 ```
 
-### Access S3
-Lets the Cromwell server instance read data from S3 - i.e. the return codes (written
-to `rc.txt` files) for each job.
+### Access to S3
+Lets the Cromwell server instance read and write data from/to S3 - i.e. the 
+return codes (written to `rc.txt` files) for each job.
 
 ```json
 {
@@ -134,8 +134,11 @@ to `rc.txt` files) for each job.
         {
             "Sid": "CromwellServer-S3Policy",
             "Effect": "Allow",
-            "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::<bucket-name>/*"
+            "Action": "s3:*",
+            "Resource": [
+                "arn:aws:s3:::<bucket-name>",
+                "arn:aws:s3:::<bucket-name>/*",
+            ]
         }
     ]
 }
@@ -144,12 +147,16 @@ to `rc.txt` files) for each job.
 
 ### Configuring Cromwell on AWS Batch
 
-Log into your server using SSH and create a Cromwell application configuration file.
 The following is an example `*.conf` file to use the `AWSBackend`.
 
 ```java
-// aws.conf
+// cromwell.conf
 include required(classpath("application"))
+
+webservice {
+    interface = localhost
+    port = 8000
+}
 
 aws {
   application-name = "cromwell"
@@ -157,7 +164,7 @@ aws {
       name = "default"
       scheme = "default"
   }]
-  region = "default"
+  region = "<your region>"
 }
 
 engine {
@@ -197,14 +204,20 @@ backend {
 
 The above file uses the [default credential provider chain](https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html) for authorization.
 
-Replace the following with values appropriate for your account:
+Replace the following with values appropriate for your accoutn and workload:
 
+* `<your region>` : the AWS region your S3 bucket and AWS Batch environment are
+  deployed into - e.g. `us-east-1`
 * `<your-s3-bucket-name>` : the name of the S3 bucket you will use for inputs
   and outputs from tasks in the workflow.
 * `<your-queue-arn>` : the Amazon Resoure Name of the AWS Batch queue you want
   to use for your tasks.
 
 ### Start the Cromwell server
+
+!!! note
+    The CloudFormation template above automatically starts Cromwell on launch.
+    Use the instructions below are if you are provisioning your own EC2 instance.
 
 Log into your server using SSH.  If you setup a port tunnel, you can interact
 with Cromwell's REST API from your local machine:
@@ -219,7 +232,7 @@ need to be connected to the server while a workflow is running.
 Launch the server using the following command:
 
 ```bash
-$ java -Dconfig.file=aws.conf -jar cromwell-35.jar server
+$ java -Dconfig.file=cromwell.conf -jar cromwell-35.jar server
 ```
 
 !!! note
