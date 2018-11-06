@@ -6,6 +6,21 @@
 system for scientific workflows developed by the [Broad Institute](https://broadinstitute.org/)
 and supports job execution using [AWS Batch](https://aws.amazon.com/batch/).
 
+## TL;DR
+
+If you need a Cromwell server backed by AWS **now** and will worry about the
+details later, use the CloudFormation template below.
+
+| Name | Description | Source | Launch Stack |
+| -- | -- | :--: | :--: |
+{{ cfn_stack_row("Cromwell All-in-One", "Cromwell", "cromwell/cromwell-aio.template.yaml", "Create all resources needed to run Cromwell on AWS: a Custom AMI, S3 Bucket, AWS Batch Environment, and Cromwell Server Instance") }}
+
+When the above stack is complete, navigate to the `HostName` that is generated
+in the outputs to access Cromwell via its SwaggerUI.
+
+![cromwell on aws](images/cromwell-all-in-one.png)
+
+
 ## Prerequisites
 
 To get started using Cromwell on AWS you'll need the following setup in your AWS

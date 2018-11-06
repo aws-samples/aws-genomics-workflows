@@ -1,0 +1,189 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Creates a custom AMI to be used with AWS Batch
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Required"
+        Parameters:
+          - S3BucketName
+          - KeyPairName
+          - AvailabilityZone1
+          - AvailabilityZone2
+      - Label:
+          default: "AWS Batch"
+        Parameters:
+          - SpotBidPercentage
+          - DefaultCEMinvCpus
+          - DefaultCEMaxvCpus
+          - HighPriorityCEMinvCpus
+          - HighPriorityCEMaxvCpus
+          - DefaultRetryNumber
+      - Label:
+          default: "Cromwell Server"
+        Parameters:
+          - InstanceType
+          - InstanceName
+          - SSHLocation
+          - HTTPLocation
+
+    ParameterLabels:
+      S3BucketName:
+        default: S3 Bucket Name
+      KeyPairName:
+        default: EC2 Key Pair Name
+      SpotBidPercentage:
+        default: Spot Bid %
+      DefaultCEMinvCpus:
+        default: Default Min vCPU
+      DefaultCEMaxvCpus:
+        default: Default Max vCPU
+      HighPriorityCEMinvCpus:
+        default: High Priority Min vCPU
+      HighPriorityCEMaxvCpus:
+        default: High Priority Max vCPU
+      DefaultRetryNumber:
+        default: Job Retry Attempts
+
+# Parameters
+Parameters:    
+  AvailabilityZone1:
+    Description: "Choose the first Availability Zones to deploy instances for AWS Batch."
+    Type: AWS::EC2::AvailabilityZone::Name
+  AvailabilityZone2:
+    Description: "Choose the second Availability Zones to deploy instances for AWS Batch."
+    Type: AWS::EC2::AvailabilityZone::Name
+  S3BucketName:
+    Description: A S3 bucket name for storing analysis results
+    Type: String
+  KeyPairName:
+    Description: Key Pair name
+    Type: AWS::EC2::KeyPair::KeyName
+  SpotBidPercentage:
+    Description: The percent of on-demand pricing for max bid for Spot intances
+    Type: Number
+    Default: 100
+  DefaultCEMinvCpus:
+    Description: The minimum number of CPUs for the default Batch Compute Environment
+    Type: Number
+    Default: 0
+  DefaultCEMaxvCpus:
+    Description: The maximum number of CPUs for the default Batch Compute Environment
+    Type: Number
+    Default: 100
+  HighPriorityCEMinvCpus:
+    Description: The minimum number of CPUs for the high-priority Batch Compute Environment
+    Type: Number
+    Default: 0
+  HighPriorityCEMaxvCpus:
+    Description: The maximum number of CPUs for the high-priority Batch Compute Environment
+    Type: Number
+    Default: 100
+  DefaultRetryNumber:
+    Description: The default number of Job retry attempts
+    Type: Number
+    Default: 1
+  InstanceType:
+    Description: >-
+      EC2 instance type.
+      
+      Cromwell itself does not require much compute power. 
+      A t2.medium should be sufficient.  If you want to run this server on the 
+      free tier, use a t2.micro.
+    Type: String
+    Default: t2.medium
+    AllowedValues:
+    - t2.micro
+    - t2.medium
+    - t2.large
+    ConstraintDescription: "Must be 't2.micro', 't2.medium', or 't2.large'."
+  InstanceName:
+    Type: String
+    Default: cromwell-server
+    Description: The name of the EC2 instance that is created
+  SSHLocation:
+    Description: "The IP address range that has SSH access to the EC2 instances"
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  HTTPLocation:
+    Description: "The IP address range that has HTTP access to the EC2 instances"
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
+Resources:
+  VpcStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  https://aws-quickstart.s3.amazonaws.com/quickstart-aws-vpc/templates/aws-vpc.template
+      TimeoutInMinutes: 15
+      Parameters:
+        AvailabilityZones: !Join ["," ,  [!Ref AvailabilityZone1, !Ref AvailabilityZone2 ] ]
+        NumberOfAZs: "2"
+        KeyPairName: !Ref KeyPairName
+  
+  CustomAMIStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  https://s3.amazonaws.com/aws-genomics-workflows/templates/create-genomics-ami/create-custom-ami-existing-vpc.yaml
+      Parameters:
+        VpcId: !GetAtt 'VpcStack.Outputs.VPCID'
+        PublicSubnetID: !GetAtt 'VpcStack.Outputs.PublicSubnet1ID'
+        ScratchMountPoint: /cromwell_root
+        ScratchVolumeSize: 20
+        UseEncryption: Yes
+        AMIType: cromwell
+        AMIName: cromwell-genomics-ami
+
+  GenomicsWorkflowStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  https://s3.amazonaws.com/aws-genomics-workflows/templates/aws-genomics-root-novpc.template.yaml
+      Parameters:
+        VpcId: !GetAtt 'VpcStack.Outputs.VPCID'
+        SubnetIds: !Sub "${VpcStack.Outputs.PrivateSubnet1AID}, ${VpcStack.Outputs.PrivateSubnet2AID}"
+        S3BucketName: !Ref S3BucketName
+        KeyPairName: !Ref 'KeyPairName'
+        CustomAmiId: !GetAtt 'CustomAMIStack.Outputs.AMI'
+        SpotBidPercentage: !Ref 'SpotBidPercentage'
+        DefaultCEMinvCpus: !Ref 'DefaultCEMinvCpus'
+        DefaultCEMaxvCpus: !Ref 'DefaultCEMaxvCpus'
+        HighPriorityCEMinvCpus: !Ref 'HighPriorityCEMinvCpus'
+        HighPriorityCEMaxvCpus: !Ref 'HighPriorityCEMaxvCpus'
+        DefaultRetryNumber: !Ref 'DefaultRetryNumber'
+
+  CromwellServerStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  https://s3.amazonaws.com/aws-genomics-workflows/templates/cromwell/cromwell-server.template.yaml
+      Parameters:
+        InstanceType: !Ref 'InstanceType'
+        VpcId: !GetAtt 'VpcStack.Outputs.VPCID'
+        PublicSubnetID: !GetAtt 'VpcStack.Outputs.PublicSubnet1ID'
+        InstanceName: !Ref 'InstanceName'
+        KeyName: !Ref 'KeyPairName'
+        SSHLocation: !Ref 'SSHLocation'
+        HTTPLocation: !Ref 'HTTPLocation'
+        S3BucketName: !Ref 'S3BucketName'
+        BatchQueue: !GetAtt 'BatchStack.Outputs.GenomicsEnvDefaultJobQueueArn'
+
+
+
+Outputs:
+  EC2Instance:
+    Description: The EC2 Instance ID of your Cromwell Server
+    Value: !GetAtt 'CromwellServerStack.Outputs.EC2Instance'
+  PublicIp:
+    Value: !GetAtt 'CromwellServerStack.Outputs.PublicIp'
+    Description: Cromwell server public IP address
+  HostName:
+    Value: !GetAtt 'CromwellServerStack.Outputs.HostName'
+    Description: Cromwell server public DNS name
