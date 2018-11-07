@@ -141,7 +141,7 @@ Resources:
         ScratchVolumeSize: 20
         UseEncryption: Yes
         AMIType: cromwell
-        AMIName: cromwell-genomics-ami
+        AMIName: !Join ["-", ["cromwell-genomics-ami", !Select [2, !Split ["/", !Ref "AWS::StackId" ]]]]
 
   GenomicsWorkflowStack:
     Type: AWS::CloudFormation::Stack
@@ -168,22 +168,26 @@ Resources:
         InstanceType: !Ref 'InstanceType'
         VpcId: !GetAtt 'VpcStack.Outputs.VPCID'
         PublicSubnetID: !GetAtt 'VpcStack.Outputs.PublicSubnet1ID'
-        InstanceName: !Ref 'InstanceName'
+        InstanceName: !Join ["-", [!Ref 'InstanceName', !Select [2, !Split ["/", !Ref "AWS::StackId" ]]]]
         KeyName: !Ref 'KeyPairName'
         SSHLocation: !Ref 'SSHLocation'
         HTTPLocation: !Ref 'HTTPLocation'
         S3BucketName: !Ref 'S3BucketName'
-        BatchQueue: !GetAtt 'BatchStack.Outputs.GenomicsEnvDefaultJobQueueArn'
+        BatchQueue: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvDefaultJobQueueArn'
 
 
 
 Outputs:
-  EC2Instance:
-    Description: The EC2 Instance ID of your Cromwell Server
-    Value: !GetAtt 'CromwellServerStack.Outputs.EC2Instance'
-  PublicIp:
-    Value: !GetAtt 'CromwellServerStack.Outputs.PublicIp'
-    Description: Cromwell server public IP address
-  HostName:
+  CromwellServerHostName:
     Value: !GetAtt 'CromwellServerStack.Outputs.HostName'
-    Description: Cromwell server public DNS name
+    Description: >-
+      Cromwell server public DNS name. Use this URL in a web browser or via curl
+      to access Cromwell and submit workflows.
+  VpcId:
+    Description: >-
+      The VPC created for your Cromwell stack. Use this ID if you need to launch
+      additional Cromwell servers.
+    Value: !GetAtt 'VpcStack.Outputs.VPCID'
+  CustomAMI:
+    Description: The custom genomics AMI created.
+    Value: !GetAtt 'CustomAMIStack.Outputs.AMI'
