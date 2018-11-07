@@ -52,20 +52,20 @@ Resources:
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              # - Sid: S3DenyIncorrectEncryptionHeader
-              #   Effect: Deny
-              #   Action:
-              #     - "s3:PutObject"
-              #   Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
-              #   Condition:
-              #     StringNotEquals: { "s3:x-amz-server-side-encryption": "AES256" }
-              # - Sid: S3DenyUnEncryptedObjectUploads
-              #   Effect: Deny
-              #   Action:
-              #     - "s3:PutObject"
-              #   Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
-              #   Condition: 
-              #     "Null" : { "s3:x-amz-server-side-encryption": true }
+              - Sid: S3DenyIncorrectEncryptionHeader
+                Effect: Deny
+                Action:
+                  - "s3:PutObject"
+                Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+                Condition:
+                  StringNotEquals: { "s3:x-amz-server-side-encryption": "AES256" }
+              - Sid: S3DenyUnEncryptedObjectUploads
+                Effect: Deny
+                Action:
+                  - "s3:PutObject"
+                Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+                Condition: 
+                  "Null" : { "s3:x-amz-server-side-encryption": true }
               - Sid: S3BucketAllowAllObjectOps
                 Effect: Allow
                 Resource: 
