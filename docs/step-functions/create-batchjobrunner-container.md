@@ -11,7 +11,7 @@ RUN yum update -y && \
     yum clean all
 
 RUN cd /opt && \
-    curl -o batch-job-runner.tgz https://aws-genomics-workflows/aws-batch-genomics.tar.gz && \
+    curl -o batch-job-runner.tgz http://aws-genomics-workflows.s3-website-us-east-1.amazonaws.com/aws-batch-genomics.tar.gz && \
     tar -xzf aws-batch-genomics.tar.gz && rm aws-batch-genomics.tar.gz
 
 CMD ["/opt/aws-batch-genomics/src/batch/bin/batch-job-runner.sh"]
