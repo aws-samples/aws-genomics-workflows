@@ -30,6 +30,9 @@ Parameters:
     Default: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
     AllowedValues:
       - /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: GENERAL.NONE
   AMIType:
     Type: String
     Description: The type of AMI you want to create
@@ -110,6 +113,7 @@ Resources:
     Properties:
       ImageId: !Ref LatestECSAMI
       InstanceType: t2.large
+      KeyName: !Ref KeyName
       Tags:
         - Key: Name
           Value: genomics-base-ami
