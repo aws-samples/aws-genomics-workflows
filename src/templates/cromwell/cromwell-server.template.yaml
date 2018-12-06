@@ -224,6 +224,13 @@ Resources:
                   port = 8000
                 }
 
+                system {
+                  job-rate-control {
+                    jobs = 1
+                    per = 2 second
+                  }
+                }
+
                 aws {
                   application-name = "cromwell"
                   auths = [{
@@ -241,11 +248,10 @@ Resources:
                     AWSBATCH {
                       actor-factory = "cromwell.backend.impl.aws.AwsBatchBackendLifecycleActorFactory"
                       config {
-                        numSubmitAttempts = 3
-                        numCreateDefinitionAttempts = 3
+                        numSubmitAttempts = 10
+                        numCreateDefinitionAttempts = 10
                         root = "s3://${S3BucketName}/cromwell-execution"
                         auth = "default"
-                        concurrent-job-limit = 16
                         default-runtime-attributes { queueArn = "${BatchQueue}" }
                         filesystems { s3 { auth = "default" } }
                       }

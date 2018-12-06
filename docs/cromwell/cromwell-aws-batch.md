@@ -173,6 +173,13 @@ webservice {
     port = 8000
 }
 
+system {
+    job-rate-control {
+    jobs = 1
+    per = 2 second
+    }
+}
+
 aws {
   application-name = "cromwell"
   auths = [{
