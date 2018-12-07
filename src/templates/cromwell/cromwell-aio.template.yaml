@@ -140,6 +140,7 @@ Resources:
         ScratchMountPoint: /cromwell_root
         ScratchVolumeSize: 20
         UseEncryption: Yes
+        KeyName: !Ref 'KeyPairName'
         AMIType: cromwell
         AMIName: !Join ["-", ["cromwell-genomics-ami", !Select [2, !Split ["/", !Ref "AWS::StackId" ]]]]
 
