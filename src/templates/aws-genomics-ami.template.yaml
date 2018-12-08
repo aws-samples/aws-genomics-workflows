@@ -1,6 +1,17 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Creates a custom AMI to be used with AWS Batch
 
+Mappings:
+  TagMap:
+    default:
+      architecture: "genomics-workflows"
+      solution: "default"
+      tags:
+        - Key: "architecture"
+          Value: "genomics-workflows"
+        - Key: "solution"
+          Value: "default"
+
 # Parameters
 Parameters:
   VpcId:
@@ -117,6 +128,10 @@ Resources:
       Tags:
         - Key: Name
           Value: genomics-base-ami
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+        - Key: solution
+          Value: !Ref AMIType
       BlockDeviceMappings:
         - DeviceName: /dev/sdc
           Ebs:
@@ -150,6 +165,11 @@ Resources:
     Properties:
       ServiceToken: !GetAtt AMIFunction.Arn
       InstanceId: !Ref EC2Instance
+      Tags:
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+        - Key: solution
+          Value: !Ref AMIType
   AMIFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -157,7 +177,7 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         ZipFile: !Sub |
-          var response = require('cfn-response');
+           var response = require('cfn-response');
            var AWS = require('aws-sdk');
            exports.handler = function(event, context) {
              console.log("Request received:\n", JSON.stringify(event));
