@@ -55,3 +55,6 @@ artifacts/
 *tar.gz
 Makefile
 __pycache__
+publish
+launch.sh
+LICENSE-*
