@@ -133,7 +133,7 @@ Resources:
   CustomAMIStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL:  https://s3.amazonaws.com/aws-genomics-workflows/templates/create-genomics-ami/create-custom-ami-existing-vpc.yaml
+      TemplateURL:  https://s3.amazonaws.com/aws-genomics-workflows/templates/aws-genomics-ami.template.yaml
       Parameters:
         VpcId: !GetAtt 'VpcStack.Outputs.VPCID'
         PublicSubnetID: !GetAtt 'VpcStack.Outputs.PublicSubnet1ID'
