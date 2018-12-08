@@ -1,3 +1,0 @@
-[submodule "src/templates/create-genomics-ami"]
-	path = src/templates/create-genomics-ami
-	url = git@github.com:nragusa/create-genomics-ami.git
