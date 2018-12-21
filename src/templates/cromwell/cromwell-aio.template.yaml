@@ -21,8 +21,7 @@ Metadata:
         Parameters:
           - S3BucketName
           - KeyPairName
-          - AvailabilityZone1
-          - AvailabilityZone2
+          - AvailabilityZones
       - Label:
           default: "AWS Batch"
         Parameters:
@@ -60,12 +59,9 @@ Metadata:
 
 # Parameters
 Parameters:    
-  AvailabilityZone1:
-    Description: "Choose the first Availability Zones to deploy instances for AWS Batch."
-    Type: AWS::EC2::AvailabilityZone::Name
-  AvailabilityZone2:
-    Description: "Choose the second Availability Zones to deploy instances for AWS Batch."
-    Type: AWS::EC2::AvailabilityZone::Name
+  AvailabilityZones:
+    Description: "Choose the two Availability Zones to deploy instances for AWS Batch."
+    Type: List<AWS::EC2::AvailabilityZone::Name>
   S3BucketName:
     Description: A S3 bucket name for storing analysis results
     Type: String
@@ -138,7 +134,7 @@ Resources:
       TemplateURL:  https://aws-quickstart.s3.amazonaws.com/quickstart-aws-vpc/templates/aws-vpc.template
       TimeoutInMinutes: 15
       Parameters:
-        AvailabilityZones: !Join ["," ,  [!Ref AvailabilityZone1, !Ref AvailabilityZone2 ] ]
+        AvailabilityZones: !Join ["," , !Ref AvailabilityZones]
         NumberOfAZs: "2"
         KeyPairName: !Ref KeyPairName
       Tags: !FindInMap ["TagMap", "default", "tags"]

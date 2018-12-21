@@ -104,11 +104,11 @@ Resources:
                       " ",
                       [
                         "wget",
-                        "https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ecs-patches.tgz",
+                        "https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ecs-additions.tgz",
                         "&&",
                         "tar",
                         "-xzf",
-                        "aws-ecs-patches.tgz",
+                        "aws-ecs-additions.tgz",
                       ],
                     ]
                   - echo "OK"
@@ -117,7 +117,7 @@ Resources:
               command:
                 Fn::If:
                   - UseCromwell
-                  - !Join [" ", ["sh", "/opt/ecs-patches/ecs-additions-cromwell.sh"]]
+                  - !Join [" ", ["sh", "/opt/ecs-additions/ecs-additions-cromwell.sh"]]
                   - echo "OK"
               env:
                 PATH: "/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin"
@@ -245,7 +245,7 @@ Resources:
                ).then((data)=>success({})).catch((err)=>failed(err));
              }
            };
-      Runtime: nodejs4.3
+      Runtime: nodejs8.10
       Timeout: 300
   LambdaExecutionRole:
     Type: AWS::IAM::Role
