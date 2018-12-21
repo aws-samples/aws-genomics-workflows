@@ -49,10 +49,3 @@ Specifically, the templates will create:
 Here is a conceptual diagram of the proposed architecture:
 
 ![AWS Batch environment for genomics](https://d2908q01vomqb2.cloudfront.net/1b6453892473a467d07372d45eb05abc2031647a/2018/04/23/Picture2.png)
-
-
-## Next Step: Setting up a custom AMI for genomics workflows
-
-Genomics is a data-heavy workload and requires some modification to the standard AWS Batch processing environment. In particular, we need to scale underlying instance storage that Tasks/Jobs run on top of to meet unpredictable runtime demands.
-
-**[Create a custom AMI for genomics workloads](./create-custom-ami.md)**

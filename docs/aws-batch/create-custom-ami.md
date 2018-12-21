@@ -1,3 +1,4 @@
+Genomics is a data-heavy workload and requires some modification to the standard AWS Batch processing environment. In particular, we need to scale underlying instance storage that Tasks/Jobs run on top of to meet unpredictable runtime demands.
 
 # Custom AWS Batch compute resources for genomics
 

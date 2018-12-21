@@ -49,7 +49,7 @@ with the following changes:
 
 Once complete, you will have a new AMI ID to give to AWS Batch to setup compute environments.
 
-## Launch CloudFormation Stacks
+## Batch Infrastructure for Genomics
 
 To create the remaining pieces of infrastructure:
 
@@ -175,8 +175,8 @@ webservice {
 
 system {
     job-rate-control {
-    jobs = 1
-    per = 2 second
+        jobs = 1
+        per = 2 second
     }
 }
 
@@ -206,8 +206,6 @@ backend {
 
         numSubmitAttempts = 3
         numCreateDefinitionAttempts = 3
-
-        concurrent-job-limit = 16
 
         default-runtime-attributes {
           queueArn: "<your-queue-arn>"

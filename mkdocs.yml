@@ -1,24 +1,23 @@
 site_name: AWS for Genomics Workflows
-pages:
-  - Home: index.md
-  - Setting up AWS Batch:
-    - Getting Started: aws-batch/configure-aws-batch-start.md
+nav:
+  - Overview: index.md
+  - Getting Started:
+    - Setup AWS Batch: aws-batch/configure-aws-batch-start.md
     - Creating a custom AMI: aws-batch/create-custom-ami.md
-    - Configuring AWS Batch with CloudFormation:
-      - Launch the CloudFormation stacks: aws-batch/configure-aws-batch-cfn.md
-      - Notes on Amazon VPC: aws-batch/notes-vpc.md
-  - Setting up a genomics workflow environment:
+    - Launch the CloudFormation stacks: aws-batch/configure-aws-batch-cfn.md
+    - Notes on Amazon VPC: aws-batch/notes-vpc.md
+  - Workflow Orchestration:
     - Introduction: genomics-workflows-intro.md
-    - AWS Step Functions:
-      - Introduction and requirements: step-functions/intro-step-functions.md
-      - Creating a job management container: step-functions/create-batchjobrunner-container.md
-      # - An example workflow: step-functions/create-example-sfl-workflow.md
-    - Cromwell:
-      - Overview: cromwell/cromwell-aws-batch.md
-      - Examples: cromwell/cromwell-examples.md
-    # - Nextflow: nextflow/nextflow-aws-batch.md
+  - AWS Step Functions:
+    - Introduction and requirements: step-functions/intro-step-functions.md
+    - Creating a job management container: step-functions/create-batchjobrunner-container.md
+    # - An example workflow: step-functions/create-example-sfl-workflow.md
+  - Cromwell:
+    - Overview: cromwell/cromwell-aws-batch.md
+    - Examples: cromwell/cromwell-examples.md
+# - Nextflow: nextflow/nextflow-aws-batch.md
 extra_css: [extra.css]
-theme: readthedocs
+theme: material
 markdown_extensions:
   - fontawesome_markdown
   - admonition
