@@ -96,24 +96,10 @@ Resources:
                 sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh '${ScratchMountPoint}' /dev/sdc 2>&1 > /var/log/init-ebs-autoscale.log
               env:
                 PATH: "/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin"
-            03GetECSPatches:
-              command:
-                Fn::If:
-                  - UseCromwell
-                  - !Join [
-                      " ",
-                      [
-                        "wget",
-                        "https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ecs-additions.tgz",
-                        "&&",
-                        "tar",
-                        "-xzf",
-                        "aws-ecs-additions.tgz",
-                      ],
-                    ]
-                  - echo "OK"
+            03GetECSAdditions:
+              command: wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
               cwd: /opt
-            04InstallECSPatches:
+            04InstallECSAdditions:
               command:
                 Fn::If:
                   - UseCromwell
