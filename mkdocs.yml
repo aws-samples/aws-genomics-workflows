@@ -1,4 +1,4 @@
-site_name: AWS for Genomics Workflows
+site_name: Genomics Workflows on AWS
 nav:
   - Overview: index.md
   - Getting Started:
@@ -17,7 +17,12 @@ nav:
     - Examples: cromwell/cromwell-examples.md
 # - Nextflow: nextflow/nextflow-aws-batch.md
 extra_css: [extra.css]
-theme: material
+theme: 
+  name: material
+  logo: 'images/AWS_logo_RGB_REV.svg'
+  palette:
+    primary: blue grey
+    accent: deep orange
 markdown_extensions:
   - fontawesome_markdown
   - admonition
