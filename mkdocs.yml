@@ -7,15 +7,15 @@ nav:
     - Launch the CloudFormation stacks: aws-batch/configure-aws-batch-cfn.md
     - Notes on Amazon VPC: aws-batch/notes-vpc.md
   - Workflow Orchestration:
-    - Introduction: genomics-workflows-intro.md
-  - AWS Step Functions:
-    - Introduction and requirements: step-functions/intro-step-functions.md
-    - Creating a job management container: step-functions/create-batchjobrunner-container.md
-    # - An example workflow: step-functions/create-example-sfl-workflow.md
-  - Cromwell:
-    - Overview: cromwell/cromwell-aws-batch.md
-    - Examples: cromwell/cromwell-examples.md
-# - Nextflow: nextflow/nextflow-aws-batch.md
+    - Introduction: orchestration/genomics-workflows-intro.md
+    - AWS Step Functions:
+      - Introduction and requirements: orchestration/step-functions/intro-step-functions.md
+      - Creating a job management container: orchestration/step-functions/create-batchjobrunner-container.md
+      # - An example workflow: orchestration/step-functions/create-example-sfl-workflow.md
+    - Cromwell:
+      - Overview: orchestration/cromwell/cromwell-aws-batch.md
+      - Examples: orchestration/cromwell/cromwell-examples.md
+  # - Nextflow: orchestration/nextflow/nextflow-aws-batch.md
 extra_css: [extra.css]
 theme: 
   name: material

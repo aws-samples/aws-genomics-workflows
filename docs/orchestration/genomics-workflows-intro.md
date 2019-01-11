@@ -1,4 +1,4 @@
-# Genomics Workflows
+# Workflow Orchestration
 
 Now that we have a way to execute individual tasks via AWS Batch, we turn to orchastration of complete workflows. A typical genomics workflow is represented by the diagram below:
 
