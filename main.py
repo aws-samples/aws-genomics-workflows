@@ -39,12 +39,12 @@ def declare_variables(variables, macro):
         )
 
         return """
-        <a href="{url}" target="_blank" class="launch-button"><i class="fa fa-play fa-xs"></i></a>
+        <a href="{url}" target="_blank" class="launch-button"><i class="material-icons">play_arrow</i></a>
         """.format(name=name, img=img_src, url=cfn_url)
     
     @macro
     @dedented
-    def download_button(path, icon="fa-download", size="fa-lg"):
+    def download_button(path, icon="cloud_download"):
         """
         create a download button
         """
@@ -56,11 +56,8 @@ def declare_variables(variables, macro):
 
         src_url = "https://s3.amazonaws.com/{bucket}/{object}".format(**s3)
         
-        if size:
-            icon = " ".join([icon, size])
-
         return """
-        <a href="{url}"><i class="fa {icon}"></i></a>
+        <a href="{url}"><i class="material-icons">{icon}</i></a>
         """.format(icon=icon, url=src_url)
     
     @macro

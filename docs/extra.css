@@ -1,5 +1,7 @@
 .launch-button {
-    color: white;
+    display: block;
+
+    color: white !important;
     background-color: darkorange;
     
     border-radius: .25ex .25ex .25ex .25ex;
@@ -7,17 +9,19 @@
     
     text-align: center;
     text-decoration: none;
-        
-    padding: 0.5ex 2ex;
-    width: 2em;
+    
+    /* padding: 0.5ex 2ex; */
+    width: 64px;
+
+    line-height: 0.5;
 }
 
 .launch-button:hover, .launch-button:visited:hover {
-    color: cornflowerblue;
+    color: cornflowerblue !important;
 }
 
 .launch-button:visited {
-    color: white;
+    color: white !important;
 }
 
 .material-icons {

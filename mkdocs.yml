@@ -1,11 +1,13 @@
 site_name: Genomics Workflows on AWS
 nav:
   - Overview: index.md
+  - TL;DR: core-env/configure-aws-batch-cfn.md
   - Getting Started:
-    - Setup AWS Batch: aws-batch/configure-aws-batch-start.md
-    - Creating a custom AMI: aws-batch/create-custom-ami.md
-    - Launch the CloudFormation stacks: aws-batch/configure-aws-batch-cfn.md
-    - Notes on Amazon VPC: aws-batch/notes-vpc.md
+    - Introduction: core-env/introduction.md
+    - Create an S3 bucket: core-env/s3-bucket.md
+  - Job Execution:
+    - Create a custom AMI: core-env/create-custom-ami.md
+    - Setup AWS Batch: core-env/configure-aws-batch-start.md
   - Workflow Orchestration:
     - Introduction: orchestration/genomics-workflows-intro.md
     - AWS Step Functions:
@@ -16,6 +18,9 @@ nav:
       - Overview: orchestration/cromwell/cromwell-aws-batch.md
       - Examples: orchestration/cromwell/cromwell-examples.md
   # - Nextflow: orchestration/nextflow/nextflow-aws-batch.md
+  - Additional Notes:
+    - Amazon VPC: core-env/notes-vpc.md
+
 extra_css: [extra.css]
 theme: 
   name: material
