@@ -1,7 +1,7 @@
 site_name: Genomics Workflows on AWS
 nav:
   - Overview: index.md
-  - TL;DR: core-env/configure-aws-batch-cfn.md
+  - TL;DR: tldr.md
   - Getting Started:
     - Introduction: core-env/introduction.md
     - Create an S3 bucket: core-env/s3-bucket.md
