@@ -1,7 +1,5 @@
 # Introduction on AWS Batch for genomics workflows
 
-## TL;DR
-
 AWS Batch provides a queue to send jobs to, and will manage the underlying compute necessary to run those jobs. For the impatient, skip to the next step ["Creating a custom AMI for genomics"](./create-custom-ami.md).
 
 ## The detailed explaination
