@@ -2,10 +2,10 @@
     display: block;
 
     color: white !important;
-    background-color: darkorange;
+    background-color: #ec7211;
     
     border-radius: .25ex .25ex .25ex .25ex;
-    border: 1px solid orange;
+    border: 1px solid #eb5f07;
     
     text-align: center;
     text-decoration: none;
@@ -17,7 +17,8 @@
 }
 
 .launch-button:hover, .launch-button:visited:hover {
-    color: cornflowerblue !important;
+    background-color: #eb5f07;
+    color: white !important;
 }
 
 .launch-button:visited {
@@ -47,4 +48,8 @@
   
     /* Support for IE. */
     font-feature-settings: 'liga';
+  }
+
+  .md-header, .md-footer, .md-footer-nav, .md-footer-meta {
+    background-color: #232f3e !important;
   }

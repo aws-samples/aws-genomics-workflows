@@ -21,18 +21,21 @@ def declare_variables(variables, macro):
         """
         create an cloudformation launch button
         """
-
         s3 = _variables['s3']
-        s3['object'] = "/".join(
-            filter(None, [s3.get('prefix'), 'templates', template])
-        )
 
-        cfn_url = "".join([
-            "https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=",
-            name,
-            "&templateURL=",
-            "https://s3.amazonaws.com/{bucket}/{object}".format(**s3),
-        ])
+        if template.lower().startswith('http'):
+            cfn_url = template
+        else:
+            s3['object'] = "/".join(
+                filter(None, [s3.get('prefix'), 'templates', template])
+            )
+
+            cfn_url = "".join([
+                "https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=",
+                name,
+                "&templateURL=",
+                "https://s3.amazonaws.com/{bucket}/{object}".format(**s3),
+            ])
 
         img_src = "/" + "/".join(
             filter(None, [s3.get('prefix'), 'images/cloudformation-launch-stack.png'])
@@ -48,13 +51,16 @@ def declare_variables(variables, macro):
         """
         create a download button
         """
-
         s3 = _variables['s3']
-        s3['object'] = "/".join(
-            filter(None, [s3.get('prefix'), path])
-        )
+            
+        if path.lower().startswith('http'):
+            src_url = path
+        else:
+            s3['object'] = "/".join(
+                filter(None, [s3.get('prefix'), path])
+            )
 
-        src_url = "https://s3.amazonaws.com/{bucket}/{object}".format(**s3)
+            src_url = "https://s3.amazonaws.com/{bucket}/{object}".format(**s3)
         
         return """
         <a href="{url}"><i class="material-icons">{icon}</i></a>
@@ -63,12 +69,17 @@ def declare_variables(variables, macro):
     @macro
     @dedented
     def cfn_stack_row(name, stack_name, template, description):
+        if template.lower().startswith('http'):
+            stack_url = template
+        else:
+            stack_url = "templates/" + template
+
         return """
         | {name} | {description} | {download_button} | {cfn_button} |
         """.format(
             name=name,
             stack_name=stack_name,
-            download_button=download_button("templates/" + template),
+            download_button=download_button(stack_url),
             cfn_button=cfn_button(stack_name, template),
             description=description
         )
