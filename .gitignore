@@ -50,6 +50,12 @@ tramp
 
 tmp/
 site/
+artifacts/
 *pem
 *tar.gz
 Makefile
+__pycache__
+publish
+launch.sh
+LICENSE-*
+src/templates/tests

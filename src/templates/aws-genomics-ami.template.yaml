@@ -1,0 +1,305 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Creates a custom AMI to be used with AWS Batch
+
+Mappings:
+  TagMap:
+    default:
+      architecture: "genomics-workflows"
+      solution: "default"
+      tags:
+        - Key: "architecture"
+          Value: "genomics-workflows"
+        - Key: "solution"
+          Value: "default"
+
+# Parameters
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: Recommended to use the Default VPC here
+  PublicSubnetID:
+    Type: AWS::EC2::Subnet::Id
+    Description: Select a public subnet to launch into
+  ScratchMountPoint:
+    Type: String
+    Default: /scratch
+    Description: Path for the scratch mount point in the instance
+  ScratchVolumeSize:
+    Type: Number
+    Default: 20
+    Description: The initial size of the scratch volume
+  UseEncryption:
+    Type: String
+    Default: Yes
+    Description: Whether or not to encrypt the addtional volumes on the EC2 instance
+    AllowedValues:
+      - Yes
+      - No
+  LatestECSAMI:
+    Description: The latest Linux ECS Optimized AMI
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
+    AllowedValues:
+      - /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: GENERAL.NONE
+  AMIType:
+    Type: String
+    Description: The type of AMI you want to create
+    Default: default
+    AllowedValues:
+      - default
+      - cromwell
+  AMIName:
+    Type: String
+    Default: genomics-ami
+    Description: The name of the AMI that is created
+
+# Conditions
+Conditions:
+  UseEncryptedVolume: !Equals [!Ref UseEncryption, Yes]
+  UseCromwell: !Equals [!Ref AMIType, cromwell]
+
+# Resources
+Resources:
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Custom AMI instance
+      VpcId: !Ref VpcId
+      Tags:
+        - Key: Name
+          Value: genomics-base-sg
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            rpm:
+              ssm-agent: "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm"
+            yum:
+              jq: []
+              btrfs-progs: []
+              python27-pip: []
+              sed: []
+              wget: []
+          commands:
+            00InstallBoto3:
+              command: pip install -U awscli boto3
+            01InstallAutoScaling:
+              command: wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
+              cwd: /opt
+            02MountAutoScaling:
+              command: !Sub |
+                sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh '${ScratchMountPoint}' /dev/sdc 2>&1 > /var/log/init-ebs-autoscale.log
+              env:
+                PATH: "/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin"
+            03GetECSAdditions:
+              command: wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
+              cwd: /opt
+            04InstallECSAdditions:
+              command:
+                Fn::If:
+                  - UseCromwell
+                  - !Join [" ", ["sh", "/opt/ecs-additions/ecs-additions-cromwell.sh"]]
+                  - echo "OK"
+              env:
+                PATH: "/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin"
+    Properties:
+      ImageId: !Ref LatestECSAMI
+      InstanceType: t2.large
+      KeyName: !Ref KeyName
+      Tags:
+        - Key: Name
+          Value: genomics-base-ami
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+        - Key: solution
+          Value: !Ref AMIType
+      BlockDeviceMappings:
+        - DeviceName: /dev/sdc
+          Ebs:
+            VolumeSize: !Ref ScratchVolumeSize
+            Encrypted:
+              Fn::If: [UseEncryptedVolume, true, false]
+        - DeviceName: /dev/xvdcz
+          Ebs:
+            Encrypted:
+              Fn::If: [UseEncryptedVolume, true, false]
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -x
+          yum -y update
+          yum install -y aws-cfn-bootstrap
+          /opt/aws/bin/cfn-init --verbose --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
+          shutdown -h now
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: "0"
+          GroupSet:
+            - !Ref EC2SecurityGroup
+          SubnetId: !Ref PublicSubnetID
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+  AMI:
+    Type: Custom::AMI
+    DeletionPolicy: Retain
+    Properties:
+      ServiceToken: !GetAtt AMIFunction.Arn
+      InstanceId: !Ref EC2Instance
+      Tags:
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+        - Key: solution
+          Value: !Ref AMIType
+  AMIFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: !Sub |
+           var response = require('cfn-response');
+           var AWS = require('aws-sdk');
+           exports.handler = function(event, context) {
+             console.log("Request received:\n", JSON.stringify(event));
+             var physicalId = event.PhysicalResourceId;
+             function success(data) {
+               return response.send(event, context, response.SUCCESS, data, physicalId);
+             }
+             function failed(e) {
+               return response.send(event, context, response.FAILED, e, physicalId);
+             }
+             // Call ec2.waitFor, continuing if not finished before Lambda function timeout.
+             function wait(waiter) {
+               console.log("Waiting: ", JSON.stringify(waiter));
+               event.waiter = waiter;
+               event.PhysicalResourceId = physicalId;
+               var request = ec2.waitFor(waiter.state, waiter.params);
+               setTimeout(()=>{
+                 request.abort();
+                 console.log("Timeout reached, continuing function. Params:\n", JSON.stringify(event));
+                 var lambda = new AWS.Lambda();
+                 lambda.invoke({
+                   FunctionName: context.invokedFunctionArn,
+                   InvocationType: 'Event',
+                   Payload: JSON.stringify(event)
+                 }).promise().then((data)=>context.done()).catch((err)=>context.fail(err));
+               }, context.getRemainingTimeInMillis() - 5000);
+               return request.promise().catch((err)=>
+                 (err.code == 'RequestAbortedError') ?
+                   new Promise(()=>context.done()) :
+                   Promise.reject(err)
+               );
+             }
+             var ec2 = new AWS.EC2(),
+                 instanceId = event.ResourceProperties.InstanceId;
+             if (event.waiter) {
+               wait(event.waiter).then((data)=>success({})).catch((err)=>failed(err));
+             } else if (event.RequestType == 'Create' || event.RequestType == 'Update') {
+               if (!instanceId) { failed('InstanceID required'); }
+               ec2.waitFor('instanceStopped', {InstanceIds: [instanceId]}).promise()
+               .then((data)=>
+                 ec2.createImage({
+                   InstanceId: instanceId,
+                   Name: '${AMIName}'
+                 }).promise()
+               ).then((data)=>
+                 wait({
+                   state: 'imageAvailable',
+                   params: {ImageIds: [physicalId = data.ImageId]}
+                 })
+               ).then((data)=>success({})).catch((err)=>failed(err));
+             } else if (event.RequestType == 'Delete') {
+               if (physicalId.indexOf('ami-') !== 0) { return success({});}
+               ec2.describeImages({ImageIds: [physicalId]}).promise()
+               .then((data)=>
+                 (data.Images.length == 0) ? success({}) :
+                 ec2.deregisterImage({ImageId: physicalId}).promise()
+               ).then((data)=>
+                 ec2.describeSnapshots({Filters: [{
+                   Name: 'description',
+                   Values: ["*" + physicalId + "*"]
+                 }]}).promise()
+               ).then((data)=>
+                 (data.Snapshots.length === 0) ? success({}) :
+                 ec2.deleteSnapshot({SnapshotId: data.Snapshots[0].SnapshotId}).promise()
+               ).then((data)=>success({})).catch((err)=>failed(err));
+             }
+           };
+      Runtime: nodejs8.10
+      Timeout: 300
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: [lambda.amazonaws.com] }
+            Action: ["sts:AssumeRole"]
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+      Policies:
+        - PolicyName: EC2Policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ec2:DescribeInstances"
+                  - "ec2:DescribeImages"
+                  - "ec2:CreateImage"
+                  - "ec2:DeregisterImage"
+                  - "ec2:DescribeSnapshots"
+                  - "ec2:DeleteSnapshot"
+                Resource: ["*"]
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Network Configuration"
+        Parameters:
+          - VpcId
+          - PublicSubnetID
+      - Label:
+          default: "Instance Configuration"
+        Parameters:
+          - AMIType
+          - ScratchMountPoint
+          - ScratchVolumeSize
+          - UseEncryption
+          - LatestECSAMI
+      - Label:
+          default: "Outputs"
+        Parameters:
+          - AMIName
+    ParameterLabels:
+      VpcId:
+        default: "VPC ID"
+      PublicSubnetID:
+        default: "Public Subnet ID"
+      ScratchMountPoint:
+        default: "Scratch Mount Point"
+      ScratchVolumeSize:
+        default: "Scratch Volume (GB)"
+      UseEncryption:
+        default: "Encrypt Volume"
+      AMIName:
+        default: "AMI Name"
+      LatestECSAMI:
+        default: "Latest ECS AMI"
+      AMIType:
+        default: "AMI Type"
+
+Outputs:
+  AMI:
+    Description: The AMI (Amazon Machine Image) ID of your instance
+    Value: !Ref AMI

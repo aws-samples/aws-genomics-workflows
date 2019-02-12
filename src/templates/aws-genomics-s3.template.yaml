@@ -6,6 +6,7 @@ Parameters:
 Resources:
   GenomicsEnvS3Bucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
     Properties:
       BucketName: !Ref S3BucketName
       BucketEncryption:

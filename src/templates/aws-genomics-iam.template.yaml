@@ -48,6 +48,32 @@ Resources:
             Action:
               - "sts:AssumeRole"
       Policies:
+        - PolicyName: !Sub GenomicsEnv-S3Bucket-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              # - Sid: S3DenyIncorrectEncryptionHeader
+              #   Effect: Deny
+              #   Action:
+              #     - "s3:PutObject"
+              #   Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+              #   Condition:
+              #     StringNotEquals: { "s3:x-amz-server-side-encryption": "AES256" }
+              # - Sid: S3DenyUnEncryptedObjectUploads
+              #   Effect: Deny
+              #   Action:
+              #     - "s3:PutObject"
+              #   Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+              #   Condition: 
+              #     "Null" : { "s3:x-amz-server-side-encryption": true }
+              - Sid: S3BucketAllowAllObjectOps
+                Effect: Allow
+                Resource: 
+                  - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName]]
+                  - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+                Action:
+                  - "s3:*"
+ 
         - PolicyName: !Sub GenomicsEnv-Autoscale-EBS-${AWS::Region}
           PolicyDocument:
             Version: 2012-10-17
@@ -55,12 +81,15 @@ Resources:
               Effect: Allow
               Action:
                 - "ec2:createVolume"
-                - "ec2:attacheVolume"
+                - "ec2:attachVolume"
+                - "ec2:deleteVolume"
                 - "ec2:modifyInstanceAttribute"
                 - "ec2:describeVolumes"
               Resource: "*"
       ManagedPolicyArns:
       - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+      - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+      - "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
   GenomicsEnvBatchInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
@@ -79,7 +108,7 @@ Resources:
             Action:
               - "sts:AssumeRole"
       ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetRole"
+      - "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole"
   GenomicsEnvBatchServiceRole:
     Type: AWS::IAM::Role
     Properties:

@@ -1,0 +1,524 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Creates an EC2 Instance and Roles for a Cromwell Server
+
+Mappings:
+  TagMap:
+    default:
+      architecture: "genomics-workflows"
+      solution: "cromwell"
+      tags:
+        - Key: "architecture"
+          Value: "genomics-workflows"
+        - Key: "solution"
+          Value: "cromwell"
+
+# Parameters
+Parameters:
+  InstanceType:
+    Description: >-
+      EC2 instance type.  Cromwell itself does not require much compute power. 
+      A t2.medium should be sufficient.  If you want to run this server on the 
+      free tier, use a t2.micro.
+    Type: String
+    Default: t2.medium
+    AllowedValues:
+    - t2.micro
+    - t2.medium
+    - t2.large
+    ConstraintDescription: "Must be 't2.micro', 't2.medium', or 't2.large'."
+  
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: Recommended to use the Default VPC here
+  
+  PublicSubnetID:
+    Type: AWS::EC2::Subnet::Id
+    Description: Select a public subnet to launch into
+  
+  LatestAmazonLinuxAMI:
+    Description: The latest Amazon Linux AMI
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn-ami-hvm-x86_64-gp2
+    AllowedValues:
+      - /aws/service/ami-amazon-linux-latest/amzn-ami-hvm-x86_64-gp2
+
+  InstanceName:
+    Type: String
+    Default: cromwell-server
+    Description: The name of the instance that is created
+  
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair that is on your local machine.
+  
+  SSHLocation:
+    Description: "The IP address range that can be used to SSH to the EC2 instances"
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  
+  HTTPLocation:
+    Description: "The IP address range that has HTTP access to the EC2 instances"
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
+  S3BucketName:
+    Description: S3 bucket you are using for workflow inputs and outputs
+    Type: String
+  
+  BatchQueue:
+    Description: ARN of the AWS Batch Job Queue this server will use by default
+    Type: String
+
+# Resources
+Resources:
+  Ec2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Policies:
+        - PolicyName: !Sub CromwellServer-BatchQueue-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              Effect: Allow
+              Resource: "*"
+              Action:
+                - "batch:DescribeJobQueues"
+                - "batch:DeregisterJobDefinition"
+                - "batch:TerminateJob"
+                - "batch:DescribeJobs"
+                - "batch:CancelJob"
+                - "batch:SubmitJob"
+                - "batch:RegisterJobDefinition"
+                - "batch:DescribeJobDefinitions"
+                - "batch:ListJobs"
+                - "batch:DescribeComputeEnvironments"
+
+        - PolicyName: !Sub CromwellServer-S3Bucket-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              Effect: Allow
+              Resource:
+                - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName]] 
+                - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+              Action:
+                - "s3:*"
+        
+        - PolicyName: !Sub CromwellServer-CloudWatch-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              Effect: Allow
+              Resource: "arn:aws:logs:*:*:*"
+              Action:
+                - "logs:CreateLogGroup"
+                - "logs:CreateLogStream"
+                - "logs:PutLogEvents"
+                - "logs:DescribeLogStreams"
+
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: ec2.amazonaws.com
+          Action: sts:AssumeRole
+  
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+        - Ref: Ec2InstanceRole
+  
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      VpcId: !Ref VpcId
+      Tags:
+        - Key: Name
+          Value: cromwell-server-sg
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+        - Key: solution
+          Value: !FindInMap ["TagMap", "default", "solution"]
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp:
+          Ref: SSHLocation
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp:
+          Ref: HTTPLocation
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          default:
+            - config1
+            - config2
+            - config3
+
+        config1:
+          packages:
+            yum:
+              jq: []
+              awslogs: []
+              nginx: []
+
+            python:
+              supervisor: []
+          
+          commands:
+            00_install_java8:
+              command: yum install -y java-1.8.0
+            01_alternatives_set_java:
+              command: alternatives --set java /usr/lib/jvm/jre-1.8.0-openjdk.x86_64/bin/java
+
+          files:
+            "/etc/awslogs/awslogs.conf":
+              content: !Sub
+                - |
+                  [general]
+                  state_file = /var/lib/awslogs/agent-state        
+                  
+                  [cromwell-server]
+                  file = /tmp/cromwell-server.log
+                  log_group_name = cromwell-server
+                  log_stream_name = ${StackGuid}
+                - { StackGuid: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]] }
+              mode: 000664
+              owner: root
+              group: root
+            
+            "/etc/awslogs/awscli.conf":
+              content: !Sub |
+                [plugins]
+                cwlogs = cwlogs
+                [default]
+                region = ${AWS::Region}
+              mode: 000664
+              owner: root
+              group: root
+            
+            "/home/ec2-user/get_cromwell.sh":
+              content: !Sub |
+                #!/bin/bash
+                url=$(curl --silent "https://api.github.com/repos/broadinstitute/cromwell/releases/latest" | jq -r .assets[0].browser_download_url)
+                curl -LO $url
+                ln -s $(find . | grep "cromwell.*\.jar") cromwell-latest.jar
+
+              mode: "000755"
+              owner: "ec2-user"
+              group: "ec2-user"
+
+            "/home/ec2-user/cromwell.conf":
+              content: !Sub |
+                include required(classpath("application"))
+
+                webservice {
+                  interface = localhost
+                  port = 8000
+                }
+
+                system {
+                  job-rate-control {
+                    jobs = 1
+                    per = 2 second
+                  }
+                }
+
+                aws {
+                  application-name = "cromwell"
+                  auths = [{
+                      name = "default"
+                      scheme = "default"
+                  }]
+                  region = "${AWS::Region}"
+                }
+
+                engine { filesystems { s3 { auth = "default" } } }
+
+                backend {
+                  default = "AWSBATCH"
+                  providers {
+                    AWSBATCH {
+                      actor-factory = "cromwell.backend.impl.aws.AwsBatchBackendLifecycleActorFactory"
+                      config {
+                        numSubmitAttempts = 10
+                        numCreateDefinitionAttempts = 10
+                        root = "s3://${S3BucketName}/cromwell-execution"
+                        auth = "default"
+                        default-runtime-attributes { queueArn = "${BatchQueue}" }
+                        filesystems { s3 { auth = "default" } }
+                      }
+                    }
+                  }
+                }
+              mode: "000644"
+              owner: "ec2-user"
+              group: "ec2-user"
+
+            "/home/ec2-user/run_cromwell_server.sh":
+              content: !Sub |
+                #!/bin/bash
+                java -Dconfig.file=cromwell.conf -jar cromwell-latest.jar server
+
+              mode: "000755"
+              owner: "ec2-user"
+              group: "ec2-user"
+            
+            "/home/ec2-user/supervisord.conf":
+              mode: "000644"
+              owner: "ec2-user"
+              group: "ec2-user"
+              content: !Sub |
+                [unix_http_server]
+                file=/tmp/supervisor.sock   ; the path to the socket file
+                
+                [supervisord]
+                logfile=/tmp/supervisord.log ; main log file; default $CWD/supervisord.log
+                logfile_maxbytes=50MB        ; max main logfile bytes b4 rotation; default 50MB
+                logfile_backups=10           ; # of main logfile backups; 0 means none, default 10
+                loglevel=info                ; log level; default info; others: debug,warn,trace
+                pidfile=/tmp/supervisord.pid ; supervisord pidfile; default supervisord.pid
+                nodaemon=false               ; start in foreground if true; default false
+                minfds=1024                  ; min. avail startup file descriptors; default 1024
+                minprocs=200                 ; min. avail process descriptors;default 200
+                
+                [rpcinterface:supervisor]
+                supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
+
+                [supervisorctl]
+                serverurl=unix:///tmp/supervisor.sock ; use a unix:// URL  for a unix socket
+
+                [program:cromwell-server]
+                command=/home/ec2-user/run_cromwell_server.sh  ; the program (relative uses PATH, can take args)
+                directory=/home/ec2-user                       ; directory to cwd to before exec (def no cwd)
+                user=ec2-user                                  ; setuid to this UNIX account to run the program
+                redirect_stderr=true                           ; redirect proc stderr to stdout (default false)
+                stdout_logfile=/tmp/cromwell-server.log        ; stdout log path, NONE for none; default AUTO
+          
+            "/etc/nginx/nginx.conf":
+              mode: "000644"
+              content: !Sub |
+                # For more information on configuration, see:
+                #   * Official English Documentation: http://nginx.org/en/docs/
+                #   * Official Russian Documentation: http://nginx.org/ru/docs/
+
+                user nginx;
+                worker_processes auto;
+                error_log /var/log/nginx/error.log;
+                pid /var/run/nginx.pid;
+
+                # Load dynamic modules. See /usr/share/doc/nginx/README.dynamic.
+                include /usr/share/nginx/modules/*.conf;
+
+                events {
+                    worker_connections 1024;
+                }
+
+                http {
+                    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                                      '$status $body_bytes_sent "$http_referer" '
+                                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+                    access_log  /var/log/nginx/access.log  main;
+
+                    sendfile            on;
+                    tcp_nopush          on;
+                    tcp_nodelay         on;
+                    keepalive_timeout   65;
+                    types_hash_max_size 2048;
+
+                    include             /etc/nginx/mime.types;
+                    default_type        application/octet-stream;
+
+                    # Load modular configuration files from the /etc/nginx/conf.d directory.
+                    # See http://nginx.org/en/docs/ngx_core_module.html#include
+                    # for more information.
+                    include /etc/nginx/conf.d/*.conf;
+
+                    index   index.html index.htm;
+
+                    server {
+                        listen       80 default_server;
+                        listen       [::]:80 default_server;
+                        server_name  localhost;
+                        root         /usr/share/nginx/html;
+                
+                #        # Config options for a TLS enabled server
+                #        listen       80;
+                #        listen       443 ssl http2 default_server;
+                #        listen       [::]:443 ssl http2 default_server;
+                #        server_name  _;
+                #        root         /usr/share/nginx/html;
+                #
+                #        ssl_certificate "/etc/pki/nginx/server.crt";
+                #        ssl_certificate_key "/etc/pki/nginx/private/server.key";
+                #        # It is *strongly* recommended to generate unique DH parameters
+                #        # Generate them with: openssl dhparam -out /etc/pki/nginx/dhparams.pem 2048
+                #        #ssl_dhparam "/etc/pki/nginx/dhparams.pem";
+                #        ssl_session_cache shared:SSL:1m;
+                #        ssl_session_timeout  10m;
+                #        ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+                #        ssl_ciphers HIGH:SEED:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!RSAPSK:!aDH:!aECDH:!EDH-DSS-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA:!SRP;
+                #        ssl_prefer_server_ciphers on;
+                
+                        # Load configuration files for the default server block.
+                        include /etc/nginx/default.d/*.conf;
+
+                        location / {
+                            proxy_pass    http://localhost:8000;
+                        }
+
+                        # redirect server error pages to the static page /40x.html
+                        #
+                        error_page 404 /404.html;
+                            location = /40x.html {
+                        }
+
+                        # redirect server error pages to the static page /50x.html
+                        #
+                        error_page 500 502 503 504 /50x.html;
+                            location = /50x.html {
+                        }
+                    }
+                }
+
+        config2:
+          commands:
+            00_enable_awslogs:
+              command: "chkconfig awslogs on"
+            
+            01_start_awslogs:
+              command: "service awslogs start"
+            
+            02_enable_nginx:
+              command: "chkconfig nginx on"
+            
+            03_start_nginx:
+              command: "service nginx start"
+
+        config3:
+          commands:
+            00_get_cromwell:
+              cwd: "/home/ec2-user/"
+              command: "./get_cromwell.sh"
+            
+            01_chown_cromwell:
+              cwd: "/home/ec2-user/"
+              command: "chown ec2-user:ec2-user cromwell*.jar"
+                        
+            02_start_cromwell:
+              cwd: "/home/ec2-user"
+              command: "sudo -u ec2-user /usr/local/bin/supervisord"
+        
+            
+    Properties:
+      ImageId: !Ref LatestAmazonLinuxAMI
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      KeyName: !Ref KeyName
+      Tags:
+        - Key: Name
+          Value: !Ref InstanceName
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+        - Key: solution
+          Value: !FindInMap ["TagMap", "default", "solution"]
+      
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -x
+          yum -y update
+          yum install -y aws-cfn-bootstrap
+          /opt/aws/bin/cfn-init --verbose --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
+      
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: "0"
+          GroupSet:
+            - !Ref EC2SecurityGroup
+          SubnetId: !Ref PublicSubnetID
+
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Network Configuration"
+        Parameters:
+          - VpcId
+          - PublicSubnetID
+      - Label:
+          default: "Instance Configuration"
+        Parameters:
+          - LatestAmazonLinuxAMI
+          - InstanceType
+          - InstanceName
+          - KeyName
+          - SSHLocation
+          - HTTPLocation
+
+      - Label:
+          default: "Cromwell Configuration"
+        Parameters:
+          - S3BucketName
+          - BatchQueue
+      
+    ParameterLabels:
+      VpcId:
+        default: "VPC ID"
+      PublicSubnetID:
+        default: "Public Subnet ID"
+      InstanceName:
+        default: "Instance Name"
+      LatestAmazonLinuxAMI:
+        default: "Latest Amazon Linux AMI"
+      SSHLocation:
+        default: "SSH Address Range"
+      HTTPLocation:
+        default: "HTTP Address Range"
+      KeyName:
+        default: "Key Pair Name"
+      S3BucketName:
+        default: "S3 Bucket Name"
+      BatchQueue:
+        default: "Default Batch Queue"
+
+Outputs:
+  EC2Instance:
+    Description: The EC2 Instance ID of your Cromwell Server
+    Value: !Ref EC2Instance
+
+  PublicIp:
+    Value: !GetAtt EC2Instance.PublicIp
+    Description: Cromwell server public IP address
+  
+  HostName:
+    Value: !GetAtt EC2Instance.PublicDnsName
+    Description: Cromwell server public DNS name
+

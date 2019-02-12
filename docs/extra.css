@@ -1,0 +1,13 @@
+.launch-button {
+    color: mediumblue;
+    background-color: orange;
+    
+    border-radius: 1.5ex 3ex 3ex 1.5ex;
+    border: 2px solid navy;
+    
+    text-align: center;
+    text-decoration: none;
+        
+    padding: 0.5ex 2ex;
+    width: 2em;
+}

@@ -12,7 +12,22 @@ We have provided a script (see [the next section](#create-a-custom-ami)) that cu
 
 ## Create a custom AMI
 
-We have provided a Python script that sets up the above.
+### Using a CloudFormation template
+
+For a "single-click" solution we have provided a CloudFormation template
+that performs these tasks via CloudFormation's UI.
+
+| Name | Description | Source | Launch Stack |
+| -- | -- | :--: | :--: |
+{{ cfn_stack_row("Custom AMI (Existing VPC)", "GenomicsWorkflow-AMI", "aws-genomics-ami.template.yaml", "Creates a custom AMI that EC2 instances can be based on for processing genomics workflow tasks.  The creation process will happen in a VPC you specify") }}
+
+### Using a python script
+
+If you are interested in how this can be automated using AWS SDKs, we have provided a Python script that sets up the above.
+
+| Name | Description | Source |
+| -- | -- | :--: |
+| Custom AMI (Script) | Python script to create a custom AMI | {{ download_button("artifacts/aws-custom-ami.tgz") }} |
 
 The script will:
 
@@ -20,26 +35,36 @@ The script will:
 2. Adjust the system settings to mount the scratch on instance start.
 3. Install and configure a small service to monitor and automatically expand the scratch space by adding new EBS volume
 4. Make the necessary adjustments to the Amazon Elastic Container Service (ECS) agent to work with AWS Batch
-5. Adjust the network settings to allow for containers to query instance metadata for their Task IAM roles.
-
 
 ```bash
-# Download the source directory and install the requirements
-curl -O https://aws-genomics-workflows.s3.amazonaws.com/aws-batch-genomics.tar.gz
-tar -xzf aws-batch-genomics.tar.gz && rm aws-batch-genomics.tar.gz
-cd aws-batch-genomics/src/custom-ami
+# Download the source and install the requirements
+curl -O https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-custom-ami.tgz
+tar -xzf aws-custom-ami.tgz && rm aws-custom-ami.tgz
+cd custom-ami
 pip install -r requirements.txt
 
 
 # Run the script to see the help
-python create-custom-ami.py --help
+./create-genomics-ami.py --help
 # Output:
-# No default VPC found. You must provide *both* VPC and Subnet IDs that are able to access public IP domains on CLI
-# usage: create-genomics-ami.py [-h] [--scratch_mount_point SCRATCH_MOUNT_POINT]
+# usage: create-genomics-ami.py [-h] [--profile PROFILE] [--region REGION_NAME]
+#                               [--scratch-mount-point SCRATCH_MOUNT_POINT]
 #                               [--key-pair-name KEY_PAIR_NAME]
-#                               [--vpc-id VPC_ID] [--subnet-id SUBNET_ID]
+#                               [--user-data USER_DATA_FILE]
+#                               [--src-ami-id SRC_AMI_ID] [--vpc-id VPC_ID]
+#                               [--subnet-id SUBNET_ID]
 #                               [--security-group-id SECURITY_GROUP_ID]
-#                               [--terminate-instance] [--no-terminate-instance]
+#                               [--use-instance-profile]
+#                               [--instance-profile-name INSTANCE_PROFILE_NAME]
+#                               [--max-instance-creation-attempts MAX_INSTANCE_CREATION_ATTEMPTS]
+#                               [--ebs-encryption | --no-ebs-encryption]
+#                               [--no-health-checks] [--no-ami]
+#                               [--ami-name AMI_NAME]
+#                               [--ami-description AMI_DESCRIPTION]
+#                               [--iam-cleanup]
+#                               [--terminate-instance | --no-terminate-instance]
+#
+# Creates a custom AMI for genomics workloads
 ```
 
 
@@ -54,34 +79,40 @@ Most new accounts have a [default VPC](https://docs.aws.amazon.com/AmazonVPC/lat
 
 The script takes about 10 minutes to run, you may want to take a :coffee: or :tea:  break at this point.
 
-Here is example output from running the script, providing a value for the key pair name (_values for ID's have been changed_):
+Here is example output from running the script, providing a value for the key pair name and the region to create the ami in (_values for ID's have been redacted for security where appropriate_):
 
 ```bash
-$ python create-genomics-ami.py --key-pair-name genomics-ami-west2
+$ ./create-genomics-ami.py \
+    --region us-west-2 \
+    --key-pair-name my-key-pair \
 
-Getting the security group from name GenomicsAmiSG-subnet-123ab123
-Security Group GenomicsAmiSG-subnet-123ab123 does not exist. Creating.
-Key Pair genomics-ami-west2 does not exist. Creating.
-Key Pair PEM file written to  genomics-ami-west2.pem
-Launching a new EC2 instance.
-Waiting on instance to have a IP...[ 111.222.111.222 ].
-Waiting on instance to pass health checks.................................instance available and healthy.
-Minting a new AMI...........................new AMI [ami-123abc123] created.
-Terminating instance...terminated.
-
+Using profile: default
+Getting security group named: GenomicsAmiSG-subnet-********
+Key Pair [ my-key-pair ] exists.
+Source AMI ID: ami-093381d21a4fc38d1
+Creating EC2 instance . done
+Getting EC2 instance IP ... [ ***.***.***.*** ]
+Checking EC2 Instance health .................................................... available and healthy
+Creating AMI ........................new AMI [ami-*****************] created.
+Terminating instance ...terminated.
 Resources that were created on your behalf:
 
-    * EC2 Key Pair: genomics-ami-west2
-    * EC2 Security Group: sg-12ab1234
-    * EC2 Instance ID: i-01234abcde2134
-    * EC2 AMI ImageId: ami-123abc123
+    * AWS Region: us-west-2
 
-Take note the returned EC2 AMI ImageId. We will use that for the AWS Batch setup.
+    * IAM Instance Profile: None
 
+    * EC2 Key Pair: my-key-pair
+    * EC2 Security Group: sg-*****************
+    * EC2 Instance ID: i-*****************
+    * EC2 AMI ImageId: ami-*****************    <== NOTE THIS ID
+        * name: genomics-ami-20180907-153312
+        * description: A custom AMI for use with AWS Batch with genomics workflows
 ```
 
-Once the script completes, you have a new AMI ID to give to AWS Batch. Make a note of the AMI ID that was returned, we will need it for future sections. If you chose to not terminate the instance,  you can also SSH into the server to review the services. Be sure to terminate the instance after you are done. Here is an example using the AWS CLI.
+Once the script completes, you have a new AMI ID to give to AWS Batch. Make a note of the AMI ID that was returned, we will need it for future sections.
+
+If you chose to not terminate the instance,  you can also SSH into the server to review the services. Be sure to terminate the instance after you are done. Here is an example using the AWS CLI.
 
 ```bash
-aws ec2 terminate-instances --instance-ids i-01234abcde2134
+aws ec2 terminate-instances --instance-ids i-*****************
 ```

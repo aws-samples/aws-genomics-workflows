@@ -3,6 +3,36 @@
 This script creates a custom AMI based on the ECS optimized AMI
 """
 
+# Copyright 2018 Amazon.com, Inc. or its affiliates.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#
+#  1. Redistributions of source code must retain the above copyright notice,
+#  this list of conditions and the following disclaimer.
+#
+#  2. Redistributions in binary form must reproduce the above copyright
+#  notice, this list of conditions and the following disclaimer in the
+#  documentation and/or other materials provided with the distribution.
+#
+#  3. Neither the name of the copyright holder nor the names of its
+#  contributors may be used to endorse or promote products derived from
+#  this software without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+#  BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+#  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+#  THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+#  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+#  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+#  STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+#  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#  POSSIBILITY OF SUCH DAMAGE.
+
+
 from __future__ import print_function
 import os, sys, stat
 import time
@@ -14,7 +44,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 TIMESTAMP = time.strftime('%Y%m%d-%H%M%S')
-DEFAULT_CLOUD_INIT_FILE = './default-genomics-ami.cloud-init.yaml'
+DEFAULT_USER_DATA_FILE = './default-genomics-ami.cloud-init.yaml'
 
 def _dedent(string):
     """utility function for long strings"""
@@ -54,9 +84,10 @@ parser.add_argument(
     "--key-pair-name", type=str, default="genomics-ami")
 
 parser.add_argument(
-    "--cloud-init-file",
+    "--user-data",
+    dest="user_data_file",
     type=str,
-    default=DEFAULT_CLOUD_INIT_FILE,
+    default=DEFAULT_USER_DATA_FILE,
     help="""
         Cloud Init spec file (yaml format) for provisioning the instance on 
         first boot.  (default: %(default)s)
@@ -89,6 +120,15 @@ parser.add_argument(
     help="EC2 instance security group ID")
 
 parser.add_argument(
+    "--use-instance-profile",
+    action="store_true",
+    help="""
+        Use an IAM instance profile to create the AMI.  Note: this requires
+        privileges to create IAM roles.
+    """
+)
+
+parser.add_argument(
     "--instance-profile-name",
     type=str,
     help="IAM instance profile name to associate with the instance"
@@ -118,6 +158,13 @@ encryption_group.add_argument(
     dest="ebs_encryption",
     action='store_false',
     help="Do not encrypt attached EBS volumes and snapshots"
+)
+
+parser.add_argument(
+    "--no-health-checks",
+    dest="check_health",
+    action="store_false",
+    help="Do not wait for instance health checks to complete"
 )
 
 parser.add_argument(
@@ -169,8 +216,10 @@ termination_group.add_argument(
     help="Do not terminate the instance when complete")
 
 parser.set_defaults(
+    use_instance_profile=False,
     ebs_encryption=True,
     terminate_instance=True,
+    check_health=True,
     create_ami=True,
     iam_cleanup=False
 )
@@ -197,10 +246,12 @@ else:
     vpc = None
     for i in ec2.vpcs.filter(Filters=[{"Name": "isDefault","Values": ['true']}]):
         vpc = i
+    
     if not vpc:
         print("No default VPC found. You must provide *both* VPC and Subnet IDs that are able to access public IP domains on CLI")
         parser.print_usage()
         exit()
+    
     else:
         vpc_id = vpc.id
         subnet = [x for x in vpc.subnets.all()][0]
@@ -216,7 +267,7 @@ if security_group_id is not None:
     security_group.reload()
 else:
     sg_name = "GenomicsAmiSG-" + subnet_id
-    print("Getting the security group from name", sg_name)
+    print("Getting security group named:", sg_name)
     security_group=None
     try:
         security_groups = [x for x in ec2.security_groups.filter(Filters=[{'Name': 'group-name', "Values": [sg_name]}])]
@@ -251,70 +302,75 @@ except Exception as e:
     with open(kp_fname, 'w') as pem:
         pem.write(key_pair.key_material)
     
-    os.lchmod(kp_fname, stat.S_IRUSR | stat.S_IWUSR)
+    os.chmod(kp_fname, stat.S_IRUSR | stat.S_IWUSR)
     print("Key Pair PEM file written to ", kp_fname)
 
 
-# IAM Role
-# need to add the following policy to the instance created to avoid ecs-agent errors
-# arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
-iam = session.client('iam')
-
-if args.instance_profile_name:
-    IAM_INSTANCE_PROFILE_NAME = args.instance_profile_name
+if not args.use_instance_profile:
+    instance_profile = None
+    IAM_INSTANCE_PROFILE_NAME = None
 
 else:
-    IAM_PREFIX = 'GenomicsAMICreation'
-    IAM_ROLE_NAME = IAM_PREFIX + 'Role_' + TIMESTAMP
-    IAM_INSTANCE_PROFILE_NAME = IAM_ROLE_NAME
-    
-    print(
-        'Creating IAM role and instance profile: {instance_profile} '.format(
-            instance_profile=IAM_INSTANCE_PROFILE_NAME
-        ),
-        end='')
-    
-    iam.create_role(
-        RoleName=IAM_ROLE_NAME,
-        Description='Role used to create a custom AMI for genomics workloads',
-        AssumeRolePolicyDocument=_dedent(
-            """
-            {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Action": "sts:AssumeRole",
-                        "Effect": "Allow",
-                        "Principal": {
-                            "Service": "ec2.amazonaws.com"
+    # IAM Role
+    # need to add the following policy to the instance created to avoid ecs-agent errors
+    # arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+    iam = session.client('iam')
+
+    if args.instance_profile_name:
+        IAM_INSTANCE_PROFILE_NAME = args.instance_profile_name
+
+    else:
+        IAM_PREFIX = 'GenomicsAMICreation'
+        IAM_ROLE_NAME = IAM_PREFIX + 'Role_' + TIMESTAMP
+        IAM_INSTANCE_PROFILE_NAME = IAM_ROLE_NAME
+        
+        print(
+            'Creating IAM role and instance profile: {instance_profile} '.format(
+                instance_profile=IAM_INSTANCE_PROFILE_NAME
+            ),
+            end='')
+        
+        iam.create_role(
+            RoleName=IAM_ROLE_NAME,
+            Description='Role used to create a custom AMI for genomics workloads',
+            AssumeRolePolicyDocument=_dedent(
+                """
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Action": "sts:AssumeRole",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "ec2.amazonaws.com"
+                            }
                         }
-                    }
-                ]
-            }
-            """
+                    ]
+                }
+                """
+            )
         )
-    )
-    print('.', end='')
-    iam.attach_role_policy(
-        RoleName=IAM_ROLE_NAME,
-        PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role'
-    )
-    print('.', end='')
-    iam.create_instance_profile(
+        print('.', end='')
+        iam.attach_role_policy(
+            RoleName=IAM_ROLE_NAME,
+            PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role'
+        )
+        print('.', end='')
+        iam.create_instance_profile(
+            InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
+        )
+        print('.', end='')
+        iam.add_role_to_instance_profile(
+            InstanceProfileName=IAM_INSTANCE_PROFILE_NAME,
+            RoleName=IAM_ROLE_NAME
+        )
+        print('.', end='')
+        print(' done')
+
+
+    instance_profile = iam.get_instance_profile(
         InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
-    )
-    print('.', end='')
-    iam.add_role_to_instance_profile(
-        InstanceProfileName=IAM_INSTANCE_PROFILE_NAME,
-        RoleName=IAM_ROLE_NAME
-    )
-    print('.', end='')
-    print(' done')
-
-
-instance_profile = iam.get_instance_profile(
-    InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
-    )['InstanceProfile']
+        )['InstanceProfile']
 
 if args.src_ami_id:
     ecs_ami_id = args.src_ami_id
@@ -348,7 +404,8 @@ block_device_mappings.append({
     }
 })
 
-with open(args.cloud_init_file, 'r') as f:
+print('Using user-data file: ', args.user_data_file)
+with open(args.user_data_file, 'r') as f:
     user_data = f.read().format(scratch_mount_point=args.scratch_mount_point)
 
 MAX_CREATION_ATTEMPTS = args.max_instance_creation_attempts
@@ -358,6 +415,10 @@ instances = None
 while not instances and creation_attempts < MAX_CREATION_ATTEMPTS:
     print('.', end='')
     try:
+        iam_instance_profile = {}
+        if instance_profile:
+            iam_instance_profile = {'Arn': instance_profile['Arn']}
+        
         ri_args = dict(
             ImageId=ecs_ami_id,
             BlockDeviceMappings=block_device_mappings,
@@ -371,7 +432,7 @@ while not instances and creation_attempts < MAX_CREATION_ATTEMPTS:
                 "DeleteOnTermination": True,
                 "SubnetId": subnet_id
             }],
-            IamInstanceProfile={'Arn': instance_profile['Arn']},
+            IamInstanceProfile=iam_instance_profile,
             UserData=user_data
         )
 
@@ -405,15 +466,16 @@ print("[", instance_ip, "]")
 
 client = session.client("ec2")
 
-status =  client.describe_instance_status(InstanceIds=[instance_id])
-print("Checking EC2 Instance health ", end="")
-while len(status["InstanceStatuses"]) == 0 or not status["InstanceStatuses"][0]["InstanceStatus"]["Status"] == "ok":
-    print(".",end="")
-    sys.stdout.flush()
-    time.sleep(5)
+if args.check_health:
     status =  client.describe_instance_status(InstanceIds=[instance_id])
+    print("Checking EC2 Instance health ", end="")
+    while len(status["InstanceStatuses"]) == 0 or not status["InstanceStatuses"][0]["InstanceStatus"]["Status"] == "ok":
+        print(".",end="")
+        sys.stdout.flush()
+        time.sleep(5)
+        status =  client.describe_instance_status(InstanceIds=[instance_id])
 
-print(" available and healthy")
+    print(" available and healthy")
 
 
 image_id = None
@@ -453,19 +515,22 @@ if args.terminate_instance:
     instance.reload()
     print("terminated.")
 
-    if args.iam_cleanup and not args.instance_profile_name:
-        iam.remove_role_from_instance_profile(
-            InstanceProfileName=IAM_INSTANCE_PROFILE_NAME,
-            RoleName=IAM_ROLE_NAME
-        )
-        iam.delete_instance_profile(
-            InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
-        )
+    if args.iam_cleanup and args.use_instance_profile:
+        if not args.instance_profile_name:
+            iam.remove_role_from_instance_profile(
+                InstanceProfileName=IAM_INSTANCE_PROFILE_NAME,
+                RoleName=IAM_ROLE_NAME
+            )
+            iam.delete_instance_profile(
+                InstanceProfileName=IAM_INSTANCE_PROFILE_NAME
+            )
 
 
 report =_dedent(
     """
     Resources that were created on your behalf:
+
+        * AWS Region: {region_name}
 
         * IAM Instance Profile: {instance_profile_name}
 
@@ -475,12 +540,12 @@ report =_dedent(
         * EC2 AMI ImageId: {image_id}
             * name: {image_name}
             * description: {image_desc}
-
-    Take note the returned EC2 AMI ImageId. We will use that for the AWS Batch setup.
+    
     """
 )
 
 report_d = dict(
+    region_name=session.region_name,
     instance_profile_name=IAM_INSTANCE_PROFILE_NAME,
     key_pair_name=args.key_pair_name,
     security_group_id=security_group_id,
