@@ -1,3 +1,11 @@
+## Genomics Workflows
+
+Genomics Workflows on AWS
+
+## License Summary
+
+This sample code is made available under a modified MIT license. See the LICENSE file.
+
 #  Deploying reference architecture for the Cromwell workflow management system on AWS
 
 This reference architecture provides a set of YAML templates for deploying AWS resources, such as [AWS Batch](http://aws.amazon.com/batch/), for use with the [Cromwell](http://cromwell.readthedocs.io) workflow management system.
@@ -33,5 +41,3 @@ Once you have a suitable AWS Batch environment for genomics workflows, you can l
 * **[Configure AWS Lambda and AWS Step Functions](./docs/configure-aws-native.md)**
 * **[Configure Cromwell](./docs/configure-cromwell-aws-batch.md)**
 <!-- * **[Configure Nextflow.io](./configure-nextflow-aws-batch.md)** -->
-
- 
