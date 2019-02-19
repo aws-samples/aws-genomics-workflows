@@ -4,22 +4,21 @@ nav:
   - TL;DR: tldr.md
   - Getting Started:
     - Introduction: core-env/introduction.md
-    - Create an S3 bucket: core-env/s3-bucket.md
-  - Job Execution:
+    - Create an S3 bucket: core-env/create-s3-bucket.md
     - Create a custom AMI: core-env/create-custom-ami.md
     - Setup AWS Batch: core-env/configure-aws-batch-start.md
   - Workflow Orchestration:
     - Introduction: orchestration/genomics-workflows-intro.md
     - AWS Step Functions:
-      - Introduction and requirements: orchestration/step-functions/intro-step-functions.md
-      - Creating a job management container: orchestration/step-functions/create-batchjobrunner-container.md
-      # - An example workflow: orchestration/step-functions/create-example-sfl-workflow.md
+      - Overview: orchestration/step-functions/intro-step-functions.md
+      # - Creating a job management container: orchestration/step-functions/create-batchjobrunner-container.md
+      - Examples: orchestration/step-functions/create-example-sfl-workflow.md
     - Cromwell:
       - Overview: orchestration/cromwell/cromwell-aws-batch.md
       - Examples: orchestration/cromwell/cromwell-examples.md
-  # - Nextflow: orchestration/nextflow/nextflow-aws-batch.md
-  - Additional Notes:
-    - Amazon VPC: core-env/notes-vpc.md
+    - Nextflow: 
+      - Overview: orchestration/nextflow/nextflow-aws-batch.md
+      - Examples: orchestration/nextflow/nextflow-examples.md
 
 extra_css: [extra.css]
 theme: 

@@ -1,15 +1,14 @@
-Genomics is a data-heavy workload and requires some modification to the standard AWS Batch processing environment. In particular, we need to scale underlying instance storage that Tasks/Jobs run on top of to meet unpredictable runtime demands.
+# Creating a custom AMI
 
-# Custom AWS Batch compute resources for genomics
+Genomics is a data-heavy workload and requires some modification to the defaults used for batch job processing. In particular, we need to be able to scale the storage used by the instances Tasks/Jobs run on to meet unpredictable runtime demands.
 
-A default AWS Batch environment assumes that the storage available to the [Amazon ECS-Optimized AMI](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html) meets the needs of most customers. Any other needs, such as the large scratch storage requirements noted above, or devices like GPUs, can be handled by providing AWS Batch with a custom [Compute Resource AMI](https://docs.aws.amazon.com/batch/latest/userguide/compute_resource_AMIs.html).
+By default, AWS Batch relies upon the [Amazon ECS-Optimized AMI](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html) as the image used to for instances it launches to run jobs.  What this image provides is sufficient in most cases.  Specialized needs, such as the large storage requirements noted above, require a custom [Compute Resource AMI](https://docs.aws.amazon.com/batch/latest/userguide/compute_resource_AMIs.html).
 
-Genomics is a data-heavy workload and requires some modification to the standard AWS Batch processing environment. In particular, we need the underlying instance storage that tasks ([AWS Batch Jobs](https://docs.aws.amazon.com/batch/latest/userguide/jobs.html)) run on top of to meet unpredictable runtime demands.
+This section provides two methods for creating a customized AMI (based on the ECS-Optimized AMI) that adds an expandable working directory that the Jobs will use to write data.
 
-We have provided a script (see [the next section](#create-a-custom-ami)) that customizes the ECS-Optimized AMI to add a working directory that the Jobs will use to write data. That directory will be monitored by a process that inspects the free space available and adds more EBS volumes and expands the filesystem on the fly, like so:
+That directory will be monitored by a process that inspects the free space available and adds more EBS volumes and expands the filesystem on the fly, like so:
 
 ![Autoscaling EBS storage](images/autoscale-ebs.gif)
-
 
 ## Create a custom AMI
 

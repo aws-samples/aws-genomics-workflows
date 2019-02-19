@@ -1,7 +1,9 @@
+# Cromwell Examples
+
 The following are some example workflows you can use to test Cromwell on AWS.
 The `curl` commands assume that you have access to a Cromwell server via `localhost:8000`.
 
-# Simple Hello World
+## Simple Hello World
 
 This is a single file workflow.  It simply echos "Hello AWS!" to `stdout` and exits.
 
@@ -52,7 +54,7 @@ If the workflow completes successfully, the server will log the following:
 2018-09-21 04:07:42,931 cromwell-system-akka.dispatchers.engine-dispatcher-25 INFO  - WorkflowManagerActor WorkflowActor-7eefeeed-157e-4307-9267-9b4d716874e5 is in a terminal state: WorkflowSucceededState
 ```
 
-# Hello World with inputs
+## Hello World with inputs
 
 This workflow is virtually the same as the single file workflow above, but
 uses an input file to define parameters in the workflow.
@@ -105,7 +107,7 @@ $ curl -X POST "http://localhost:8000/api/workflows/v1" \
     -F "workflowInputs=@hello-aws.json"
 ```
 
-# Using data on S3
+## Using data on S3
 
 This workflow demonstrates how to use data from S3.
 
@@ -185,7 +187,7 @@ If successful the server should log the following:
 2018-09-21 05:04:15,481 cromwell-system-akka.dispatchers.engine-dispatcher-28 INFO  - WorkflowManagerActor WorkflowActor-1774c9a2-12bf-42ea-902d-3dbe2a70a116 is in a terminal state: WorkflowSucceededState
 ```
 
-# Real-world example: HaplotypeCaller
+## Real-world example: HaplotypeCaller
 
 This example demonstrates how to use Cromwell with the AWS backend to run GATK4 
 HaplotypeCaller against public data in S3.  The HaplotypeCaller tool is one of the
@@ -401,11 +403,11 @@ part of the [AWS Open Data Program](https://aws.amazon.com/opendata/).
   "HaplotypeCallerGvcf_GATK4.HaplotypeCaller.mem_size": "10 GB",
   "HaplotypeCallerGvcf_GATK4.MergeGVCFs.mem_size": "30 GB",
 
-  "##_COMMENT8": "DISK SIZE ALLOCATION",
+  "##_COMMENT8": "DISK SIZE ALLOCATION (IGNORED BY AWS BACKEND)",
   "HaplotypeCallerGvcf_GATK4.HaplotypeCaller.disk_size": 100,
   "HaplotypeCallerGvcf_GATK4.MergeGVCFs.disk_size": 100,
 
-  "##_COMMENT9": "PREEMPTION",
+  "##_COMMENT9": "PREEMPTION (IGNORED BY AWS BACKEND)",
   "HaplotypeCallerGvcf_GATK4.HaplotypeCaller.preemptible_tries": 3,
   "HaplotypeCallerGvcf_GATK4.MergeGVCFs.preemptible_tries": 3
 }
