@@ -9,12 +9,15 @@ The documentation is built using mkdocs.
 Install dependencies:
 
 ```bash
-$ pip install -r requirements.txt
+$ conda create --file enviroment.yaml
 ```
+
+This will create a `conda` environment called `mkdocs`
 
 Build the docs:
 
 ```bash
+$ source activate mkdocs
 $ mkdocs build
 ```
 
