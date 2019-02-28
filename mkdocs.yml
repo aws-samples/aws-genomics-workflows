@@ -5,7 +5,7 @@ nav:
   - Getting Started:
     - Introduction: core-env/introduction.md
     - Create an S3 bucket: core-env/create-s3-bucket.md
-    - Create a custom AMI: core-env/create-custom-ami.md
+    - Create a custom compute resources: core-env/create-custom-compute-resources.md
     - Setup AWS Batch: core-env/configure-aws-batch-start.md
   - Workflow Orchestration:
     - Introduction: orchestration/genomics-workflows-intro.md
