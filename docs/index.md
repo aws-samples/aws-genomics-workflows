@@ -13,7 +13,7 @@ Here you will learn how to:
 3. Orchestrate individual jobs into analysis workflows using native AWS services like [AWS Step Functions](https://aws.amazon.com/step-functions) and 3rd party workflow engines
 
 If you're impatient and want to get something up and running immediately, head 
-straigth to the [TL;DR](tldr) section.  Otherwise, continue on for the full details.
+straight to the [TL;DR](tldr) section.  Otherwise, continue on for the full details.
 
 ## Prerequisites
 
