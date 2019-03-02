@@ -5,20 +5,23 @@ nav:
   - Getting Started:
     - Introduction: core-env/introduction.md
     - Create an S3 bucket: core-env/create-s3-bucket.md
-    - Create a custom compute resources: core-env/create-custom-compute-resources.md
-    - Setup AWS Batch: core-env/configure-aws-batch-start.md
+    - Create custom compute resources: core-env/create-custom-compute-resources.md
+    - Create IAM roles: core-env/create-iam-roles.md
+    - Setup AWS Batch: core-env/setup-aws-batch.md
+  - Containerized Tooling:
+    - Introduction: containers/container-introduction.md
+    - Examples: containers/container-examples.md
   - Workflow Orchestration:
-    - Introduction: orchestration/genomics-workflows-intro.md
+    - Introduction: orchestration/orchestration-intro.md
     - AWS Step Functions:
-      - Overview: orchestration/step-functions/intro-step-functions.md
-      # - Creating a job management container: orchestration/step-functions/create-batchjobrunner-container.md
-      - Examples: orchestration/step-functions/create-example-sfl-workflow.md
+      - Overview: orchestration/step-functions/step-functions-overview.md
+      - Examples: orchestration/step-functions/step-functions-examples.md
     - Cromwell:
-      - Overview: orchestration/cromwell/cromwell-aws-batch.md
+      - Overview: orchestration/cromwell/cromwell-overview.md
       - Examples: orchestration/cromwell/cromwell-examples.md
-    - Nextflow: 
-      - Overview: orchestration/nextflow/nextflow-aws-batch.md
-      - Examples: orchestration/nextflow/nextflow-examples.md
+    # - Nextflow: 
+    #   - Overview: orchestration/nextflow/nextflow-overview.md
+    #   - Examples: orchestration/nextflow/nextflow-examples.md
 
 extra_css: [extra.css]
 theme: 
@@ -33,10 +36,9 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_generator: !!python/name:pymdownx.emoji.to_png
 
-# repo_url: https://github.com/aws-samples/aws-batch-genomics/
-# repo_name: Genomics Workflows on AWS
-# site_author: Angel Pizarro <pizarroa@amazon.com>
-copyright: 2018 Amazon Web Services
+repo_url: https://github.com/aws-samples/aws-genomics-workflows/
+repo_name: Contribute
+copyright: 2019 Amazon Web Services
 
 plugins:
 - search
