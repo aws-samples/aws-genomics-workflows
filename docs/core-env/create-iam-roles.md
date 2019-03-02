@@ -13,8 +13,38 @@ Below are IAM roles that your job execution environment in AWS Batch will use:
     
     (required)
     Role that defines service permissions for EC2 instances launched by AWS Batch.
-    For example, this is used to allow access to specific S3 buckets.
+    For example, this is used to specify policies that allow access to specific S3 buckets and modify storage on the intance (shown below).
     [(Learn More)](https://docs.aws.amazon.com/batch/latest/userguide/instance_IAM_role.html)
+
+```yaml
+
+# this inline policy specifies access to a single S3 bucket
+- PolicyName: GenomicsEnv-S3Bucket-Access-us-east-1
+    PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+            Effect: Allow
+            Resource:
+                - "arn:aws:s3:::<bucket_name>"
+                - "arn:aws:s3:::<bucket_name>/*"
+            Action:
+                - "s3:*"
+
+# this inline policy allows the job instance to attach EBS volumes to create
+# extra scratch space for genomic data
+- PolicyName: GenomicsEnv-Autoscale-EBS-us-east-1
+    PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+            Effect: Allow
+            Action:
+            - "ec2:createVolume"
+            - "ec2:attachVolume"
+            - "ec2:deleteVolume"
+            - "ec2:modifyInstanceAttribute"
+            - "ec2:describeVolumes"
+            Resource: "*"
+```
 
 * Batch SpotFleet Role:
     
