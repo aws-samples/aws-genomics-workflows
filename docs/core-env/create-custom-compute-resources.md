@@ -60,7 +60,7 @@ specify a `/dev/sdc` volume in the Launch Template.
     The mount point is specific to what orchestration method / engine you intend
     to use.  `/scratch` is considered the default for AWS Step Functions.  If you
     are using a 3rd party workflow orchestration engine this mount point will need
-    to be adjusted to fit the engines expectations.
+    to be adjusted to fit that engine's expectations.
 
 Once your Launch Template is created, you can reference it when you setup resources
 in AWS Batch to ensure that jobs run therein have your customizations available
@@ -70,13 +70,13 @@ to them.
 
 A more robust, but slightly more involved method for customizing an instance is
 to create a new AMI based on the ECS Optimized AMI.  This is good if you have 
-a lot of customization to do - lots of software to install and or preloading
-large datasets that will be needed by jobs.
+a lot of customization to do - lots of software to install and or need large 
+datasets preloaded that will be needed by all your jobs.
 
 You can learn more about how to [create your own AMIs in the EC2 userguide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html).
 
 For a "single-click" solution for genomics workflows we have provided a 
-CloudFormation template that performs the tasks neded via CloudFormation's UI.
+CloudFormation template that automates the tasks neded.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
