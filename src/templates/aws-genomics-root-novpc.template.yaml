@@ -1,6 +1,9 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Scalable genomics workflows environment
+Description: >-
+  (WWPS-GLS-WF-ROOT) Scalable genomics workflows environment
+
+
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -8,10 +11,11 @@ Metadata:
           default: "Genomics Environment for AWS Batch Parameters"
         Parameters:
           - S3BucketName
+          - ExistingBucket
+          - WorkflowOrchestrator
           - VpcId
           - SubnetIds
           - KeyPairName
-          - CustomAmiId
           - SpotBidPercentage
           - DefaultCEMinvCpus
           - DefaultCEMaxvCpus
@@ -21,14 +25,16 @@ Metadata:
     ParameterLabels:
       S3BucketName:
         default: S3 Bucket Name
+      ExistingBucket:
+        default: Existing Bucket?
+      WorkflowOrchestrator:
+        default: Workflow Orchestrator
       VpcId:
         default: VPC ID
       SubnetIds:
         default: VPC Subnet IDs
       KeyPairName:
         default: EC2 Key Pair Name
-      CustomAmiId:
-        default: Custom AMI ID
       SpotBidPercentage:
         default: Spot Bid %
       DefaultCEMinvCpus:
@@ -39,8 +45,7 @@ Metadata:
         default: High Priority Min vCPU
       HighPriorityCEMaxvCpus:
         default: High Priority Max vCPU
-      DefaultRetryNumber:
-        default: Job Retry Attempts
+
 
 Parameters:
   VpcId:
@@ -52,12 +57,23 @@ Parameters:
   S3BucketName:
     Description: A S3 bucket name for storing analysis results
     Type: String
+  ExistingBucket:
+    Description: Does this bucket already exist?
+    Type: String
+    AllowedValues:
+      - Yes
+      - No
+    Default: No
+  WorkflowOrchestrator:
+    Description: The workflow orchestration engine you will use
+    Type: String
+    AllowedValues:
+      - step-functions
+      - cromwell
+    Default: step-functions
   KeyPairName:
     Description: Key Pair name
     Type: AWS::EC2::KeyPair::KeyName
-  CustomAmiId:
-    Description: The AMI ID for the custom AWS Batch Compute Resource AMI.
-    Type: AWS::EC2::Image::Id
   SpotBidPercentage:
     Description: The percent of on-demand pricing for max bid for Spot intances
     Type: Number
@@ -78,35 +94,44 @@ Parameters:
     Description: The maximum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
     Default: 100
-  DefaultRetryNumber:
-    Description: The default number of Job retry attempts
-    Type: Number
-    Default: 1
+
+
 Resources:
   S3Stack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: https://aws-genomics-workflows.s3.amazonaws.com/templates/aws-genomics-s3.template.yaml
-      TimeoutInMinutes: '5'
+      TimeoutInMinutes: 5
       Parameters:
         S3BucketName: !Ref S3BucketName
+        ExistingBucket: !Ref ExistingBucket
+  
   IamStack:
     Type: AWS::CloudFormation::Stack
     DependsOn: S3Stack
     Properties:
       TemplateURL: https://aws-genomics-workflows.s3.amazonaws.com/templates/aws-genomics-iam.template.yaml
-      TimeoutInMinutes: '10'
+      TimeoutInMinutes: 10
       Parameters:
         S3BucketName: !Ref S3BucketName
+  
+  LaunchTplStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://aws-genomics-workflows.s3.amazonaws.com/templates/aws-genomics-launch-template.template.yaml
+      Parameters:
+        WorkflowOrchestrator: !Ref WorkflowOrchestrator
+  
   BatchStack:
     Type: AWS::CloudFormation::Stack
     DependsOn:
       - IamStack
+      - LaunchTplStack
     Properties:
       TemplateURL: https://aws-genomics-workflows.s3.amazonaws.com/templates/aws-genomics-batch.template.yaml
-      TimeoutInMinutes: "10"
+      TimeoutInMinutes: 10
       Parameters:
-        CustomAmiId: !Ref CustomAmiId
+        LaunchTemplateId: !Sub ${LaunchTplStack.Outputs.LaunchTemplateId}
         Ec2KeyPairName: !Ref KeyPairName
         VpcId: !Ref VpcId
         SubnetIds: !Join [",", !Ref SubnetIds ]
@@ -115,10 +140,11 @@ Resources:
         DefaultCEMaxvCpus: !Ref DefaultCEMaxvCpus
         HighPriorityCEMinvCpus: !Ref HighPriorityCEMinvCpus
         HighPriorityCEMaxvCpus: !Ref HighPriorityCEMaxvCpus
-        DefaultRetryNumber: !Ref DefaultRetryNumber
         BatchServiceRoleArn: !Sub ${IamStack.Outputs.BatchServiceRoleArn}
         Ec2InstanceProfileArn: !Sub ${IamStack.Outputs.BatchInstanceProfileArn}
         SpotFleetRoleArn: !Sub ${IamStack.Outputs.BatchSpotFleetRoleArn}
+
+
 Outputs:
   GenomicsEnvS3Bucket:
     Value: !Sub ${S3Stack.Outputs.BucketName}

@@ -1,34 +1,44 @@
-site_name: AWS for Genomics Workflows
-pages:
-  - Home: index.md
-  - Setting up AWS Batch:
-    - Getting Started: aws-batch/configure-aws-batch-start.md
-    - Creating a custom AMI: aws-batch/create-custom-ami.md
-    - Configuring AWS Batch with CloudFormation:
-      - Launch the CloudFormation stacks: aws-batch/configure-aws-batch-cfn.md
-      - Notes on Amazon VPC: aws-batch/notes-vpc.md
-  - Setting up a genomics workflow environment:
-    - Introduction: genomics-workflows-intro.md
+site_name: Genomics Workflows on AWS
+nav:
+  - Overview: index.md
+  - TL;DR: tldr.md
+  - Getting Started:
+    - Introduction: core-env/introduction.md
+    - Create an S3 bucket: core-env/create-s3-bucket.md
+    - Create custom compute resources: core-env/create-custom-compute-resources.md
+    - Create IAM roles: core-env/create-iam-roles.md
+    - Setup AWS Batch: core-env/setup-aws-batch.md
+  # - Containerized Tooling:
+  #   - Introduction: containers/container-introduction.md
+  #   - Examples: containers/container-examples.md
+  - Workflow Orchestration:
+    - Introduction: orchestration/orchestration-intro.md
     - AWS Step Functions:
-      - Introduction and requirements: step-functions/intro-step-functions.md
-      - Creating a job management container: step-functions/create-batchjobrunner-container.md
-      # - An example workflow: step-functions/create-example-sfl-workflow.md
+      - Overview: orchestration/step-functions/step-functions-overview.md
+      # - Examples: orchestration/step-functions/step-functions-examples.md
     - Cromwell:
-      - Overview: cromwell/cromwell-aws-batch.md
-      - Examples: cromwell/cromwell-examples.md
-    # - Nextflow: nextflow/nextflow-aws-batch.md
+      - Overview: orchestration/cromwell/cromwell-overview.md
+      - Examples: orchestration/cromwell/cromwell-examples.md
+    # - Nextflow: 
+    #   - Overview: orchestration/nextflow/nextflow-overview.md
+    #   - Examples: orchestration/nextflow/nextflow-examples.md
+
 extra_css: [extra.css]
-theme: readthedocs
+theme: 
+  name: material
+  logo: 'images/AWS_logo_RGB_REV.svg'
+  palette:
+    primary: blue grey
+    accent: deep orange
 markdown_extensions:
   - fontawesome_markdown
   - admonition
   - pymdownx.emoji:
       emoji_generator: !!python/name:pymdownx.emoji.to_png
 
-# repo_url: https://github.com/aws-samples/aws-batch-genomics/
-# repo_name: Genomics Workflows on AWS
-# site_author: Angel Pizarro <pizarroa@amazon.com>
-copyright: 2018 Amazon Web Services
+repo_url: https://github.com/aws-samples/aws-genomics-workflows/
+repo_name: Contribute
+copyright: 2019 Amazon Web Services
 
 plugins:
 - search

@@ -1,5 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Creates a custom AMI to be used with AWS Batch
+Description: >-
+  (WWPS-GLS-WF-CROMWELL-AIO) Creates the complete set of resources needed to run
+  genomics workflows using Cromwell on AWS Batch
 
 Mappings:
   TagMap:
@@ -20,6 +22,7 @@ Metadata:
           default: "Required"
         Parameters:
           - S3BucketName
+          - ExistingBucket
           - KeyPairName
           - AvailabilityZones
       - Label:
@@ -30,7 +33,6 @@ Metadata:
           - DefaultCEMaxvCpus
           - HighPriorityCEMinvCpus
           - HighPriorityCEMaxvCpus
-          - DefaultRetryNumber
       - Label:
           default: "Cromwell Server"
         Parameters:
@@ -42,6 +44,8 @@ Metadata:
     ParameterLabels:
       S3BucketName:
         default: S3 Bucket Name
+      ExistingBucket:
+        default: Existing Bucket?
       KeyPairName:
         default: EC2 Key Pair Name
       SpotBidPercentage:
@@ -54,8 +58,6 @@ Metadata:
         default: High Priority Min vCPU
       HighPriorityCEMaxvCpus:
         default: High Priority Max vCPU
-      DefaultRetryNumber:
-        default: Job Retry Attempts
 
 # Parameters
 Parameters:    
@@ -65,6 +67,13 @@ Parameters:
   S3BucketName:
     Description: A S3 bucket name for storing analysis results
     Type: String
+  ExistingBucket:
+    Description: Does this bucket already exist?
+    Type: String
+    AllowedValues:
+      - Yes
+      - No
+    Default: No
   KeyPairName:
     Description: Key Pair name
     Type: AWS::EC2::KeyPair::KeyName
@@ -88,10 +97,6 @@ Parameters:
     Description: The maximum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
     Default: 100
-  DefaultRetryNumber:
-    Description: The default number of Job retry attempts
-    Type: Number
-    Default: 1
   InstanceType:
     Description: >-
       EC2 instance type.
@@ -138,21 +143,6 @@ Resources:
         NumberOfAZs: "2"
         KeyPairName: !Ref KeyPairName
       Tags: !FindInMap ["TagMap", "default", "tags"]
-  
-  CustomAMIStack:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL:  https://s3.amazonaws.com/aws-genomics-workflows/templates/aws-genomics-ami.template.yaml
-      Parameters:
-        VpcId: !GetAtt 'VpcStack.Outputs.VPCID'
-        PublicSubnetID: !GetAtt 'VpcStack.Outputs.PublicSubnet1ID'
-        ScratchMountPoint: /cromwell_root
-        ScratchVolumeSize: 20
-        UseEncryption: Yes
-        KeyName: !Ref 'KeyPairName'
-        AMIType: cromwell
-        AMIName: !Join ["-", ["cromwell-genomics-ami", !Select [2, !Split ["/", !Ref "AWS::StackId" ]]]]
-      Tags: !FindInMap ["TagMap", "default", "tags"]
 
   GenomicsWorkflowStack:
     Type: AWS::CloudFormation::Stack
@@ -162,14 +152,14 @@ Resources:
         VpcId: !GetAtt 'VpcStack.Outputs.VPCID'
         SubnetIds: !Sub "${VpcStack.Outputs.PrivateSubnet1AID}, ${VpcStack.Outputs.PrivateSubnet2AID}"
         S3BucketName: !Ref S3BucketName
+        ExistingBucket: !Ref ExistingBucket
         KeyPairName: !Ref 'KeyPairName'
-        CustomAmiId: !GetAtt 'CustomAMIStack.Outputs.AMI'
+        WorkflowOrchestrator: cromwell
         SpotBidPercentage: !Ref 'SpotBidPercentage'
         DefaultCEMinvCpus: !Ref 'DefaultCEMinvCpus'
         DefaultCEMaxvCpus: !Ref 'DefaultCEMaxvCpus'
         HighPriorityCEMinvCpus: !Ref 'HighPriorityCEMinvCpus'
         HighPriorityCEMaxvCpus: !Ref 'HighPriorityCEMaxvCpus'
-        DefaultRetryNumber: !Ref 'DefaultRetryNumber'
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
   CromwellServerStack:
@@ -200,9 +190,6 @@ Outputs:
       The VPC created for your Cromwell stack. Use this ID if you need to launch
       additional Cromwell servers.
     Value: !GetAtt 'VpcStack.Outputs.VPCID'
-  CustomAMI:
-    Description: The custom genomics AMI created.
-    Value: !GetAtt 'CustomAMIStack.Outputs.AMI'
   S3Bucket:
     Value: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvS3Bucket'
     Description: >-

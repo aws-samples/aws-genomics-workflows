@@ -1,5 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Creates a set of IAM resources to use with AWS Batch scalable genomics environment.
+Description: >-
+  (WWPS-GLS-WF-IAM) Creates IAM roles to use with AWS Batch scalable genomics 
+  workflow environment.
 Parameters:
     S3BucketName:
       Type: String
