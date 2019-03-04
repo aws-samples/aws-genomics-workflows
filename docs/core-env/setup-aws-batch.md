@@ -55,4 +55,4 @@ The CloudFormation template below will create all of the above.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("AWS Batch", "GenomicsWorkflow-Batch", "aws-genomics-batch.template.yaml", "Creates AWS Batch Job Queues and Compute Environments. You will need to provide the details on IAM roles and instance profiles, and the IDs for a VPC and subnets.") }}
+{{ cfn_stack_row("AWS Batch", "GenomicsWorkflow-Batch", "aws-genomics-batch.template.yaml", "Creates AWS Batch Job Queues and Compute Environments. You will need to provide the details for your Launch Template ID, IAM roles and instance profiles, and the IDs for a VPC and subnets.") }}
