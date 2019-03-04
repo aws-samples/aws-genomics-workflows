@@ -5,12 +5,15 @@ orchestration of complete workflows.
 
 In order to process data, we will need to handle the cases for serial and parallel task execution, and retry logic when a task fails.
 
-The logic for workflows should live outside of the code for any individual task. There are a couple of systems that researchers can use to define and execute repeatable data analysis pipelines on AWS Batch:
+The logic for workflows should live outside of the code for any individual task. There are a couple of options that researchers can use to define and execute repeatable data analysis pipelines on AWS Batch:
 
-1. [AWS Step Functions](./step-functions/intro-step-functions.md), a native AWS service for workflow orchestration.
+1. [AWS Step Functions](./step-functions/step-functions-overview.md), a native AWS service for workflow orchestration.
 
-2. [Cromwell](./cromwell/cromwell-aws-batch.md), a workflow management system from the [Broad Institute](https://www.broadinstitute.org/)
+2. 3rd party alternatives:
 
-<!-- 3. [Nextflow](./nextflow/nextflow-aws-batch.md), another workflow management system well used by the bioinformatics community. -->
+    * [Cromwell](./cromwell/cromwell-overview.md), a workflow execution system
+    from the [Broad Institute](https://www.broadinstitute.org/)
 
-Follow one of the links above to configure a full genomics workflows computing environment on AWS.
+!!! help
+    There are many more 3rd party alternatives.  We are actively seeking out
+    help to document them here!
