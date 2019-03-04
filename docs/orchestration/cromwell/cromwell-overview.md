@@ -13,7 +13,7 @@ details later, use the CloudFormation template below.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("Cromwell All-in-One", "Cromwell", "cromwell/cromwell-aio.template.yaml", "Create all resources needed to run Cromwell on AWS: a Custom AMI, S3 Bucket, AWS Batch Environment, and Cromwell Server Instance") }}
+{{ cfn_stack_row("Cromwell All-in-One", "Cromwell", "cromwell/cromwell-aio.template.yaml", "Create all resources needed to run Cromwell on AWS: an S3 Bucket, AWS Batch Environment, and Cromwell Server Instance") }}
 
 When the above stack is complete, navigate to the `HostName` that is generated
 in the outputs to access Cromwell via its SwaggerUI.
@@ -21,44 +21,31 @@ in the outputs to access Cromwell via its SwaggerUI.
 ![cromwell on aws](images/cromwell-all-in-one.png)
 
 
-## Prerequisites
+## Requirements
 
 To get started using Cromwell on AWS you'll need the following setup in your AWS
 account:
 
-* Custom Genomics AMI with Cromwell Additions
+* The core set of resources (S3 Bucket, IAM Roles, AWS Batch) described in the [Getting Started](../../../core-env/introduction/) section.
+* Custom Compute Resource (Launch Template or AMI) with Cromwell Additions
 * EC2 Instance as a Cromwell Server
-* S3 Bucket for inputs and outputs
-* IAM Roles for Batch job execution
-* AWS Batch
-    * Compute Environments
-    * Job Queues
 
-The documentation and CloudFormation templates on this site will help you get
+The documentation and CloudFormation templates here will help you get
 these setup.
 
-## Custom AMI with Cromwell Additions
+!!! note
+    For a Cromwell server that will run multiple workflows, or workflows with many
+    steps (e.g. ones with large scatter steps), it is recommended to setup a
+    database to use to store workflow metadata.
 
-Follow the [instructions on creating a custom AMI](/aws-batch/create-custom-ami/)
-with the following changes:
+## Custom Compute Resource with Cromwell Additions
+
+Follow the [instructions on creating a custom compute resources](/core-env/create-custom-compute-resources/) with the following changes:
 
 * specify the scratch mount point as `/cromwell_root`
-* make sure that cromwell additions are included in the ami
-    * select "cromwell" as the AMI type if using the CloudFormation template
-    * use `cromwell-genomics-ami.cloud-init.yaml` as `user-data` with the python script
+* make sure that cromwell additions are included in the resource by selecting "cromwell" as the resource type.
 
-Once complete, you will have a new AMI ID to give to AWS Batch to setup compute environments.
-
-## Batch Infrastructure for Genomics
-
-To create the remaining pieces of infrastructure:
-
-* S3 Bucket
-* IAM Roles
-* Batch Compute Environments
-* Batch Queues
-
-use the [CloudFormation templates](/aws-batch/configure-aws-batch-cfn) provided in the previous sections.
+Once complete, you will have a resource ID to give to AWS Batch to setup compute environments.
 
 ## Cromwell Server
 
@@ -111,6 +98,7 @@ The permissions above can be added to the instance via policies in an [instance 
 Example policies are shown below:
 
 ### Access to AWS Batch
+
 Lets the Cromwell server instance submit and get info about AWS Batch jobs.
 
 ```json
@@ -139,6 +127,7 @@ Lets the Cromwell server instance submit and get info about AWS Batch jobs.
 ```
 
 ### Access to S3
+
 Lets the Cromwell server instance read and write data from/to S3 - i.e. the 
 return codes (written to `rc.txt` files) for each job.
 
@@ -160,7 +149,7 @@ return codes (written to `rc.txt` files) for each job.
 ```
 
 
-### Configuring Cromwell on AWS Batch
+### Configuring Cromwell to use AWS Batch
 
 The following is an example `*.conf` file to use the `AWSBackend`.
 
@@ -173,6 +162,8 @@ webservice {
     port = 8000
 }
 
+// this stanza controls how fast Cromwell submits jobs to AWS Batch
+// and avoids running into API request limits
 system {
     job-rate-control {
         jobs = 1
@@ -180,12 +171,18 @@ system {
     }
 }
 
+// this stanza defines how your server will authenticate with your AWS
+// account.  it is recommended to use the "default-credential-provider" scheme.
 aws {
   application-name = "cromwell"
   auths = [{
       name = "default"
       scheme = "default"
   }]
+
+  // you must provide your operating region here - e.g. "us-east-1"
+  // this should be the same region your S3 bucket and AWS Batch resources
+  // are created in
   region = "<your region>"
 }
 
@@ -196,6 +193,7 @@ engine {
 }
 
 backend {
+  // this configures the AWS Batch Backend for Cromwell
   default = "AWSBATCH"
   providers {
     AWSBATCH {

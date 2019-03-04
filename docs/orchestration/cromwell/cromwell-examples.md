@@ -193,7 +193,7 @@ This example demonstrates how to use Cromwell with the AWS backend to run GATK4
 HaplotypeCaller against public data in S3.  The HaplotypeCaller tool is one of the
 primary steps in GATK best practices pipeline.
 
-The source for thse files can be found in [Cromwell's test suite on GitHub](https://github.com/broadinstitute/cromwell/tree/develop/centaur/src/main/resources/integrationTestCases/germline/haplotype-caller-workflow).
+The source for these files can be found in [Cromwell's test suite on GitHub](https://github.com/broadinstitute/cromwell/tree/develop/centaur/src/main/resources/integrationTestCases/germline/haplotype-caller-workflow).
 
 **Worflow Definition**
 
@@ -402,14 +402,6 @@ part of the [AWS Open Data Program](https://aws.amazon.com/opendata/).
   "##_COMMENT7": "MEMORY ALLOCATION",
   "HaplotypeCallerGvcf_GATK4.HaplotypeCaller.mem_size": "10 GB",
   "HaplotypeCallerGvcf_GATK4.MergeGVCFs.mem_size": "30 GB",
-
-  "##_COMMENT8": "DISK SIZE ALLOCATION (IGNORED BY AWS BACKEND)",
-  "HaplotypeCallerGvcf_GATK4.HaplotypeCaller.disk_size": 100,
-  "HaplotypeCallerGvcf_GATK4.MergeGVCFs.disk_size": 100,
-
-  "##_COMMENT9": "PREEMPTION (IGNORED BY AWS BACKEND)",
-  "HaplotypeCallerGvcf_GATK4.HaplotypeCaller.preemptible_tries": 3,
-  "HaplotypeCallerGvcf_GATK4.MergeGVCFs.preemptible_tries": 3
 }
 ```
 
