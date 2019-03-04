@@ -38,7 +38,7 @@ AWS has many services that can be used for genomics.  Here, we will build core a
 !!! note
     If you are using a institutional account, it is likely that you do not have administrative privileges, i.e. the IAM [AdministratorAccess](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-vs-inline.html) managed policy is not attached to your IAM User or Role, and you won't be able to attach it yourself.
 
-    If this is the case, you will need to work with your account administrator to get things set up for you. Refer them to this guide, and have them provide you with an [AWS Batch Job Queue ARN](https://docs.aws.amazon.com/batch/latest/userguide/job_queues.html), and a [Amazon S3 Bucket](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html) that you can write results to.
+    If this is the case, you will need to work with your account administrator to get things set up for you. Refer them to this guide, and have them provide you with an [AWS Batch Job Queue ARN](https://docs.aws.amazon.com/batch/latest/userguide/job_queues.html), and an [Amazon S3 Bucket](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html) that you can write results to.
 
 ## Contribution
 
