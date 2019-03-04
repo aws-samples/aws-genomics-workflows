@@ -1,13 +1,55 @@
 .launch-button {
-    color: mediumblue;
-    background-color: orange;
+    display: block;
+
+    color: white !important;
+    background-color: #ec7211;
     
-    border-radius: 1.5ex 3ex 3ex 1.5ex;
-    border: 2px solid navy;
+    border-radius: .25ex .25ex .25ex .25ex;
+    border: 1px solid #eb5f07;
     
     text-align: center;
     text-decoration: none;
-        
-    padding: 0.5ex 2ex;
-    width: 2em;
+    
+    /* padding: 0.5ex 2ex; */
+    width: 64px;
+
+    line-height: 0.5;
 }
+
+.launch-button:hover, .launch-button:visited:hover {
+    background-color: #eb5f07;
+    color: white !important;
+}
+
+.launch-button:visited {
+    color: white !important;
+}
+
+.material-icons {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;  /* Preferred icon size */
+    display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+  
+    /* Support for all WebKit browsers. */
+    -webkit-font-smoothing: antialiased;
+    /* Support for Safari and Chrome. */
+    text-rendering: optimizeLegibility;
+  
+    /* Support for Firefox. */
+    -moz-osx-font-smoothing: grayscale;
+  
+    /* Support for IE. */
+    font-feature-settings: 'liga';
+  }
+
+  .md-header, .md-footer, .md-footer-nav, .md-footer-meta {
+    background-color: #232f3e !important;
+  }

@@ -1,0 +1,118 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  (WWPS-GLS-WF-LT) Creates an EC2 Launch Template for AWS Batch based 
+  genomics workflows
+
+Mappings:
+  TagMap:
+    default:
+      architecture: "genomics-workflows"
+      solution: "default"
+      tags:
+        - Key: "architecture"
+          Value: "genomics-workflows"
+        - Key: "solution"
+          Value: "default"
+
+Parameters:
+  LaunchTemplateNamePrefix:
+    Type: String
+    Default: genomics-workflow
+    Description: Name of the launch template. This will be made unique using the Stack ID.
+  ScratchVolumeSize:
+    Type: Number
+    Default: 20
+    Description: The initial size of the scratch volume (GB)
+  WorkflowOrchestrator:
+    Type: String
+    Description: The workflow orchestration engine you will use
+    Default: step-functions
+    AllowedValues:
+      - step-functions
+      - cromwell
+  ScratchMountPoint:
+    Type: String
+    Default: /scratch
+    Description: >-
+      Path for the scratch mount point in the instance. If your workflow 
+      orchestrator is "Cromwell" the value here is overridden with "/cromwell_root"
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Required"
+        Parameters:
+          - WorkflowOrchestrator
+          - LaunchTemplateNamePrefix
+      - Label:
+          default: "Optional"
+        Parameters:
+          - ScratchMountPoint
+          - ScratchVolumeSize
+
+Conditions:
+  UseCromwell: !Equals [!Ref WorkflowOrchestrator, cromwell]
+
+Resources:
+  EC2LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: !Join ["-", [!Ref LaunchTemplateNamePrefix, !Select [2, !Split ["/", !Ref "AWS::StackId" ]]]]
+      LaunchTemplateData:
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+            - Key: architecture
+              Value: !FindInMap ["TagMap", "default", "architecture"]
+            - Key: solution
+              Value: !Ref WorkflowOrchestrator
+        BlockDeviceMappings:
+          - Ebs:
+              Encrypted: True
+              DeleteOnTermination: True
+              VolumeSize: !Ref ScratchVolumeSize
+              VolumeType: gp2 
+            DeviceName: /dev/sdc
+        UserData:
+          Fn::Base64: !Sub
+            - |
+              MIME-Version: 1.0
+              Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+
+              --==BOUNDARY==
+              Content-Type: text/cloud-config; charset="us-ascii"
+
+              packages:
+              - jq
+              - btrfs-progs
+              - python27-pip
+              - sed
+              - wget
+
+              runcmd:
+              - pip install -U awscli boto3
+              - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
+              - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh ${ScratchMountPoint} /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
+              ${ECSAdditions}
+
+              --==BOUNDARY==--
+            - ECSAdditions:
+                Fn::If:
+                  - UseCromwell
+                  - |-
+                    - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
+                    - sh /opt/ecs-additions/ecs-additions-cromwell.sh
+                  - ""
+              ScratchMountPoint: 
+                Fn::If:
+                  - UseCromwell
+                  - /cromwell_root
+                  - !Ref ScratchMountPoint
+
+Outputs:
+  LaunchTemplateId:
+    Description: >-
+      EC2 Launch Template ID to use when creating AWS Batch compute environments
+      for genomics workflows
+    Value: !Ref EC2LaunchTemplate

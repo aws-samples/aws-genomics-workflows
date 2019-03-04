@@ -1,11 +1,39 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: A S3 bucket for storing results from genomics analysis
+Description: >-
+  (WWPS-GLS-WF-S3) A S3 bucket for storing results from genomics analysis
+
+Mappings:
+  TagMap:
+    default:
+      architecture: "genomics-workflows"
+      solution: "default"
+      tags:
+        - Key: "architecture"
+          Value: "genomics-workflows"
+        - Key: "solution"
+          Value: "default"
+
 Parameters:
   S3BucketName:
     Type: String
+  ExistingBucket:
+    Type: String
+    Description: Does this bucket already exist? If not, it will be created.
+    AllowedValues:
+      - Yes
+      - No
+    Default: No
+
+Conditions:
+  BucketDoesNotExist:
+    Fn::Equals:
+      - !Ref ExistingBucket
+      - No
+
 Resources:
   GenomicsEnvS3Bucket:
     Type: AWS::S3::Bucket
+    Condition: BucketDoesNotExist
     DeletionPolicy: Retain
     Properties:
       BucketName: !Ref S3BucketName
@@ -13,8 +41,22 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
              SSEAlgorithm: AES256
+      Tags:
+        - Key: Name
+          Value: genomics-base-ami
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+
 Outputs:
   BucketName:
-    Value: !Ref GenomicsEnvS3Bucket
+    Value:
+      Fn::If:
+        - BucketDoesNotExist
+        - !Ref GenomicsEnvS3Bucket
+        - !Ref S3BucketName
   BucketArn:
-    Value: !GetAtt GenomicsEnvS3Bucket.Arn
+    Value:
+      Fn::If:
+        - BucketDoesNotExist
+        - !GetAtt GenomicsEnvS3Bucket.Arn
+        - !Join [":::", ["arn:aws:s3", !Ref S3BucketName]]

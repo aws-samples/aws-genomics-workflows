@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2018 Amazon.com, Inc. or its affiliates.
+# Copyright 2019 Amazon.com, Inc. or its affiliates.
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are met:
@@ -94,53 +94,20 @@ function is_same_image() {
     echo "Images match: $1 ($left) vs $2 ($right)"
 }
 
-PATCHED_AGENT_IMAGE="elerch/amazon-ecs-agent:latest"
+# install ecs-proxy
 PROXY_IMAGE="quay.io/broadinstitute/cromwell-aws-proxy:latest"
-
-# check the current state of ecs-agent
-echo "=== (re)starting ecs ==="
-stop ecs
-start ecs
-sleep 10
-docker images
-docker ps
-
-# get cromwell specific container images
-echo "=== pulling custom images ==="
-docker pull $PATCHED_AGENT_IMAGE
 docker pull $PROXY_IMAGE
-docker images
-
-# check here that the images were successfully downloaded
-is_missing_image "$PATCHED_AGENT_IMAGE"
 is_missing_image "$PROXY_IMAGE"
-
-echo "=== tagging custom images ==="
-docker image tag "amazon/amazon-ecs-agent:latest" "amazon/amazon-ecs-agent:upstream"
-docker image tag "$PATCHED_AGENT_IMAGE" "amazon/amazon-ecs-agent:latest"
 docker image tag "$PROXY_IMAGE" "ecs-agent-proxy:latest"
-
-echo "=== removing previous ecs-agent state ==="
-stop ecs
-rm /var/lib/ecs/data/ecs*.json
-start ecs
-
-echo "=== restarting ecs-agent ==="
-docker kill ecs-agent
-sleep 10
-
-echo "=== verifying installation ==="
-# check that images are tagged correctly
-is_same_image "$PATCHED_AGENT_IMAGE" "amazon/amazon-ecs-agent:latest"
 is_same_image "$PROXY_IMAGE" "ecs-agent-proxy:latest"
 
-# check that the ecs-agent container is using the correct image
-ecs_agent_container=$(get_container_id "$PATCHED_AGENT_IMAGE")
-if [[ -z "$ecs_agent_container" ]]; then
-    missing_container_error "ecs-agent"
-fi
+# configure to use patched ecs-agent
+PATCHED_AGENT_IMAGE="elerch/amazon-ecs-agent:latest"
+docker pull $PATCHED_AGENT_IMAGE
+is_missing_image "$PATCHED_AGENT_IMAGE"
+docker image tag "$PATCHED_AGENT_IMAGE" "amazon/amazon-ecs-agent:latest"
+is_same_image "$PATCHED_AGENT_IMAGE" "amazon/amazon-ecs-agent:latest"
 
-echo "ECS-Agent container found: $ecs_agent_container"
-
-# if we make it here, things have worked
-exit 0
+cd /var/cache/ecs
+docker save -o ecs-agent-cromwell.tar elerch/amazon-ecs-agent
+ln -fs ecs-agent-cromwell.tar ecs-agent.tar

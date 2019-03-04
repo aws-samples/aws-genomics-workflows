@@ -1,5 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Creates an EC2 Instance and Roles for a Cromwell Server
+Description: >-
+  (WWPS-GLS-WF-CROMWELL-SERVER) Creates an EC2 Instance and Roles for a Cromwell Server
 
 Mappings:
   TagMap:

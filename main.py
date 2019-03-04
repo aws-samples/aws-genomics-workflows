@@ -21,57 +21,65 @@ def declare_variables(variables, macro):
         """
         create an cloudformation launch button
         """
-
         s3 = _variables['s3']
-        s3['object'] = "/".join(
-            filter(None, [s3.get('prefix'), 'templates', template])
-        )
 
-        cfn_url = "".join([
-            "https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=",
-            name,
-            "&templateURL=",
-            "https://s3.amazonaws.com/{bucket}/{object}".format(**s3),
-        ])
+        if template.lower().startswith('http'):
+            cfn_url = template
+        else:
+            s3['object'] = "/".join(
+                filter(None, [s3.get('prefix'), 'templates', template])
+            )
+
+            cfn_url = "".join([
+                "https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=",
+                name,
+                "&templateURL=",
+                "https://s3.amazonaws.com/{bucket}/{object}".format(**s3),
+            ])
 
         img_src = "/" + "/".join(
             filter(None, [s3.get('prefix'), 'images/cloudformation-launch-stack.png'])
         )
 
         return """
-        <a href="{url}" target="_blank" class="launch-button"><i class="fa fa-play fa-xs"></i></a>
+        <a href="{url}" target="_blank" class="launch-button"><i class="material-icons">play_arrow</i></a>
         """.format(name=name, img=img_src, url=cfn_url)
     
     @macro
     @dedented
-    def download_button(path, icon="fa-download", size="fa-lg"):
+    def download_button(path, icon="cloud_download"):
         """
         create a download button
         """
-
         s3 = _variables['s3']
-        s3['object'] = "/".join(
-            filter(None, [s3.get('prefix'), path])
-        )
+            
+        if path.lower().startswith('http'):
+            src_url = path
+        else:
+            s3['object'] = "/".join(
+                filter(None, [s3.get('prefix'), path])
+            )
 
-        src_url = "https://s3.amazonaws.com/{bucket}/{object}".format(**s3)
+            src_url = "https://s3.amazonaws.com/{bucket}/{object}".format(**s3)
         
-        if size:
-            icon = " ".join([icon, size])
-
         return """
-        <a href="{url}"><i class="fa {icon}"></i></a>
+        <a href="{url}"><i class="material-icons">{icon}</i></a>
         """.format(icon=icon, url=src_url)
     
     @macro
     @dedented
     def cfn_stack_row(name, stack_name, template, description):
+        if template.lower().startswith('http'):
+            stack_url = template
+        else:
+            stack_url = "templates/" + template
+
         return """
         | {name} | {description} | {download_button} | {cfn_button} |
         """.format(
             name=name,
             stack_name=stack_name,
-            download_button=download_button("templates/" + template),
+            download_button=download_button(stack_url),
             cfn_button=cfn_button(stack_name, template),
             description=description
         )
