@@ -8,14 +8,14 @@ nav:
     - Create custom compute resources: core-env/create-custom-compute-resources.md
     - Create IAM roles: core-env/create-iam-roles.md
     - Setup AWS Batch: core-env/setup-aws-batch.md
-  - Containerized Tooling:
-    - Introduction: containers/container-introduction.md
-    - Examples: containers/container-examples.md
+  # - Containerized Tooling:
+  #   - Introduction: containers/container-introduction.md
+  #   - Examples: containers/container-examples.md
   - Workflow Orchestration:
     - Introduction: orchestration/orchestration-intro.md
     - AWS Step Functions:
       - Overview: orchestration/step-functions/step-functions-overview.md
-      - Examples: orchestration/step-functions/step-functions-examples.md
+      # - Examples: orchestration/step-functions/step-functions-examples.md
     - Cromwell:
       - Overview: orchestration/cromwell/cromwell-overview.md
       - Examples: orchestration/cromwell/cromwell-examples.md
