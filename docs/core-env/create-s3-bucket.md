@@ -1,4 +1,4 @@
-# Creating an S3 Bucket
+# Data Storage
 
 You will need a robust location to store your input and output data.  As mentioned
 previously, genomics data files are fairly large.  In addition to input sample
@@ -11,6 +11,8 @@ The following are key criteria for storing data for genomics workflows
 * secure
 * durable
 * capable of handling large files
+
+## Create an S3 Bucket
 
 Amazon S3 buckets meet all of the above conditions.
 
