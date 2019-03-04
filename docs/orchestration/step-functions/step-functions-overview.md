@@ -6,6 +6,8 @@
 
 In the context of genomics workflows, the combination of Step Functions with Batch and Lambda constitutes a robust and scalable task orchestration solution.
 
+<!--// not ready for release yet
+    // TODO: create the example sfn state-machine cfn template
 ## TL;DR
 
 If you need something up and running in a hurry, and you've followed all of the 
@@ -19,6 +21,7 @@ you can modify to suit your needs.
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
 {{ cfn_stack_row("AWS Step Functions", "GenomicsWorkflow-Sfn", "aws-genomics-sfn.template.yaml", "Create IAM roles, Batch job definitions, and an example genomics workflow using an AWS Step Functions state machine") }}
+-->
 
 ## Prerequisites
 
