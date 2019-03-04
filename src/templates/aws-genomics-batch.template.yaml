@@ -1,13 +1,16 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: >
-    Deploys resource for a AWS Batch environment that is suitable for genomics, including default and high-priority JobQueues.
+Description: >-
+  (WWPS-GLS-WF-BATCH) Deploys resource for a AWS Batch environment that is 
+  suitable for genomics, including default and high-priority JobQueues.
+
+
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
           default: "AWS Batch Environment Config"
         Parameters:
-        - CustomAmiId
+        - LaunchTemplateId
         - Ec2KeyPairName
         - VpcId
         - SubnetIds
@@ -21,8 +24,8 @@ Metadata:
         - Ec2InstanceProfileArn
         - SpotFleetRoleArn
     ParameterLabels:
-      CustomAmiId:
-        default: Custom AMI ID
+      LaunchTemplateId:
+        default: Launch Template ID
       Ec2KeyPairName:
         default: EC2 Key Pair Name
       VpcId:
@@ -39,14 +42,14 @@ Metadata:
         default: HighPriority Queue Min vCPU count
       HighPriorityCEMaxvCpus:
         default: HighPriority Queue Max vCPU count
-      DefaultRetryNumber:
-        default: Job retry attempts
       BatchServiceRoleArn:
         default: AWS Batch service role ARN
       Ec2InstanceProfileArn:
         default: EC2 Instance Profile ARN
       SpotFleetRoleArn:
         default: Spot Fleet Role ARN
+
+
 Parameters:
   VpcId:
     Type: AWS::EC2::VPC::Id
@@ -60,38 +63,32 @@ Parameters:
     MaxValue: 100
     MinValue: 5
     Default: 100
-  CustomAmiId:
-    Type: AWS::EC2::Image::Id
-    Description: AMI you want your AWS Batch Compute Environment to use
+  LaunchTemplateId:
+    Type: String
+    Description: Launch Template you want your AWS Batch Compute Environments to use
   Ec2KeyPairName:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Name of the EC2 Key Pair for connecting to EC2 instances launched in your compute environment
   HighPriorityCEMinvCpus:
     Type: Number
     Description: Minimum number of CPUs in the high-priority compute environment. Default 0.
-    Default: 4
+    Default: 0
     MinValue: 0
   HighPriorityCEMaxvCpus:
     Type: Number
     Description: Maximum number of CPUs in the high-priority compute environment. Should be >= than MinCpus
-    Default: 64
+    Default: 100
     MinValue: 0
   DefaultCEMinvCpus:
     Type: Number
     Description: Minimum number of CPUs in the default compute environment. Default 0.
-    Default: 4
+    Default: 0
     MinValue: 0
   DefaultCEMaxvCpus:
     Type: Number
     Description: Maximum number of CPUs in the default compute environment. Should be >= than MinCpus
-    Default: 64
+    Default: 100
     MinValue: 0
-  DefaultRetryNumber:
-    Type: Number
-    Description: Number of retries for each AWS Batch job. Integer required.
-    MaxValue: 3
-    MinValue: 0
-    Default: 1
   BatchServiceRoleArn:
     Type: String
     Description: The IAM Role ARN for the Batch service
@@ -101,6 +98,7 @@ Parameters:
   Ec2InstanceProfileArn:
     Type: String
     Description: The IAM Role ARN for the Batch service
+
 
 Resources:
   GenomicsBatchSecurityGroup:
@@ -115,8 +113,8 @@ Resources:
     Properties:
       GroupId: !Ref GenomicsBatchSecurityGroup
       IpProtocol: tcp
-      FromPort: '22'
-      ToPort: '22'
+      FromPort: 22
+      ToPort: 22
       CidrIp: 0.0.0.0/0
   SGAllTcpEgress:
     Type: AWS::EC2::SecurityGroupEgress
@@ -124,8 +122,8 @@ Resources:
     Properties:
       GroupId: !Ref GenomicsBatchSecurityGroup
       IpProtocol: tcp
-      FromPort: '0'
-      ToPort: '65535'
+      FromPort: 0
+      ToPort: 65535
       CidrIp: 0.0.0.0/0
   SGAllTcpSelfIngress:
     Type: AWS::EC2::SecurityGroupIngress
@@ -133,8 +131,8 @@ Resources:
     Properties:
       GroupId: !Ref GenomicsBatchSecurityGroup
       IpProtocol: tcp
-      FromPort: '0'
-      ToPort: '65535'
+      FromPort: 0
+      ToPort: 65535
       SourceSecurityGroupId: !Ref GenomicsBatchSecurityGroup
 
   GenomicsDefaultComputeEnv:
@@ -147,7 +145,8 @@ Resources:
       ComputeResources:
         BidPercentage: !Ref SpotBidPercentage
         Ec2KeyPair: !Ref Ec2KeyPairName
-        ImageId: !Ref CustomAmiId
+        LaunchTemplate:
+          LaunchTemplateId: !Ref LaunchTemplateId
         InstanceRole: !Ref Ec2InstanceProfileArn
         InstanceTypes:
           - optimal
@@ -168,7 +167,8 @@ Resources:
       State: ENABLED
       ComputeResources:
         Ec2KeyPair: !Ref Ec2KeyPairName
-        ImageId: !Ref CustomAmiId
+        LaunchTemplate:
+          LaunchTemplateId: !Ref LaunchTemplateId
         InstanceRole:  !Ref Ec2InstanceProfileArn
         InstanceTypes:
           - optimal
