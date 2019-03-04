@@ -1,5 +1,7 @@
 # Genomics Workflows on AWS
 
+![banner](images/aws-genomics-workflows-banner.png)
+
 ## Introduction
 
 Welcome!
