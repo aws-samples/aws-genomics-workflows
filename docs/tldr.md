@@ -1,10 +1,8 @@
-# TL;DR - For the impatient
+# TL;DR - For rapid deployment
 
-## Core resources
+## Step 0: Amazon VPC
 
-### Amazon VPC
-
-While you can use an existing "default" VPC to implement deployment of your genomics environment, we strongly recommend utilizing a VPC with private subnets for the processing sensitive data with AWS Batch. Doing so will restrict access to the instances from the internet, and help meet security and compliance requirements, such as [dbGaP](http://j.mp/aws-dbgap).
+While you can use an existing "default" VPC to implement deployment of your genomics environment, we strongly recommend utilizing a VPC with private subnets for processing sensitive data with AWS Batch. Doing so will restrict access to the instances from the internet, and help meet security and compliance requirements, such as [dbGaP](http://j.mp/aws-dbgap).
 
 
 !!! tip
@@ -19,13 +17,15 @@ While you can use an existing "default" VPC to implement deployment of your geno
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("VPC", "GenomicsVPC", "https://aws-quickstart.s3.amazonaws.com/quickstart-aws-vpc/templates/aws-vpc.template", "(Optional) Creates a new Virtual Private Cloud to use for your genomics workflow resources.") }}
+{{ cfn_stack_row("VPC (Optional)", "GenomicsVPC", "https://aws-quickstart.s3.amazonaws.com/quickstart-aws-vpc/templates/aws-vpc.template", "Creates a new Virtual Private Cloud to use for your genomics workflow resources.") }}
 
 The above template uses the AWS Quickstart reference for a [Modular and Scalable VPC Architecture](https://aws.amazon.com/quickstart/architecture/vpc/) and provides a networking foundation for AWS Cloud infrastructures, deploying an Amazon Virtual Private Cloud (Amazon VPC) according to AWS best practices and guidelines.
 
 For architectural details, best practices, step-by-step instructions, and customization options, see the [deployment guide](https://fwd.aws/9VdxN).
 
-### Full stack
+## Step 1: Compute Environment
+
+### Option A: Full stack
 
 The "Full Stack" CloudFormation template below will create all of the AWS resources required - S3 Bucket, EC2 Launch Templates, IAM Roles, Batch Compute Environments, Batch Job Queues - for your genomics workflow environment into an existing VPC.
 
@@ -43,7 +43,7 @@ Once completed, click on the `Outputs` tab and copy down the AWS Batch Job Queue
 
 ![CloudFormation web console wizard output job queue ARN](./images/root-vpc-5.png)
 
-### Individual components
+### Option B: Individual components
 
 The CloudFormation templates above are [nested stacks](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html), a hierarchy of templates that pass values from a parent template to dependent templates.
 
@@ -51,12 +51,12 @@ Below are the stand-alone CloudFormation templates for S3, IAM, and AWS Batch. T
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("Amazon IAM Roles", "GenomicsWorkflow-IAM", "aws-genomics-iam.template.yaml", "Create the necessary IAM Roles. This is useful to hand to someone with the right permissions to create these on your behalf. _You will need to provide a S3 bucket name_.") }}
+{{ cfn_stack_row("Amazon IAM Roles", "GenomicsWorkflow-IAM", "aws-genomics-iam.template.yaml", "Create the necessary IAM Roles. This is useful to hand to someone with the right permissions to create these on your behalf. _You will need to provide an Amazon S3 bucket name_.") }}
 {{ cfn_stack_row("EC2 Launch Template", "GenomicsWorkflow-LT", "aws-genomics-launch-template.template.yaml", "Creates an EC2 Launch Template that provisions instances on first boot for processing genomics workflow tasks.") }}
-{{ cfn_stack_row("Amazon S3 Bucket", "GenomicsWorkflow-S3", "aws-genomics-s3.template.yaml", "Creates a secure Amazon S3 bucket to read from and write results to.") }}
+{{ cfn_stack_row("Amazon S3 Bucket", "GenomicsWorkflow-S3", "aws-genomics-s3.template.yaml", "Creates a secure Amazon S3 bucket to read inputs and write results.") }}
 {{ cfn_stack_row("AWS Batch", "GenomicsWorkflow-Batch", "aws-genomics-batch.template.yaml", "Creates AWS Batch Job Queues and Compute Environments. You will need to provide the details on IAM roles and instance profiles, and the IDs for a VPC and subnets.") }}
 
-## Worklow Orchestrators
+## Step 3: Worklow Orchestrators
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
