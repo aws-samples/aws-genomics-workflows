@@ -62,26 +62,34 @@ specify a `/dev/sdc` volume in the Launch Template.
     are using a 3rd party workflow orchestration engine this mount point will need
     to be adjusted to fit that engine's expectations.
 
+You can use the following CloudFormation template to create a Launch Template
+suitable for your needs.
+
+| Name | Description | Source | Launch Stack |
+| -- | -- | :--: | :--: |
+{{ cfn_stack_row("EC2 Launch Template", "GenomicsWorkflow-LT", "aws-genomics-launch-template.template.yaml", "Creates an EC2 Launch Template that provisions instances on first boot for processing genomics workflow tasks.") }}
+
 Once your Launch Template is created, you can reference it when you setup resources
 in AWS Batch to ensure that jobs run therein have your customizations available
 to them.
 
 ## Custom AMI
 
-A more robust, but slightly more involved method for customizing an instance is
+A slightly more involved method for customizing an instance is
 to create a new AMI based on the ECS Optimized AMI.  This is good if you have 
-a lot of customization to do - lots of software to install and or need large 
+a lot of customization to do - lots of software to install and/or need large 
 datasets preloaded that will be needed by all your jobs.
 
 You can learn more about how to [create your own AMIs in the EC2 userguide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html).
 
-For a "single-click" solution for genomics workflows we have provided a 
-CloudFormation template that automates the tasks neded.
+The CloudFormation template below automates the tasks needed to create an AMI and should take about 10-15min to complete.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("Custom AMI (Existing VPC)", "GenomicsWorkflow-AMI", "aws-genomics-ami.template.yaml", "Creates a custom AMI that EC2 instances can be based on for processing genomics workflow tasks.  The creation process will happen in a VPC you specify") }}
+{{ cfn_stack_row("Custom AMI (Existing VPC)", "GenomicsWorkflow-AMI", "deprecated/aws-genomics-ami.template.yaml", "Creates a custom AMI that EC2 instances can be based on for processing genomics workflow tasks.  The creation process will happen in a VPC you specify") }}
 
-The above CloudFormation template should take about 10-15min to complete. 
 Once your AMI is created, you will need to jot down its unique AMI Id.  You will
 need this when creating compute resources in AWS Batch.
+
+!!! note
+    This is considered advanced use.  All documentation and CloudFormation templates hereon assumes use of EC2 Launch Templates.
