@@ -1,19 +1,19 @@
-# Creating IAM Roles
+# Permissions
 
-Below are IAM roles that your job execution environment in AWS Batch will use:
+## Create IAM Roles
 
-* Batch Service Role:
+IAM roles that your job execution environment in AWS Batch will use include:
+
+* **Batch Service Role (required)**:
     
-    (required)
     Role used by AWS Batch to call other AWS services on its behalf.
     AWS Batch makes calls to other AWS services on your behalf to manage the resources that you use with the service. Before you can use the service, you must have an IAM policy and role that provides the necessary permissions to AWS Batch.
     [(Learn More)](https://docs.aws.amazon.com/batch/latest/userguide/service_IAM_role.html)
 
-* Batch Instance Profile:
+* **Batch Instance Profile (required)**:
     
-    (required)
     Role that defines service permissions for EC2 instances launched by AWS Batch.
-    For example, this is used to specify policies that allow access to specific S3 buckets and modify storage on the intance (shown below).
+    For example, this is used to specify policies that allow access to specific S3 buckets and modify storage on the instance (shown below).
     [(Learn More)](https://docs.aws.amazon.com/batch/latest/userguide/instance_IAM_role.html)
 
 ```yaml
@@ -46,16 +46,14 @@ Below are IAM roles that your job execution environment in AWS Batch will use:
             Resource: "*"
 ```
 
-* Batch SpotFleet Role:
+* **Batch SpotFleet Role (depends)**:
     
-    (depends)
-    This is role is needed if you intend to launch spot instances from AWS Batch.
+    This role is needed if you intend to launch spot instances from AWS Batch.
     If you create a managed compute environment that uses Amazon EC2 Spot Fleet Instances, you must create a role that grants the Spot Fleet permission to bid on, launch, tag, and terminate instances on your behalf.
     [(Learn More)](https://docs.aws.amazon.com/batch/latest/userguide/spot_fleet_IAM_role.html)
 
-* Batch Job Role:
+* **Batch Job Role (optional)**:
 
-    (optional)
     Role used to provide service permissions to individual jobs.
     Jobs can run without an IAM role. In that case, they inherit the
     permissions of the instance they run on.

@@ -4,7 +4,7 @@
 
 [AWS Step Functions](https://aws.amazon.com/step-functions/) is a service that allows you to orchestrate other AWS services, such as Lambda, Batch, SNS, and Glue, making it easy to coordinate the components of distributed applications as a series of steps in a visual workflow.
 
-In the context of genomics workflows, the combination of Step Functions with Batch and Lambda constitutes a robust and scalable task orchestration solution.
+In the context of genomics workflows, the combination of AWS Step Functions with Batch and Lambda constitutes a robust, scalable, and serverless task orchestration solution.
 
 ## TL;DR
 
@@ -20,15 +20,15 @@ read through the rest of this page.
 
 To get started using AWS Step Functions for genomics workflows you'll need the following setup in your AWS account:
 
-1. The core set of resources (S3 Bucket, IAM Roles, AWS Batch) described in the [Getting Started](../../../core-env/introduction/) section.
+* The core set of resources (S3 Bucket, IAM Roles, AWS Batch) described in the [Getting Started](../../../core-env/introduction/) section.
 
-## Step Functions Execution Role
+## AWS Step Functions Execution Role
 
-A Step Functions Execution role is an IAM role that allows Step Functions to execute other AWS services via the state machine.
+An AWS Step Functions Execution role is an IAM role that allows Step Functions to execute other AWS services via the state machine.
 
-This can be created automatically during the "first-run" experience in the Step Functions console when you create your first state machine.  The policy attached to the role will depend on the specifc tasks you incorporate into your state machine.
+This can be created automatically during the "first-run" experience in the AWS Step Functions console when you create your first state machine.  The policy attached to the role will depend on the specifc tasks you incorporate into your state machine.
 
-For state machines that use AWS Batch for job execution and send events to CloudWatch, the should have an Execution role with the following inline policy:
+State machines that use AWS Batch for job execution and send events to CloudWatch should have an Execution role with the following inline policy:
 
 ```json
 {
@@ -60,7 +60,7 @@ For state machines that use AWS Batch for job execution and send events to Cloud
 
 ## Step Functions State Machine
 
-Workflows in AWS Step Functions are built using [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) (ASL), a declarative, JSON-based, structured language used to define your state machine, a collection of states, that can do work (Task states), determine which states to transition to next (Choice states), stop an execution with an error (Fail states), and so on.
+Workflows in AWS Step Functions are built using [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) (ASL), a declarative, JSON-based, structured language used to define your state machine, a collection of states that can do work (Task states), determine which states to transition to next (Choice states), stop an execution with an error (Fail states), and so on.
 
 ### Building workflows with AWS Step Functions
 
@@ -178,7 +178,7 @@ An example Job Definition for the `bwa-mem` sequence aligner is shown below:
 
 ### State Machine Batch Job Tasks
 
-Conveniently for genomics workflows, Step Functions has built-in integration with AWS Batch (and [several other services](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-connectors.html)), and provides snippets of code to make developing your state-machine
+Conveniently for genomics workflows, AWS Step Functions has built-in integration with AWS Batch (and [several other services](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-connectors.html)), and provides snippets of code to make developing your state-machine
 Batch tasks easier.
 
 ![Manage a Batch Job Snippet](images/sfn-batch-job-snippet.png)

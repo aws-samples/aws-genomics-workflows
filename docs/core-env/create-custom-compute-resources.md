@@ -1,19 +1,16 @@
 # Creating Custom Compute Resources
 
 Genomics is a data-heavy workload and requires some modification to the defaults
-used for batch job processing. In particular, we need to be able to scale the
-storage used by the instances Tasks/Jobs run on to meet unpredictable runtime 
-demands.
+used for batch job processing. In particular, instances running the Tasks/Jobs need scalable storage to meet unpredictable runtime demands.
 
 By default, AWS Batch relies upon the [Amazon ECS-Optimized AMI](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)
-as the image used to for instances it launches to run jobs.  What this image 
-provides is sufficient in most cases.  Specialized needs, such as the large 
+to launch container instances for running jobs.  This is sufficient in most cases, but specialized needs, such as the large 
 storage requirements noted above, require customization of the base AMI.
 
 This section provides two methods for customizing the base ECS-Optimized AMI 
-that adds an expandable working directory that the Jobs will use to write data.
-That directory will be monitored by a process that inspects the free space 
-available and adds more EBS volumes and expands the filesystem on the fly, like so:
+that adds an expandable working directory for jobs to write data.
+A process will monitor the directory and add more EBS volumes on the fly to expand the free space 
+based on the capacity threshold, like so:
 
 ![Autoscaling EBS storage](images/ebs-autoscale.png)
 
