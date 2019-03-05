@@ -45,9 +45,9 @@ Once completed, click on the `Outputs` tab and copy down the AWS Batch Job Queue
 
 ### Option B: Individual components
 
-The CloudFormation templates above are [nested stacks](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html), a hierarchy of templates that pass values from a parent template to dependent templates.
+The `Full Stack` CloudFormation template above is a [nested stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html), a hierarchy of templates that pass values from a parent template to dependent templates.
 
-Below are the stand-alone CloudFormation templates for S3, IAM, and AWS Batch. These are handy in case you need to modify the individual components, or need to have another individual with elevated privileges to execute one of them (e.g. the IAM template). They are in order of dependency, and you will need to provide output values from one template to the dependent templates.
+Below are the stand-alone CloudFormation templates for each of the sub-stacks. These are handy in case you need to modify the individual components, or need to have another individual with elevated privileges to execute one of them (e.g. the IAM template). They are in order of dependency, and you will need to provide output values from one template to the dependent templates.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
