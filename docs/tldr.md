@@ -56,9 +56,8 @@ Below are the stand-alone CloudFormation templates for each of the sub-stacks. T
 {{ cfn_stack_row("Amazon S3 Bucket", "GenomicsWorkflow-S3", "aws-genomics-s3.template.yaml", "Creates a secure Amazon S3 bucket to read inputs and write results.") }}
 {{ cfn_stack_row("AWS Batch", "GenomicsWorkflow-Batch", "aws-genomics-batch.template.yaml", "Creates AWS Batch Job Queues and Compute Environments. You will need to provide the details on IAM roles and instance profiles, and the IDs for a VPC and subnets.") }}
 
-## Step 3: Worklow Orchestrators
+## Step 2: Worklow Orchestrators
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
 {{ cfn_stack_row("Cromwell Server", "CromwellServer", "cromwell/cromwell-server.template.yaml", "Create an EC2 instance and an IAM instance profile to run Cromwell") }}
-
