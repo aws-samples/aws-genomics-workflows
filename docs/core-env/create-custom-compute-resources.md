@@ -1,7 +1,8 @@
 # Creating Custom Compute Resources
 
 Genomics is a data-heavy workload and requires some modification to the defaults
-used for batch job processing. In particular, instances running the Tasks/Jobs need scalable storage to meet unpredictable runtime demands.
+used for batch job processing. In particular, instances running the Tasks/Jobs 
+need scalable storage to meet unpredictable runtime demands.
 
 By default, AWS Batch relies upon the [Amazon ECS-Optimized AMI](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)
 to launch container instances for running jobs.  This is sufficient in most cases, but specialized needs, such as the large 
@@ -20,11 +21,13 @@ The simplest method for customizing an instance is to use an EC2 Launch Template
 This works best if your customizations are relatively light - such as installing
 a few small utilities or making specific configuration changes.
 
-This is because Launch Templates run `UserData` when an instance first launches.
+This is because Launch Templates run a `UserData` script when an instance first launches.
 The longer these scripts / customizations take to complete, the longer it will
 be before your instance is ready for work.
 
-Since this will be working with AWS Batch, you only need to supply the `UserData`
+Launch Templates are capable of pre-configuring a lot of EC2 instance options.
+Since this will be working with AWS Batch, which already does a lot of automatic 
+instance configuration on its own, you only need to supply the `UserData`
 script below:
 
 ```text
@@ -49,9 +52,10 @@ runcmd:
 --==BOUNDARY==--
 ```
 
-By default the `ebs-autoscale` monitor will add a 20GB EBS volume to the logical volume
-mounted at `/scratch`.  If you want this volume to be larger initially, you can
-specify a `/dev/sdc` volume in the Launch Template.
+The above will add an `ebs-autoscale` daemon to an instance.  By default it will 
+add a 20GB EBS volume to the logical volume mounted at `/scratch`.  
+If you want this volume to be larger initially, you can specify a bigger one 
+mapped to `/dev/sdc`  the Launch Template.
 
 !!! note
     The mount point is specific to what orchestration method / engine you intend
