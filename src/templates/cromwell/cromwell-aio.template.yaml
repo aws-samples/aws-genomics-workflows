@@ -36,6 +36,7 @@ Metadata:
       - Label:
           default: "Cromwell Server"
         Parameters:
+          - CromwellVersion
           - InstanceType
           - InstanceName
           - SSHLocation
@@ -115,6 +116,16 @@ Parameters:
     Type: String
     Default: cromwell-server
     Description: The name of the EC2 instance that is created
+  CromwellVersion:
+    Type: String
+    Description: >-
+      Version of Cromwell to install. "latest" will retrieve the currently released
+      version of Cromwell from Github.
+    AllowedValues:
+      - latest
+      - 36.1
+      - 36
+    Default: 36.1
   SSHLocation:
     Description: "The IP address range that has SSH access to the EC2 instances"
     Type: String
@@ -171,6 +182,7 @@ Resources:
         VpcId: !GetAtt 'VpcStack.Outputs.VPCID'
         PublicSubnetID: !GetAtt 'VpcStack.Outputs.PublicSubnet1ID'
         InstanceName: !Join ["-", [!Ref 'InstanceName', !Select [2, !Split ["/", !Ref "AWS::StackId" ]]]]
+        CromwellVersion: !Ref CromwellVersion
         KeyName: !Ref 'KeyPairName'
         SSHLocation: !Ref 'SSHLocation'
         HTTPLocation: !Ref 'HTTPLocation'
@@ -185,6 +197,10 @@ Outputs:
     Description: >-
       Cromwell server public DNS name. Use this URL in a web browser or via curl
       to access Cromwell and submit workflows.
+  CromwellServerVersion:
+    Description: >-
+      Version of Cromwell installed.
+    Value: !Ref CromwellVersion
   VpcId:
     Description: >-
       The VPC created for your Cromwell stack. Use this ID if you need to launch
