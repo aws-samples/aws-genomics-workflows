@@ -10,7 +10,7 @@ The following CloudFormation template will launch a EC2 instance pre-configured 
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | -- |
-{{ cfn_stack_row("Nextflow All-in-One", "Nextflow", "nextflow/nextflow-aio.template.yaml", "Create all resources needed to run Nextflow on AWS: an S3 Bucket, AWS Batch Environment, and Nextflow head node") }}
+{{ cfn_stack_row("Nextflow All-in-One", "Nextflow", "nextflow/nextflow-aio.template.yaml", "Create all resources needed to run Nextflow on AWS: an S3 Bucket for data, S3 Bucket for nextflow config and workflows, AWS Batch Environment, and Nextflow head node job definition and job role") }}
 
 When the above stack is complete, you will have a preconfigured Batch Job Definition that you can use to launch Nextflow pipelines.  Skip to the [Running a workflow](#running-a-workflow) section below to learn how.
 
@@ -22,6 +22,7 @@ To get started using Nextflow on AWS you'll need the following setup in your AWS
 * Containerized Nextflow that pulls configuration and workflow definitions from S3
 * AWS CLI installed in job instances using `conda`
 * A Batch Job Definition that runs a Nextflow head node
+* An IAM Role for the Nextflow head node job that allows it access to AWS Batch
 * (optional) An S3 Bucket to store your Nextflow workflow definitions and configuration
 
 ### Nextflow container
