@@ -123,6 +123,11 @@ aws.region = 'us-west-2'
 executor.awscli = '/home/ec2-user/miniconda/bin/aws'
 ```
 
+| Name | Description | Source | Launch Stack |
+| -- | -- | :--: | -- |
+{{ cfn_stack_row("Nextflow Resources", "NextflowResources", "nextflow/nextflow-resources.template.yaml", "Create Nextflow specific resources needed to run on AWS: an S3 Bucket for nextflow config and workflows, AWS Batch Job Definition for a Nextflow head node, and an IAM role for the nextflow head node job") }}
+
+
 ## Running a workflow
 
 ### Starting a workflow

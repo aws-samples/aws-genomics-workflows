@@ -61,3 +61,5 @@ Below are the stand-alone CloudFormation templates for each of the sub-stacks. T
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
 {{ cfn_stack_row("Cromwell Server", "CromwellServer", "cromwell/cromwell-server.template.yaml", "Create an EC2 instance and an IAM instance profile to run Cromwell") }}
+{{ cfn_stack_row("Nextflow Resources", "NextflowResources", "nextflow/nextflow-resources.template.yaml", "Create Nextflow specific resources needed to run on AWS: an S3 Bucket for nextflow config and workflows, AWS Batch Job Definition for a Nextflow head node, and an IAM role for the nextflow head node job") }}
+
