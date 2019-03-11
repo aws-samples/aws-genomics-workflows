@@ -1,0 +1,220 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  (WWPS-GLS-WF-NEXTFLOW-AIO) Creates the complete set of resources needed to run
+  genomics workflows using Nextflow on AWS Batch
+
+
+Mappings:
+  TagMap:
+    default:
+      architecture: "genomics-workflows"
+      solution: "nextflow"
+      tags:
+        - Key: "architecture"
+          Value: "genomics-workflows"
+        - Key: "solution"
+          Value: "nextflow"
+
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Required"
+        Parameters:
+          - S3DataBucketName
+          - ExistingDataBucket
+          - KeyPairName
+          - AvailabilityZones
+          - S3NextflowBucketName
+          - ExistingNextflowBucket
+          - NextflowContainerImage
+      - Label:
+          default: "AWS Batch"
+        Parameters:
+          - SpotBidPercentage
+          - DefaultCEMinvCpus
+          - DefaultCEMaxvCpus
+          - HighPriorityCEMinvCpus
+          - HighPriorityCEMaxvCpus
+      - Label:
+          default: "Nextflow Resources"
+        Parameters:
+          - S3NextflowConfigPrefix
+          - S3NextflowScriptPrefix
+
+    ParameterLabels:
+      S3DataBucketName:
+        default: S3 Data Bucket Name
+      ExistingDataBucket:
+        default: Existing Data Bucket?
+      S3NextflowBucketName:
+        default: S3 Nextflow Bucket Name
+      ExistingNextflowBucket:
+        default: Existing Nextflow Bucket?
+      KeyPairName:
+        default: EC2 Key Pair Name
+      SpotBidPercentage:
+        default: Spot Bid %
+      DefaultCEMinvCpus:
+        default: Default Min vCPU
+      DefaultCEMaxvCpus:
+        default: Default Max vCPU
+      HighPriorityCEMinvCpus:
+        default: High Priority Min vCPU
+      HighPriorityCEMaxvCpus:
+        default: High Priority Max vCPU
+
+
+Parameters:
+  AvailabilityZones:
+    Description: "Choose the two Availability Zones to deploy instances for AWS Batch."
+    Type: List<AWS::EC2::AvailabilityZone::Name>
+  S3DataBucketName:
+    Description: A S3 bucket name for storing analysis results
+    Type: String
+  ExistingDataBucket:
+    Description: Does this bucket already exist?
+    Type: String
+    AllowedValues:
+      - Yes
+      - No
+    Default: No
+  KeyPairName:
+    Description: Key Pair name
+    Type: AWS::EC2::KeyPair::KeyName
+  SpotBidPercentage:
+    Description: The percent of on-demand pricing for max bid for Spot intances
+    Type: Number
+    Default: 100
+  DefaultCEMinvCpus:
+    Description: The minimum number of CPUs for the default Batch Compute Environment
+    Type: Number
+    Default: 0
+  DefaultCEMaxvCpus:
+    Description: The maximum number of CPUs for the default Batch Compute Environment
+    Type: Number
+    Default: 100
+  HighPriorityCEMinvCpus:
+    Description: The minimum number of CPUs for the high-priority Batch Compute Environment
+    Type: Number
+    Default: 0
+  HighPriorityCEMaxvCpus:
+    Description: The maximum number of CPUs for the high-priority Batch Compute Environment
+    Type: Number
+    Default: 100
+  
+  S3NextflowBucketName:
+    Type: String
+    Description: >-
+      S3 Bucket used to store nextflow.config and *.nf scripts
+  
+  S3NextflowConfigPrefix:
+    Type: String
+    Description: >-
+      (Optional) Parent folder in the S3 bucket that contains nextflow.config
+  
+  S3NextflowScriptPrefix:
+    Type: String
+    Description: >-
+      (Optional) Parent folder in the S3 bucket that contains *.nf workflow scripts
+  
+  ExistingNextflowBucket:
+    Type: String
+    Description: >-
+      Does the Nextflow S3 Bucket already exist?  If not, it will be created.
+    AllowedValues:
+      - Yes
+      - No
+    Default: No
+  
+  NextflowContainerImage:
+    Type: String
+    Description: >-
+      Container image for nextflow with custom entrypoint for config and workflow
+      script staging.  (Example, "<dockerhubuser>/nextflow:latest")  
+
+
+Resources:
+  VpcStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  https://aws-quickstart.s3.amazonaws.com/quickstart-aws-vpc/templates/aws-vpc.template
+      TimeoutInMinutes: 15
+      Parameters:
+        AvailabilityZones: !Join ["," , !Ref AvailabilityZones]
+        NumberOfAZs: "2"
+        KeyPairName: !Ref KeyPairName
+      Tags: !FindInMap ["TagMap", "default", "tags"]
+
+  GenomicsWorkflowStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  https://s3.amazonaws.com/aws-genomics-workflows/templates/aws-genomics-root-novpc.template.yaml
+      Parameters:
+        VpcId: !GetAtt 'VpcStack.Outputs.VPCID'
+        SubnetIds: !Sub "${VpcStack.Outputs.PrivateSubnet1AID}, ${VpcStack.Outputs.PrivateSubnet2AID}"
+        S3BucketName: !Ref S3DataBucketName
+        ExistingBucket: !Ref ExistingDataBucket
+        KeyPairName: !Ref 'KeyPairName'
+        WorkflowOrchestrator: cromwell
+        SpotBidPercentage: !Ref 'SpotBidPercentage'
+        DefaultCEMinvCpus: !Ref 'DefaultCEMinvCpus'
+        DefaultCEMaxvCpus: !Ref 'DefaultCEMaxvCpus'
+        HighPriorityCEMinvCpus: !Ref 'HighPriorityCEMinvCpus'
+        HighPriorityCEMaxvCpus: !Ref 'HighPriorityCEMaxvCpus'
+      Tags: !FindInMap ["TagMap", "default", "tags"]
+
+  NextflowStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  https://s3.amazonaws.com/aws-genomics-workflows/templates/nextflow/nextflow-resources.template.yaml
+      Parameters:
+        S3BucketName: !Ref S3NextflowBucketName
+        ExistingBucket: !Ref ExistingNextflowBucket
+        S3ConfigPrefix: !Ref S3NextflowConfigPrefix
+        S3ScriptPrefix: !Ref S3NextflowScriptPrefix
+        NextflowContainerImage: !Ref NextflowContainerImage
+      Tags: !FindInMap ["TagMap", "default", "tags"]
+
+
+Outputs:
+  NextflowJobDefinition:
+    Value: !GetAtt NextflowStack.Outputs.NextflowJobDefinition
+    Description: >-
+      Batch Job Definition that creates a nextflow head node for running workflows
+  
+  S3NextFlowBucket:
+    Value: !GetAtt NextflowStack.Outputs.Bucketname
+    Description: >-
+      S3 Bucket used to store nextflow.config and *.nf scripts
+  S3NextflowConfigPrefix:
+    Value: !GetAtt NextflowStack.Outputs.ConfigPrefix
+    Description: >-
+      Path in the S3 bucket where nextflow.config file(s) are located.  If blank,
+      then they are located at the root level of the "nextflow" bucket.
+  S3NextflowScriptPrefix:
+    Value: !GetAtt NextflowStack.Outputs.ScriptPrefix
+    Description: >-
+      Path in the S3 bucket where *.nf script files are located.  If blank,
+      then they are located at the root level of the "nextflow" bucket.
+  
+  VpcId:
+    Description: >-
+      The VPC created for your Cromwell stack. Use this ID if you need to launch
+      additional Cromwell servers.
+    Value: !GetAtt 'VpcStack.Outputs.VPCID'
+  S3DataBucket:
+    Value: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvS3Bucket'
+    Description: >-
+      S3 bucket for storing genomics workflow input and output data
+  BatchDefaultQueue:
+    Value: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvDefaultJobQueueArn'
+    Description: >-
+      The default AWS Batch job queue for workflow jobs, based on EC2 SPOT instances
+  BatchHighPriorityQueue:
+    Value: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvHighPriorityJobQueueArn'
+    Description: >-
+      AWS Batch job queue for high priority workflow jobs, based on EC2 On-Demand
+      instances

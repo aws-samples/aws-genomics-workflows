@@ -75,6 +75,7 @@ Parameters:
     AllowedValues:
       - step-functions
       - cromwell
+      - nextflow
     Default: step-functions
   KeyPairName:
     Description: Key Pair name
