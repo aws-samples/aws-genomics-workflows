@@ -74,6 +74,8 @@ Parameters:
   S3DataBucketName:
     Description: A S3 bucket name for storing analysis results
     Type: String
+    AllowedPattern: "(?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)"
+    ConstraintDescription: "Must respect S3 bucket naming conventions"
   ExistingDataBucket:
     Description: Does this bucket already exist?
     Type: String
@@ -109,6 +111,8 @@ Parameters:
     Type: String
     Description: >-
       S3 Bucket used to store nextflow.config and *.nf scripts
+    AllowedPattern: "(?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)"
+    ConstraintDescription: "Must respect S3 bucket naming conventions"
   
   S3NextflowConfigPrefix:
     Type: String
