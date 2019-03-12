@@ -369,8 +369,7 @@ task MergeGVCFs {
 
 **Inputs**
 
-The inputs for this workflow reference public data on S3 that is hosted by AWS as
-part of the [AWS Open Data Program](https://aws.amazon.com/opendata/).
+The inputs for this workflow reference [public data on S3](https://registry.opendata.aws/gatk-test-data/) that is hosted by AWS as part of the [AWS Public Dataset Program](https://aws.amazon.com/opendata/).
 
 `HaplotypeCaller.aws.json`
 
