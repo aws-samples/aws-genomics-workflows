@@ -33,7 +33,9 @@ The last four items above are created by the following CloudFormation template:
 
 ### Nextflow container
 
-To create a container with the `nextflow` executable that pulls a workflow script from S3, you can use a `Dockerfile` like the one below:
+For AWS Batch to run Nextflow as a Batch Job, it needs to be containerized.  In the process of doing so you can add the ability to automatically create a config file based on environment variables passed in by Batch and use workflow scripts that are stored in S3.
+
+To create such a container, you can use a `Dockerfile` like the one below:
 
 ```Dockerfile
 FROM centos:7
@@ -68,12 +70,12 @@ NEXTFLOW_SCRIPT=$1
 # Create the default config using environment variables
 # passed into the container
 mkdir -p /opt/config
-NF_CONFIG=/opt/config/nextflow.cnfig
+NF_CONFIG=/opt/config/nextflow.config
 
 cat << EOF > $NF_CONFIG
-workDir = "$AWS_WORKDIR"
+workDir = "$NF_WORKDIR"
 process.executor = "awsbatch"
-process.queue = "$AWS_BATCH_JOB_QUEUE"
+process.queue = "$NF_JOB_QUEUE"
 executor.awscli = "/home/ec2-user/miniconda/bin/aws"
 EOF
 
@@ -93,9 +95,11 @@ NF_FILE=$(find . -name "*.nf")
 nextflow -c $NF_CONFIG run $NF_FILE
 ```
 
+The `AWS_BATCH_JOB_ID` and `AWS_BATCH_JOB_ATTEMPT` are [environment variables that are provided](https://docs.aws.amazon.com/batch/latest/userguide/job_env_vars.html) to all AWS Batch jobs.  The `NF_WORKDIR` and `NF_JOB_QUEUE` variables are ones set by the Batch Job Definition ([see below](#batch-job-definition)).
+
 ### Job instance AWS CLI
 
-Nextflow uses the [AWS CLI](https://aws.amazon.com/cli/) to stage data in / out for a workflow task.  This AWS CLI can be either installed on the host instance that task containers run on, or included in the task container.
+Nextflow uses the [AWS CLI](https://aws.amazon.com/cli/) to stage input and output data for tasks.  The AWS CLI can be either installed in the task container, or on the host instance that task containers run on.
 
 Adding the AWS CLI to an existing containerized tool requires rebuilding the image to include it.  Assuming your tool's container image is based on CentOS, this would require a Dockerfile like so:
 
@@ -110,7 +114,7 @@ If you have many tools in your pipeline, rebuilding all of their images and keep
 
 Using a version installed on the host instance means you can use pre-existing containers.  The caveat here is that the AWS CLI must be installed on the host using `conda`, which packages the `aws` command with a corresponding Python environment.
 
-Installing the AWS CLI via `conda` is easily handled by running a `UserData` script in an EC2 Launch Template.  For example:
+Installing the AWS CLI via `conda` can be done via a `UserData` script in an EC2 Launch Template.  For example:
 
 ```bash
 yum install -y bzip2 wget
@@ -125,9 +129,9 @@ chown -R ec2-user:ec2-user $USER/miniconda
 rm Miniconda3-latest-Linux-x86_64.sh
 ```
 
-This is all handled automatically in the CloudFormation templates above.
-
 ### Batch job definition
+
+An AWS Batch Job Definition for the containerized Nextflow described above is shown below.
 
 ```json
 {
@@ -156,11 +160,11 @@ This is all handled automatically in the CloudFormation templates above.
         ],
         "environment": [
             {
-                "name": "AWS_BATCH_JOB_QUEUE",
+                "name": "NF_JOB_QUEUE",
                 "value": "<jobQueueArn>"
             },
             {
-                "name": "AWS_WORKDIR",
+                "name": "NF_WORKDIR",
                 "value": "s3://<bucket-name>/runs"
             }
         ],
@@ -181,6 +185,8 @@ Nextflow needs to be able to create and submit Batch Job Defintions and Batch Jo
 
 #### Nextflow-Batch-Access
 
+This policy gives **full** access to AWS Batch.
+
 ```json
 {
     "Version": "2012-10-17",
@@ -197,6 +203,8 @@ Nextflow needs to be able to create and submit Batch Job Defintions and Batch Jo
 ```
 
 #### Nextflow-S3Bucket-Access
+
+This policy gives **full** access to the buckets used to store data and workflow scripts.
 
 ```json
 {
@@ -220,7 +228,7 @@ Nextflow needs to be able to create and submit Batch Job Defintions and Batch Jo
 
 ## A Nextflow S3 Bucket
 
-The containerized version of `nextflow` above reads a `*.nf` script from an S3 bucket.  This bucket can either be the same one that your workflow inputs and outputs are stored (e.g. in a separate folder therein), or it can be another bucket entirely.
+The containerized version of `nextflow` above reads a `*.nf` script from an S3 bucket and writes workflow logs and outputs back to it.  This bucket can either be the same one that your workflow inputs and outputs are stored (e.g. in a separate folder therein), or it can be another bucket entirely.
 
 ## Running a workflow
 
@@ -274,6 +282,10 @@ process hello {
 }
 ```
 
+For each process in your workflow, Nextflow will create a corresponding Batch Job Definition, which it will re-use for subsequent workflow runs.  You can customize these job definitions to incorporate additional environment variables or volumes/mount points as needed.
+
+!!! important
+    In order to take advantage of automatically [expandable scratch space](/core-env/create-custom-compute-resources/) in the host instance, you will need to modify Nextflow created job definitions to map a container volume from `/scratch` on the host to `/tmp` in the container.
 
 ### Running the workflow
 
