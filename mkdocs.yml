@@ -21,7 +21,7 @@ nav:
       - Examples: orchestration/cromwell/cromwell-examples.md
     - Nextflow: 
       - Overview: orchestration/nextflow/nextflow-overview.md
-      - Examples: orchestration/nextflow/nextflow-examples.md
+      # - Examples: orchestration/nextflow/nextflow-examples.md
 
 extra_css: [extra.css]
 theme: 
