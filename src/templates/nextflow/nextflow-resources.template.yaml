@@ -180,9 +180,9 @@ Resources:
         Vcpus: 2
         Image: !Ref NextflowContainerImage
         Environment:
-          - Name: "AWS_BATCH_JOB_QUEUE"
+          - Name: "NF_JOB_QUEUE"
             Value: !Ref BatchDefaultJobQueue
-          - Name: "AWS_WORKDIR"
+          - Name: "NF_WORKDIR"
             Value: 
               Fn::Join: 
               - "/"
