@@ -306,3 +306,5 @@ aws batch submit-job \
 ```
 
 After submitting a workflow, you can monitor the progress of tasks via the AWS Batch console.
+
+For the "Hello World" workflow above you will see three jobs run in Batch - one for the head node, and one for each `Channel` text as it goes through the `hello` process.
