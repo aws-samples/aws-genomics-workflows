@@ -8,7 +8,7 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "Genomics Environment for AWS Batch Parameters"
+          default: Required
         Parameters:
           - S3BucketName
           - ExistingBucket
@@ -16,12 +16,16 @@ Metadata:
           - VpcId
           - SubnetIds
           - KeyPairName
+      - Label:
+          default: Optional
+        Parameters:
           - SpotBidPercentage
           - DefaultCEMinvCpus
           - DefaultCEMaxvCpus
           - HighPriorityCEMinvCpus
           - HighPriorityCEMaxvCpus
-          - DefaultRetryNumber
+          - TemplateRootUrl
+
     ParameterLabels:
       S3BucketName:
         default: S3 Bucket Name
@@ -45,6 +49,8 @@ Metadata:
         default: High Priority Min vCPU
       HighPriorityCEMaxvCpus:
         default: High Priority Max vCPU
+      TemplateRootUrl:
+        default: Template Root URL
 
 
 Parameters:
@@ -100,13 +106,21 @@ Parameters:
     Description: The maximum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
     Default: 100
+  TemplateRootUrl:
+    Type: String
+    Description: >-
+      Root URL for where nested templates are stored
+    Default: https://s3.amazonaws.com/aws-genomics-workflows/templates
+    ConstraintDescription: >-
+      Must be a valid S3 URL
+    AllowedPattern: "https://s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
 
 
 Resources:
   S3Stack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://aws-genomics-workflows.s3.amazonaws.com/templates/aws-genomics-s3.template.yaml
+      TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-s3.template.yaml
       TimeoutInMinutes: 5
       Parameters:
         S3BucketName: !Ref S3BucketName
@@ -116,7 +130,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: S3Stack
     Properties:
-      TemplateURL: https://aws-genomics-workflows.s3.amazonaws.com/templates/aws-genomics-iam.template.yaml
+      TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-iam.template.yaml
       TimeoutInMinutes: 10
       Parameters:
         S3BucketName: !Ref S3BucketName
@@ -124,7 +138,7 @@ Resources:
   LaunchTplStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://aws-genomics-workflows.s3.amazonaws.com/templates/aws-genomics-launch-template.template.yaml
+      TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-launch-template.template.yaml
       Parameters:
         WorkflowOrchestrator: !Ref WorkflowOrchestrator
   
@@ -134,7 +148,7 @@ Resources:
       - IamStack
       - LaunchTplStack
     Properties:
-      TemplateURL: https://aws-genomics-workflows.s3.amazonaws.com/templates/aws-genomics-batch.template.yaml
+      TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-batch.template.yaml
       TimeoutInMinutes: 10
       Parameters:
         LaunchTemplateId: !Sub ${LaunchTplStack.Outputs.LaunchTemplateId}

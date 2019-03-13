@@ -59,6 +59,8 @@ Metadata:
         default: High Priority Min vCPU
       HighPriorityCEMaxvCpus:
         default: High Priority Max vCPU
+      TemplateRootUrl:
+        default: Template Root URL
 
 # Parameters
 Parameters:    
@@ -147,6 +149,16 @@ Parameters:
     Default: 0.0.0.0/0
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  
+  TemplateRootUrl:
+    Type: String
+    Description: >-
+      Root URL for where nested templates are stored
+    Default: https://aws-genomics-workflows.s3.amazonaws.com/templates
+    ConstraintDescription: >-
+      Must be a valid S3 URL
+    AllowedPattern: "https://s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
+
 
 Resources:
   VpcStack:
@@ -163,7 +175,7 @@ Resources:
   GenomicsWorkflowStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL:  https://s3.amazonaws.com/aws-genomics-workflows/templates/aws-genomics-root-novpc.template.yaml
+      TemplateURL:  !Sub ${TemplateRootUrl}/aws-genomics-root-novpc.template.yaml
       Parameters:
         VpcId: !GetAtt 'VpcStack.Outputs.VPCID'
         SubnetIds: !Sub "${VpcStack.Outputs.PrivateSubnet1AID}, ${VpcStack.Outputs.PrivateSubnet2AID}"
@@ -176,12 +188,13 @@ Resources:
         DefaultCEMaxvCpus: !Ref 'DefaultCEMaxvCpus'
         HighPriorityCEMinvCpus: !Ref 'HighPriorityCEMinvCpus'
         HighPriorityCEMaxvCpus: !Ref 'HighPriorityCEMaxvCpus'
+        TemplateRootUrl: !Ref TemplateRootUrl
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
   CromwellServerStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL:  https://s3.amazonaws.com/aws-genomics-workflows/templates/cromwell/cromwell-server.template.yaml
+      TemplateURL:  !Sub ${TemplateRootUrl}/cromwell/cromwell-server.template.yaml
       Parameters:
         InstanceType: !Ref 'InstanceType'
         VpcId: !GetAtt 'VpcStack.Outputs.VPCID'
