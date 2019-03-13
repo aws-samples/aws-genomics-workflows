@@ -112,9 +112,9 @@ Parameters:
   S3NextflowBucketName:
     Type: String
     Description: >-
-      (Optional) S3 Bucket used to store nextflow.config and *.nf scripts.
+      (Optional) S3 Bucket used to store *.nf scripts.
       Defaults to the S3 Bucket used for data.
-    AllowedPattern: "(?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)"
+    AllowedPattern: "(^$|(?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$))"
     ConstraintDescription: "Must respect S3 bucket naming conventions"
   
   S3NextflowWorkDirPrefix:
@@ -139,7 +139,7 @@ Parameters:
   NextflowContainerImage:
     Type: String
     Description: >-
-      Container image for nextflow with custom entrypoint for config and workflow
+      Container image for nextflow with custom entrypoint for workflow
       script staging.  (Example, "<dockerhubuser>/nextflow:latest")
   
   TemplateRootUrl:
@@ -222,12 +222,7 @@ Outputs:
   S3NextFlowBucket:
     Value: !GetAtt NextflowStack.Outputs.BucketName
     Description: >-
-      S3 Bucket used to store nextflow.config and *.nf scripts
-  S3NextflowConfigPrefix:
-    Value: !GetAtt NextflowStack.Outputs.ConfigPrefix
-    Description: >-
-      Path in the S3 bucket where nextflow.config file(s) are located.  If blank,
-      then they are located at the root level of the "nextflow" bucket.
+      S3 Bucket used to store *.nf scripts
   S3NextflowScriptPrefix:
     Value: !GetAtt NextflowStack.Outputs.ScriptPrefix
     Description: >-

@@ -174,7 +174,6 @@ Resources:
               SourcePath: /scratch
             Name: scratch
         Command: 
-          - Ref::NextflowConfig
           - Ref::NextflowScript
         Memory: 1024
         JobRoleArn: !GetAtt IAMNextflowJobRole.Arn
