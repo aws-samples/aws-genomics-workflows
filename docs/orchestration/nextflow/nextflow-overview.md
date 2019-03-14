@@ -4,6 +4,8 @@
 
 [Nextflow](https://www.nextflow.io) is a reactive workflow framework and DSL developed by the [Comparative Bioinformatics group](https://www.crg.eu/en/programmes-groups/notredame-lab) at the Barcelona [Centre for Genomic Regulation (CRG)](http://www.crg.eu/) that enables scalable and reproducible scientific workflows using software containers.
 
+Nextflow can be run either locally or on a dedicated EC2 instance.  The latter is preferred if you have long running workflows - with the caveat that you are responsible for stopping the instance when your workflow is complete.  The architecture presented in this guide demonstrates how you can run Nextflow entirely in AWS Batch in a managed and cost effective fashion.
+
 ## Full Stack Deployment (TL;DR)
 
 The following CloudFormation template will launch a EC2 instance pre-configured for using Nextflow.
@@ -60,7 +62,10 @@ WORKDIR /opt/work
 ENTRYPOINT ["/opt/bin/nextflow.aws.sh"]
 ```
 
-where the entrypoint script is:
+!!! note
+    If you are trying to keep your container image as small as possible, keep in mind that Nextflow relies on basic linux tools such as `awk`, `bash`, `ps`, `date`, `sed`, `grep`, `egrep`, and `tail` which may need to be installed on extra minimalist base images like `alpine`.
+
+The script used for the entrypoint is:
 
 ```bash
 #!/bin/bash
