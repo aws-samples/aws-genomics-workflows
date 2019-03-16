@@ -1,0 +1,3 @@
+# Disclaimer
+
+The architectures and solutions presented in this guide are meant to demonstrate proof of concept use.  Before implementing anything described here in a production setting it is highly recommended that you consult with your AWS account team regarding your specific requirements for performance, scalability, and security via a [Well Architected Review](https://aws.amazon.com/architecture/well-architected/).
