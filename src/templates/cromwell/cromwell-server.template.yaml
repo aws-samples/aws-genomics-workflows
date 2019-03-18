@@ -304,7 +304,7 @@ Resources:
               group: "ec2-user"
 
             "/home/ec2-user/run_cromwell_server.sh":
-              content: !Sub |
+              content: |
                 #!/bin/bash
                 java -Dconfig.file=cromwell.conf -jar cromwell.jar server
 
@@ -316,7 +316,7 @@ Resources:
               mode: "000644"
               owner: "ec2-user"
               group: "ec2-user"
-              content: !Sub |
+              content: |
                 [unix_http_server]
                 file=/tmp/supervisor.sock   ; the path to the socket file
                 
@@ -345,7 +345,7 @@ Resources:
           
             "/etc/nginx/nginx.conf":
               mode: "000644"
-              content: !Sub |
+              content: |
                 # For more information on configuration, see:
                 #   * Official English Documentation: http://nginx.org/en/docs/
                 #   * Official Russian Documentation: http://nginx.org/ru/docs/

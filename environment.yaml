@@ -2,53 +2,13 @@ name: mkdocs
 channels:
   - defaults
 dependencies:
-  - ca-certificates=2018.03.07=0
-  - certifi=2018.4.16=py36_0
-  - libcxx=4.0.1=h579ed51_0
-  - libcxxabi=4.0.1=hebd6815_0
-  - libedit=3.1.20170329=hb402a30_2
-  - libffi=3.2.1=h475c297_4
-  - ncurses=6.1=h0a44026_0
-  - openssl=1.0.2o=h26aff7b_0
-  - pip=10.0.1=py36_0
-  - python=3.6.6=hc167b69_0
-  - readline=7.0=hc1231fa_4
-  - setuptools=39.2.0=py36_0
-  - sqlite=3.24.0=ha441bb4_0
-  - tk=8.6.7=h35a86e2_3
-  - wheel=0.31.1=py36_0
-  - xz=5.2.4=h1de35cc_4
-  - zlib=1.2.11=hf3cbc9b_2
+  - python=3.6.6
   - pip:
-    - boto3==1.7.26
-    - botocore==1.10.26
-    - click==6.7
-    - colorama==0.3.9
-    - docutils==0.14
+    - cfn-lint==0.16.0
     - fontawesome-markdown==0.2.6
-    - jinja2==2.10
-    - jmespath==0.9.3
-    - livereload==2.5.2
-    - markdown==3.0.1
-    - markupsafe==1.0
     - mkdocs==1.0.4
-    - mkdocs-alabaster==0.7.6
-    - mkdocs-bootswatch==1.0
-    - mkdocs-cinder==0.15.0
-    - mkdocs-cluster==0.0.9
     - mkdocs-macros-plugin==0.2.4
     - mkdocs-markdownextradata-plugin==0.0.5
     - mkdocs-material==3.1.0
-    - mkdocs-rtd-dropdown==1.0.2
-    - mkdocs-windmill==0.1.6
-    - pyasn1==0.4.4
-    - pygments==2.3.0
     - pymdown-extensions==6.0
-    - python-dateutil==2.7.3
-    - pyyaml==3.13
-    - repackage==0.7.3
-    - rsa==3.4.2
-    - s3transfer==0.1.13
-    - six==1.11.0
-    - tornado==5.1.1
 prefix: /Users/pwyming/anaconda3/envs/mkdocs
