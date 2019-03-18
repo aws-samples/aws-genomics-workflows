@@ -8,9 +8,7 @@ before_install:
   - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - ./miniconda.sh -b -f
-  - ls
-  - export PATH=$HOME/miniconda/bin:$PATH
-  - echo $PATH
+  - export PATH=$HOME/miniconda3/bin:$PATH
   - which conda
   - conda update --yes conda
 
