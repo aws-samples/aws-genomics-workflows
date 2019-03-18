@@ -14,7 +14,7 @@ before_install:
 
 install:
 
-  - conda create --yes --file environment.yaml
+  - conda env create --file environment.yaml
   - source activate mkdocs
 
 script:
