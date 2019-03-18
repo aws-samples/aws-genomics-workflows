@@ -147,7 +147,6 @@ Resources:
         Timeout: PT15M
   AMI:
     Type: Custom::AMI
-    DeletionPolicy: Retain
     Properties:
       ServiceToken: !GetAtt AMIFunction.Arn
       InstanceId: !Ref EC2Instance
