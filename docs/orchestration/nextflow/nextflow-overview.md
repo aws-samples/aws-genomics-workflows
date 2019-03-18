@@ -2,17 +2,17 @@
 
 ![Nextflow on AWS](./images/nextflow-on-aws-infrastructure.png)
 
-[Nextflow](https://www.nextflow.io) is a reactive workflow framework and DSL developed by the [Comparative Bioinformatics group](https://www.crg.eu/en/programmes-groups/notredame-lab) at the Barcelona [Centre for Genomic Regulation (CRG)](http://www.crg.eu/) that enables scalable and reproducible scientific workflows using software containers.
+[Nextflow](https://www.nextflow.io) is a reactive workflow framework and domain specific language (DSL) developed by the [Comparative Bioinformatics group](https://www.crg.eu/en/programmes-groups/notredame-lab) at the Barcelona [Centre for Genomic Regulation (CRG)](http://www.crg.eu/) that enables scalable and reproducible scientific workflows using software containers.
 
-Nextflow can be run either locally or on a dedicated EC2 instance.  The latter is preferred if you have long running workflows - with the caveat that you are responsible for stopping the instance when your workflow is complete.  The architecture presented in this guide demonstrates how you can run Nextflow entirely in AWS Batch in a managed and cost effective fashion.
+Nextflow can be run either locally or on a dedicated EC2 instance.  The latter is preferred if you have long running workflows - with the caveat that you are responsible for stopping the instance when your workflow is complete.  The architecture presented in this guide demonstrates how you can run Nextflow using AWS Batch in a managed and cost effective fashion.
 
 ## Full Stack Deployment (TL;DR)
 
-The following CloudFormation template will launch a EC2 instance pre-configured for using Nextflow.
+The following CloudFormation template will launch an EC2 instance pre-configured for using Nextflow.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | -- |
-{{ cfn_stack_row("Nextflow All-in-One", "Nextflow", "nextflow/nextflow-aio.template.yaml", "Create all resources needed to run Nextflow on AWS: an S3 Bucket for data, S3 Bucket for nextflow config and workflows, AWS Batch Environment, and Nextflow head node job definition and job role") }}
+{{ cfn_stack_row("Nextflow All-in-One", "Nextflow", "nextflow/nextflow-aio.template.yaml", "Create all resources needed to run Nextflow on AWS: an AWS S3 Bucket for data, S3 Bucket for nextflow config and workflows, AWS Batch Environment, and Nextflow head node job definition and job role") }}
 
 When the above stack is complete, you will have a preconfigured Batch Job Definition that you can use to launch Nextflow pipelines.  Skip to the [Running a workflow](#running-a-workflow) section below to learn how.
 
@@ -100,11 +100,11 @@ NF_FILE=$(find . -name "*.nf")
 nextflow -c $NF_CONFIG run $NF_FILE
 ```
 
-The `AWS_BATCH_JOB_ID` and `AWS_BATCH_JOB_ATTEMPT` are [environment variables that are provided](https://docs.aws.amazon.com/batch/latest/userguide/job_env_vars.html) to all AWS Batch jobs.  The `NF_WORKDIR` and `NF_JOB_QUEUE` variables are ones set by the Batch Job Definition ([see below](#batch-job-definition)).
+The `AWS_BATCH_JOB_ID` and `AWS_BATCH_JOB_ATTEMPT` are [environment variables that are automatically provided](https://docs.aws.amazon.com/batch/latest/userguide/job_env_vars.html) to all AWS Batch jobs.  The `NF_WORKDIR` and `NF_JOB_QUEUE` variables are ones set by the Batch Job Definition ([see below](#batch-job-definition)).
 
 ### Job instance AWS CLI
 
-Nextflow uses the [AWS CLI](https://aws.amazon.com/cli/) to stage input and output data for tasks.  The AWS CLI can be either installed in the task container, or on the host instance that task containers run on.
+Nextflow uses the [AWS CLI](https://aws.amazon.com/cli/) to stage input and output data for tasks.  The AWS CLI can either be installed in the task container or on the host instance that task containers run on.
 
 Adding the AWS CLI to an existing containerized tool requires rebuilding the image to include it.  Assuming your tool's container image is based on CentOS, this would require a Dockerfile like so:
 
@@ -141,7 +141,7 @@ An AWS Batch Job Definition for the containerized Nextflow described above is sh
 ```json
 {
     "jobDefinitionName": "nextflow",
-    "jobDefinitionArn": "arn:aws:batch:us-west-2:<account-number>:job-definition/nextflow:1",
+    "jobDefinitionArn": "arn:aws:batch:<region>:<account-number>:job-definition/nextflow:1",
     "revision": 1,
     "status": "ACTIVE",
     "type": "container",
@@ -233,7 +233,7 @@ This policy gives **full** access to the buckets used to store data and workflow
 
 ## A Nextflow S3 Bucket
 
-The containerized version of `nextflow` above reads a `*.nf` script from an S3 bucket and writes workflow logs and outputs back to it.  This bucket can either be the same one that your workflow inputs and outputs are stored (e.g. in a separate folder therein), or it can be another bucket entirely.
+The containerized version of `nextflow` above reads a `*.nf` script from an S3 bucket and writes workflow logs and outputs back to it.  This bucket can either be the same one that your workflow inputs and outputs are stored (e.g. in a separate folder therein) or it can be another bucket entirely.
 
 ## Running a workflow
 
@@ -256,7 +256,7 @@ The script will replace `<s3-nextflow-bucket>`, `<s3-prefix>`, and `<batch-job-q
 
 ### Workflow process definitions
 
-The `process` definitions in Nextflow scripts should include a couple key parts in when running on AWS Batch:
+The `process` definitions in Nextflow scripts should include a couple key parts for running on AWS Batch:
 
 * the `container` directive
 * `cpus` and `memory` directives to define resource that will be used by Batch Jobs
