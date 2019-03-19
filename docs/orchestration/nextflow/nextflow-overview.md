@@ -287,10 +287,128 @@ process hello {
 }
 ```
 
-For each process in your workflow, Nextflow will create a corresponding Batch Job Definition, which it will re-use for subsequent workflow runs.  You can customize these job definitions to incorporate additional environment variables or volumes/mount points as needed.
+For each process in your workflow, Nextflow will create a corresponding Batch Job Definition, which it will re-use for subsequent workflow runs.  The process defined above will create a Batch Job Definition called `nf-ubuntu-latest` that looks like:
+
+```json
+{
+    "jobDefinitionName": "nf-ubuntu-latest",
+    "jobDefinitionArn": "arn:aws:batch:<region>:<account-number>:job-definition/nf-ubuntu-latest:1",
+    "revision": 1,
+    "status": "ACTIVE",
+    "type": "container",
+    "parameters": {
+        "nf-token": "43869867b5fbae16fa7cfeb5ea2c3522"
+    },
+    "containerProperties": {
+        "image": "ubuntu:latest",
+        "vcpus": 1,
+        "memory": 1024,
+        "command": [
+            "true"
+        ],
+        "volumes": [
+            {
+                "host": {
+                    "sourcePath": "/home/ec2-user/miniconda"
+                },
+                "name": "aws-cli"
+            }
+        ],
+        "environment": [],
+        "mountPoints": [
+            {
+                "containerPath": "/home/ec2-user/miniconda",
+                "readOnly": true,
+                "sourceVolume": "aws-cli"
+            }
+        ],
+        "ulimits": []
+    }
+}
+```
+
+You can customize these job definitions to incorporate additional environment variables or volumes/mount points as needed.
 
 !!! important
     In order to take advantage of automatically [expandable scratch space](/core-env/create-custom-compute-resources/) in the host instance, you will need to modify Nextflow created job definitions to map a container volume from `/scratch` on the host to `/tmp` in the container.
+
+For example, a customized job definition for the process above that maps `/scratch` on the host to `/scratch` in the container and still work with Nextflow would be:
+
+```json
+{
+    "jobDefinitionName": "nf-ubuntu-latest",
+    "jobDefinitionArn": "arn:aws:batch:<region>:<account-number>:job-definition/nf-ubuntu-latest:2",
+    "revision": 2,
+    "status": "ACTIVE",
+    "type": "container",
+    "parameters": {
+        "nf-token": "43869867b5fbae16fa7cfeb5ea2c3522"
+    },
+    "containerProperties": {
+        "image": "ubuntu:latest",
+        "vcpus": 1,
+        "memory": 1024,
+        "command": [
+            "true"
+        ],
+        "volumes": [
+            {
+                "host": {
+                    "sourcePath": "/home/ec2-user/miniconda"
+                },
+                "name": "aws-cli"
+            },
+            {
+                "host": {
+                    "sourcePath": "/scratch"
+                },
+                "name": "scratch"
+            }
+        ],
+        "environment": [],
+        "mountPoints": [
+            {
+                "containerPath": "/home/ec2-user/miniconda",
+                "readOnly": true,
+                "sourceVolume": "aws-cli"
+            },
+            {
+                "containerPath": "/scratch",
+                "sourceVolume": "scratch"
+            }
+        ],
+        "ulimits": []
+    }
+}
+```
+
+Nextflow will use the most recent revision of a Job Definition.
+
+You can also predefine Job Definitions that leverage extra volume mappings and refer to them in the process definition.  Assuming you had an existing Job Definition named `say-hello`, a process definition that utilized it would look like:
+
+```groovy
+texts = Channel.from("AWS", "Nextflow")
+
+process hello {
+    // directives
+    // substitute the container image reference with a job-definition reference
+    container "job-definition://say-hello"
+
+    // compute resources for the Batch Job
+    cpus 1
+    memory '512 MB'
+
+    input:
+    val text from texts
+
+    output:
+    file 'hello.txt'
+
+    """
+    echo "Hello $text" > hello.txt
+    """
+}
+```
 
 ### Running the workflow
 
