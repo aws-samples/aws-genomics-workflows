@@ -1,18 +1,20 @@
-AWSTemplateFormatVersion: "2010-09-09"
+---
+AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  (WWPS-GLS-WF-CROMWELL-AIO) Creates the complete set of resources needed to run
-  genomics workflows using Cromwell on AWS Batch
+  (WWPS-GLS-WF-NEXTFLOW-AIO) Creates the complete set of resources needed to run
+  genomics workflows using Nextflow on AWS Batch
+
 
 Mappings:
   TagMap:
     default:
       architecture: "genomics-workflows"
-      solution: "cromwell"
+      solution: "nextflow"
       tags:
         - Key: "architecture"
           Value: "genomics-workflows"
         - Key: "solution"
-          Value: "cromwell"
+          Value: "nextflow"
 
 
 Metadata:
@@ -21,10 +23,11 @@ Metadata:
       - Label:
           default: "Required"
         Parameters:
-          - S3BucketName
-          - ExistingBucket
+          - S3DataBucketName
+          - ExistingDataBucket
           - KeyPairName
           - AvailabilityZones
+          - NextflowContainerImage
       - Label:
           default: "AWS Batch"
         Parameters:
@@ -34,19 +37,22 @@ Metadata:
           - HighPriorityCEMinvCpus
           - HighPriorityCEMaxvCpus
       - Label:
-          default: "Cromwell Server"
+          default: "Nextflow Resources"
         Parameters:
-          - CromwellVersion
-          - InstanceType
-          - InstanceName
-          - SSHLocation
-          - HTTPLocation
+          - S3NextflowBucketName
+          - ExistingNextflowBucket
+          - S3NextflowScriptPrefix
+          - S3NextflowWorkDirPrefix
 
     ParameterLabels:
-      S3BucketName:
-        default: S3 Bucket Name
-      ExistingBucket:
-        default: Existing Bucket?
+      S3DataBucketName:
+        default: S3 Data Bucket Name
+      ExistingDataBucket:
+        default: Existing Data Bucket?
+      S3NextflowBucketName:
+        default: S3 Nextflow Bucket Name
+      ExistingNextflowBucket:
+        default: Existing Nextflow Bucket?
       KeyPairName:
         default: EC2 Key Pair Name
       SpotBidPercentage:
@@ -62,20 +68,17 @@ Metadata:
       TemplateRootUrl:
         default: Template Root URL
 
-# Parameters
-Parameters:    
+
+Parameters:
   AvailabilityZones:
     Description: "Choose the two Availability Zones to deploy instances for AWS Batch."
     Type: List<AWS::EC2::AvailabilityZone::Name>
-  S3BucketName:
-    Description: >-
-      A S3 bucket name for storing analysis results. 
-      The bucket name must respect the S3 bucket naming conventions 
-      (can contain lowercase letters, numbers, periods and hyphens).
+  S3DataBucketName:
+    Description: A S3 bucket name for storing analysis results
     Type: String
     AllowedPattern: "(?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)"
     ConstraintDescription: "Must respect S3 bucket naming conventions"
-  ExistingBucket:
+  ExistingDataBucket:
     Description: Does this bucket already exist?
     Type: String
     AllowedValues:
@@ -105,59 +108,55 @@ Parameters:
     Description: The maximum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
     Default: 100
-  InstanceType:
-    Description: >-
-      EC2 instance type.
-      
-      Cromwell itself does not require much compute power. 
-      A t2.medium should be sufficient.  If you want to run this server on the 
-      free tier, use a t2.micro.
-    Type: String
-    Default: t2.medium
-    AllowedValues:
-    - t2.micro
-    - t2.medium
-    - t2.large
-    ConstraintDescription: "Must be 't2.micro', 't2.medium', or 't2.large'."
-  InstanceName:
-    Type: String
-    Default: cromwell-server
-    Description: The name of the EC2 instance that is created
-  CromwellVersion:
+  
+  S3NextflowBucketName:
     Type: String
     Description: >-
-      Version of Cromwell to install. "latest" will retrieve the currently released
-      version of Cromwell from Github.
+      (Optional) S3 Bucket used to store *.nf scripts.
+      Defaults to the S3 Bucket used for data.
+    AllowedPattern: "(^$|(?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$))"
+    ConstraintDescription: "Must respect S3 bucket naming conventions"
+  
+  S3NextflowWorkDirPrefix:
+    Type: String
+    Description: >-
+      (Optional) Parent folder in the S3 bucket that contains workflow execution logs
+  
+  S3NextflowScriptPrefix:
+    Type: String
+    Description: >-
+      (Optional) Parent folder in the S3 bucket that contains *.nf workflow scripts
+  
+  ExistingNextflowBucket:
+    Type: String
+    Description: >-
+      Does the Nextflow S3 Bucket already exist?  If not, it will be created.
     AllowedValues:
-      - latest
-      - 36.1
-      - 36
-    Default: 36.1
-  SSHLocation:
-    Description: "The IP address range that has SSH access to the EC2 instances"
+      - Yes
+      - No
+    Default: No
+  
+  NextflowContainerImage:
     Type: String
-    MinLength: '9'
-    MaxLength: '18'
-    Default: 0.0.0.0/0
-    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
-    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
-  HTTPLocation:
-    Description: "The IP address range that has HTTP access to the EC2 instances"
-    Type: String
-    MinLength: '9'
-    MaxLength: '18'
-    Default: 0.0.0.0/0
-    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
-    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+    Description: >-
+      Container image for nextflow with custom entrypoint for workflow
+      script staging.  (Example, "<dockerhubuser>/nextflow:latest")
   
   TemplateRootUrl:
     Type: String
     Description: >-
       Root URL for where nested templates are stored
-    Default: https://aws-genomics-workflows.s3.amazonaws.com/templates
+    Default: https://s3.amazonaws.com/aws-genomics-workflows/templates
     ConstraintDescription: >-
       Must be a valid S3 URL
     AllowedPattern: "https://s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
+
+
+Conditions:
+  UseOneBucket:
+    Fn::Or:
+      - !Equals [!Ref S3NextflowBucketName, ""]
+      - !Equals [!Ref S3NextflowBucketName, !Ref S3DataBucketName]
 
 
 Resources:
@@ -179,10 +178,10 @@ Resources:
       Parameters:
         VpcId: !GetAtt 'VpcStack.Outputs.VPCID'
         SubnetIds: !Sub "${VpcStack.Outputs.PrivateSubnet1AID}, ${VpcStack.Outputs.PrivateSubnet2AID}"
-        S3BucketName: !Ref S3BucketName
-        ExistingBucket: !Ref ExistingBucket
+        S3BucketName: !Ref S3DataBucketName
+        ExistingBucket: !Ref ExistingDataBucket
         KeyPairName: !Ref 'KeyPairName'
-        WorkflowOrchestrator: cromwell
+        WorkflowOrchestrator: nextflow
         SpotBidPercentage: !Ref 'SpotBidPercentage'
         DefaultCEMinvCpus: !Ref 'DefaultCEMinvCpus'
         DefaultCEMaxvCpus: !Ref 'DefaultCEMaxvCpus'
@@ -191,40 +190,50 @@ Resources:
         TemplateRootUrl: !Ref TemplateRootUrl
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
-  CromwellServerStack:
+  NextflowStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL:  !Sub ${TemplateRootUrl}/cromwell/cromwell-server.template.yaml
+      TemplateURL:  !Sub ${TemplateRootUrl}/nextflow/nextflow-resources.template.yaml
       Parameters:
-        InstanceType: !Ref 'InstanceType'
-        VpcId: !GetAtt 'VpcStack.Outputs.VPCID'
-        PublicSubnetID: !GetAtt 'VpcStack.Outputs.PublicSubnet1ID'
-        InstanceName: !Join ["-", [!Ref 'InstanceName', !Select [2, !Split ["/", !Ref "AWS::StackId" ]]]]
-        CromwellVersion: !Ref CromwellVersion
-        KeyName: !Ref 'KeyPairName'
-        SSHLocation: !Ref 'SSHLocation'
-        HTTPLocation: !Ref 'HTTPLocation'
-        S3BucketName: !Ref 'S3BucketName'
-        BatchQueue: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvDefaultJobQueueArn'
+        S3DataBucketName: !Ref S3DataBucketName
+        S3NextflowBucketName:
+          Fn::If:
+            - UseOneBucket
+            - !Ref S3DataBucketName
+            - !Ref S3NextflowBucketName
+        ExistingBucket: 
+          Fn::If:
+            - UseOneBucket
+            - !Ref ExistingDataBucket
+            - !Ref ExistingNextflowBucket
+        S3WorkDirPrefix: !Ref S3NextflowWorkDirPrefix
+        S3ScriptPrefix: !Ref S3NextflowScriptPrefix
+        NextflowContainerImage: !Ref NextflowContainerImage
+        BatchDefaultJobQueue: !GetAtt GenomicsWorkflowStack.Outputs.GenomicsEnvDefaultJobQueueArn
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
 
 Outputs:
-  CromwellServerHostName:
-    Value: !GetAtt 'CromwellServerStack.Outputs.HostName'
+  NextflowJobDefinition:
+    Value: !GetAtt NextflowStack.Outputs.NextflowJobDefinition
     Description: >-
-      Cromwell server public DNS name. Use this URL in a web browser or via curl
-      to access Cromwell and submit workflows.
-  CromwellServerVersion:
+      Batch Job Definition that creates a nextflow head node for running workflows
+  
+  S3NextFlowBucket:
+    Value: !GetAtt NextflowStack.Outputs.BucketName
     Description: >-
-      Version of Cromwell installed.
-    Value: !Ref CromwellVersion
+      S3 Bucket used to store *.nf scripts
+  S3NextflowScriptPrefix:
+    Value: !GetAtt NextflowStack.Outputs.ScriptPrefix
+    Description: >-
+      Path in the S3 bucket where *.nf script files are located.  If blank,
+      then they are located at the root level of the "nextflow" bucket.
+  
   VpcId:
     Description: >-
-      The VPC created for your Cromwell stack. Use this ID if you need to launch
-      additional Cromwell servers.
+      The VPC created for your Nextflow stack.
     Value: !GetAtt 'VpcStack.Outputs.VPCID'
-  S3Bucket:
+  S3DataBucket:
     Value: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvS3Bucket'
     Description: >-
       S3 bucket for storing genomics workflow input and output data

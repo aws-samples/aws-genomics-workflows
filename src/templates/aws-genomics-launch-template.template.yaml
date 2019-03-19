@@ -13,6 +13,17 @@ Mappings:
           Value: "genomics-workflows"
         - Key: "solution"
           Value: "default"
+  ECSAdditionsMap:
+    step-functions:
+      additions: ""
+    cromwell:
+      additions: |-
+        - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
+        - sh /opt/ecs-additions/ecs-additions-cromwell.sh
+    nextflow:
+      additions: |-
+        - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
+        - sh /opt/ecs-additions/ecs-additions-nextflow.sh
 
 Parameters:
   LaunchTemplateNamePrefix:
@@ -30,6 +41,7 @@ Parameters:
     AllowedValues:
       - step-functions
       - cromwell
+      - nextflow
   ScratchMountPoint:
     Type: String
     Default: /scratch
@@ -98,12 +110,10 @@ Resources:
 
               --==BOUNDARY==--
             - ECSAdditions:
-                Fn::If:
-                  - UseCromwell
-                  - |-
-                    - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
-                    - sh /opt/ecs-additions/ecs-additions-cromwell.sh
-                  - ""
+                Fn::FindInMap: 
+                  - ECSAdditionsMap
+                  - !Ref WorkflowOrchestrator
+                  - additions
               ScratchMountPoint: 
                 Fn::If:
                   - UseCromwell

@@ -1,0 +1,229 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  (WWPS-GLS-WF-NEXTFLOW) Creates resources specific to running Nextflow on AWS
+
+
+Mappings:
+  TagMap:
+    default:
+      architecture: "genomics-workflows"
+      solution: "nextflow"
+      tags:
+        - Key: "architecture"
+          Value: "genomics-workflows"
+        - Key: "solution"
+          Value: "nextflow"
+
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Required"
+        Parameters:
+          - S3DataBucketName
+          - S3NextflowBucketName
+          - ExistingBucket
+          - NextflowContainerImage
+      - Label:
+          default: "Optional"
+        Parameters:
+          - S3ScriptPrefix
+          - S3WorkDirPrefix
+
+
+Parameters:
+  S3DataBucketName:
+    Type: String
+    Description: >-
+      S3 Bucket used to store input and output data for the workflow.
+      This should bucket should already exist.
+    
+  S3NextflowBucketName:
+    Type: String
+    Description: >-
+      S3 Bucket used to store *.nf scripts.
+    
+  S3ScriptPrefix:
+    Type: String
+    Description: >-
+      (Optional) Parent folder in the S3 bucket that contains *.nf workflow scripts
+  
+  S3WorkDirPrefix:
+    Type: String
+    Description: >-
+      (Optional) Parent folder in the S3 bucket that contains workflow execution logs
+  
+  ExistingBucket:
+    Type: String
+    Description: >-
+      Does the S3 Bucket for *.nf scripts already exist?  If not, it will be created.
+    AllowedValues:
+      - Yes
+      - No
+    Default: No
+  
+  NextflowContainerImage:
+    Type: String
+    Description: >-
+      Container image for nextflow with custom entrypoint for config and workflow
+      script staging.  (Example, "<dockerhubuser>/nextflow:latest")
+
+  BatchDefaultJobQueue:
+    Type: String
+    Description: >-
+      Name or ARN of the Batch Job Queue to use by default for workflow tasks.
+
+Conditions:
+  DataBucketIsNextflowBucket:
+    Fn::Equals:
+      - !Ref S3NextflowBucketName
+      - !Ref S3DataBucketName
+    
+  NextflowBucketDoesNotExist:
+    Fn::Equals:
+      - !Ref ExistingBucket
+      - No
+    
+  NoS3ScriptPrefix:
+    Fn::Equals:
+      - !Ref S3ScriptPrefix
+      - ""
+  
+  NoS3WorkDirPrefix:
+    Fn::Equals:
+      - !Ref S3WorkDirPrefix
+      - ""
+
+
+Resources:
+  S3NextflowBucket:
+    Type: AWS::S3::Bucket
+    Condition: NextflowBucketDoesNotExist
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Ref S3NextflowBucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+             SSEAlgorithm: AES256
+      Tags: !FindInMap ["TagMap", "default", "tags"]
+  
+  IAMNextflowJobRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Policies:
+        - PolicyName: !Sub Nextflow-Batch-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Resource: "*"
+                Action:
+                  - "batch:*"
+        - PolicyName: !Sub Nextflow-S3Bucket-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Resource:
+                  Fn::If:
+                    - DataBucketIsNextflowBucket
+
+                    - - !Join ["", ["arn:aws:s3:::", !Ref S3DataBucketName]]
+                      - !Join ["", ["arn:aws:s3:::", !Ref S3DataBucketName, "/*"]]
+
+                    - - !Join ["", ["arn:aws:s3:::", !Ref S3DataBucketName]]
+                      - !Join ["", ["arn:aws:s3:::", !Ref S3DataBucketName, "/*"]]
+                      - !Join ["", ["arn:aws:s3:::", !Ref S3NextflowBucketName]]
+                      - !Join ["", ["arn:aws:s3:::", !Ref S3NextflowBucketName, "/*"]]
+                Action:
+                  - "s3:*"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "ecs-tasks.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+
+  BatchNextflowJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      Type: container
+      Parameters:
+        NextflowScript: 
+          Fn::Join:
+            - "/"
+            - - Fn::If:
+                  - NoS3ScriptPrefix
+                  - !Sub "s3://${S3NextflowBucketName}"
+                  - !Join ["/", [!Sub "s3://${S3NextflowBucketName}", !Ref S3ScriptPrefix]]
+              - workflow.nf
+      ContainerProperties: 
+        MountPoints: 
+          - ContainerPath: /opt/work
+            SourceVolume: scratch
+        Volumes: 
+          - Host:
+              SourcePath: /scratch
+            Name: scratch
+        Command: 
+          - Ref::NextflowScript
+        Memory: 1024
+        JobRoleArn: !GetAtt IAMNextflowJobRole.Arn
+        Vcpus: 2
+        Image: !Ref NextflowContainerImage
+        Environment:
+          - Name: "NF_JOB_QUEUE"
+            Value: !Ref BatchDefaultJobQueue
+          - Name: "NF_WORKDIR"
+            Value: 
+              Fn::Join: 
+              - "/"
+              - - Fn::If:
+                    - NoS3WorkDirPrefix
+                    - !Sub "s3://${S3NextflowBucketName}"
+                    - !Join ["/", [!Sub "s3://${S3NextflowBucketName}", !Ref S3WorkDirPrefix]]
+                - runs
+            
+      JobDefinitionName: nextflow
+
+
+Outputs:
+  BucketName:
+    Description: >-
+      S3 Bucket used to store *.nf scripts
+    Value:
+      Fn::If:
+        - NextflowBucketDoesNotExist
+        - !Ref S3NextflowBucket
+        - !Ref S3NextflowBucketName
+    
+  ScriptPrefix:
+    Description: >-
+      Path in the S3 bucket where *.nf script files are located.  If blank,
+      then they are located at the root level of the bucket.
+    Value: !Ref S3ScriptPrefix
+
+  WorkDirPrefix:
+    Description: >-
+      Path in the S3 bucket where "runs" folder with workflow logs and final 
+      outputs is located.  If blank, then they are located at the root level of
+      the bucket.
+    Value: !Ref S3WorkDirPrefix
+
+  NextflowJobDefinition:
+    Description: >-
+      Batch Job Definition that creates a nextflow head node for running workflows
+    Value: !Ref BatchNextflowJobDefinition
+  
+  NextflowJobRole:
+    Description: >-
+      IAM Role that allows the nextflow head node job access to S3 and Batch
+    Value: !GetAtt IAMNextflowJobRole.Arn
