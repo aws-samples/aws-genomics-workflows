@@ -13,7 +13,7 @@ def dedented(f):
 
 def declare_variables(variables, macro):
 
-    _variables = variables[variables['staging']]
+    _artifacts = variables['artifacts']
 
     @macro
     @dedented
@@ -21,7 +21,7 @@ def declare_variables(variables, macro):
         """
         create an cloudformation launch button
         """
-        s3 = _variables['s3']
+        s3 = _artifacts['s3']
 
         if template.lower().startswith('http'):
             cfn_url = template
@@ -51,19 +51,27 @@ def declare_variables(variables, macro):
         """
         create a download button
         """
-        s3 = _variables['s3']
+        repo_url = variables['repo_url']
+        s3 = _artifacts['s3']
             
         if path.lower().startswith('http'):
             src_url = path
         else:
-            s3['object'] = "/".join(
-                filter(None, [s3.get('prefix'), path])
-            )
+            # s3['object'] = "/".join(
+            #     filter(None, [s3.get('prefix'), path])
+            # )
 
-            src_url = "https://s3.amazonaws.com/{bucket}/{object}".format(**s3)
+            # src_url = "https://s3.amazonaws.com/{bucket}/{object}".format(**s3)
+            if repo_url.endswith("/"):
+                repo_url = repo_url[:-1]
+            
+            if path.startswith("/"):
+                path = path[1:]
+            
+            src_url = f"{repo_url}/blob/master/src/{path}"
         
         return """
-        <a href="{url}"><i class="material-icons">{icon}</i></a>
+        <a href="{url}" target="_blank"><i class="material-icons">{icon}</i></a>
         """.format(icon=icon, url=src_url)
     
     @macro
