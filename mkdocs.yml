@@ -1,6 +1,7 @@
 site_name: Genomics Workflows on AWS
 nav:
   - Overview: index.md
+  - Disclaimer: disclaimer.md
   - TL;DR: tldr.md
   - Getting Started:
     - Introduction: core-env/introduction.md
