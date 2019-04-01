@@ -20,7 +20,6 @@ Parameters:
       A S3 bucket name for storing analysis results.
       The bucket name must respect the S3 bucket naming conventions 
       (can contain lowercase letters, numbers, periods and hyphens).
-    Type: String
     AllowedPattern: "(?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)"
     ConstraintDescription: "Must respect AWS naming conventions"
   ExistingBucket:
