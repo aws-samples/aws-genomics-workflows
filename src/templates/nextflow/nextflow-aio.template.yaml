@@ -204,7 +204,7 @@ Resources:
         ExistingBucket: 
           Fn::If:
             - UseOneBucket
-            - !Ref ExistingDataBucket
+            - True  # by the time this stack is created, the data bucket should exist
             - !Ref ExistingNextflowBucket
         S3WorkDirPrefix: !Ref S3NextflowWorkDirPrefix
         S3ScriptPrefix: !Ref S3NextflowScriptPrefix
