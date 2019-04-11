@@ -34,6 +34,10 @@ Parameters:
     Type: Number
     Default: 20
     Description: The initial size of the scratch volume (GB)
+  DockerImageAndMetadataVolumeSize:
+    Type: Number
+    Default: 75
+    Description: The size of the volume Docker will use for image and metadata storage (GB)
   WorkflowOrchestrator:
     Type: String
     Description: The workflow orchestration engine you will use
@@ -62,7 +66,7 @@ Metadata:
         Parameters:
           - ScratchMountPoint
           - ScratchVolumeSize
-
+          - DockerImageAndMetadataVolumeSize
 Conditions:
   UseCromwell: !Equals [!Ref WorkflowOrchestrator, cromwell]
 
@@ -80,6 +84,12 @@ Resources:
             - Key: solution
               Value: !Ref WorkflowOrchestrator
         BlockDeviceMappings:
+          - Ebs:
+              Encrypted: True
+              DeleteOnTermination: True
+              VolumeSize: !Ref DockerImageAndMetadataVolumeSize
+              VolumeType: gp2 
+            DeviceName: /dev/xvdcz
           - Ebs:
               Encrypted: True
               DeleteOnTermination: True
