@@ -241,23 +241,23 @@ All of the above is created by the following CloudFormation template.
 
 When the stack above completes, go to the outputs tab and copy the JSON string provided in `StateMachineInput`.
 
-![cloud formation output tab](cfn-stack-outputs-tab.png)
-![example state-machine input](cfn-stack-outputs-statemachine-inputs.png)
+![cloud formation output tab](./images/cfn-stack-outputs-tab.png)
+![example state-machine input](./images/cfn-stack-outputs-statemachineinput.png)
 
 Next head to the AWS Step Functions console and select the state-machine that was created.
 
-![select state-machine](sfn-console-statemachine.png)
+![select state-machine](./images/sfn-console-statemachine.png)
 
 Click the "Start Execution" button.
 
-![start execution](sfn-console-start-execution.png)
+![start execution](./images/sfn-console-start-execution.png)
 
 In the dialog that appears, paste the input JSON into the "Input" field, and click the "Start Execution" button.  (A unique execution ID will be automatically generated).
 
-![start execution dialog](sfn-console-start-execution-dialog.png)
+![start execution dialog](./images/sfn-console-start-execution-dialog.png)
 
 You will then be taken to the execution tracking page where you can monitor the progress of your workflow.
 
-![execution tracking](sfn-console-execution-inprogress.png)
+![execution tracking](./images/sfn-console-execution-inprogress.png)
 
 The workflow takes approximately 5-6hrs to complete on `r4.2xlarge` SPOT instances.
