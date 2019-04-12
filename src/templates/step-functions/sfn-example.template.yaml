@@ -222,7 +222,7 @@ Resources:
         reference_prefix: "s3://broad-references/hg38/v0"
         reference_name: "Homo_sapiens_assembly38"
         sample_id: "SRR1919605"
-        input_prefix: !Sub "s3://aws-batch-genomics-resources/fastq"
+        input_prefix: "s3://aws-batch-genomics-resources/fastq"
         output_prefix: !Sub "s3://${S3BucketName}/genomics-workflow"
       
       ContainerProperties:
