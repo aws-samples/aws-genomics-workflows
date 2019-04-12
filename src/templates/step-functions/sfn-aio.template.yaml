@@ -142,7 +142,7 @@ Resources:
         S3BucketName: !Ref S3BucketName
         ExistingBucket: !Ref ExistingBucket
         KeyPairName: !Ref 'KeyPairName'
-        WorkflowOrchestrator: cromwell
+        WorkflowOrchestrator: step-functions
         SpotBidPercentage: !Ref 'SpotBidPercentage'
         DefaultCEMinvCpus: !Ref 'DefaultCEMinvCpus'
         DefaultCEMaxvCpus: !Ref 'DefaultCEMaxvCpus'
