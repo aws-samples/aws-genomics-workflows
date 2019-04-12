@@ -154,7 +154,7 @@ Resources:
   SfnStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL:  !Sub ${TemplateRootUrl}/step-functions/sfn-example.template.yaml
+      TemplateURL: !Sub ${TemplateRootUrl}/step-functions/sfn-${StateMachine}.template.yaml
       Parameters:
         S3BucketName: !Ref 'S3BucketName'
         BatchJobQueue: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvDefaultJobQueueArn'
