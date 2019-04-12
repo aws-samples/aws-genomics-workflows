@@ -1,0 +1,187 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  (WWPS-GLS-WF-SFN-AIO) Creates the complete set of resources needed to run
+  genomics workflows using AWS Step-Functions on AWS Batch
+
+Mappings:
+  TagMap:
+    default:
+      architecture: "genomics-workflows"
+      solution: "step-functions"
+      tags:
+        - Key: "architecture"
+          Value: "genomics-workflows"
+        - Key: "solution"
+          Value: "step-functions"
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Required"
+        Parameters:
+          - S3BucketName
+          - ExistingBucket
+          - KeyPairName
+          - AvailabilityZones
+      - Label:
+          default: "AWS Batch"
+        Parameters:
+          - SpotBidPercentage
+          - DefaultCEMinvCpus
+          - DefaultCEMaxvCpus
+          - HighPriorityCEMinvCpus
+          - HighPriorityCEMaxvCpus
+      - Label:
+          default: "Step Functions"
+        Parameters:
+          - StateMachine
+
+    ParameterLabels:
+      S3BucketName:
+        default: S3 Bucket Name
+      ExistingBucket:
+        default: Existing Bucket?
+      KeyPairName:
+        default: EC2 Key Pair Name
+      SpotBidPercentage:
+        default: Spot Bid %
+      DefaultCEMinvCpus:
+        default: Default Min vCPU
+      DefaultCEMaxvCpus:
+        default: Default Max vCPU
+      HighPriorityCEMinvCpus:
+        default: High Priority Min vCPU
+      HighPriorityCEMaxvCpus:
+        default: High Priority Max vCPU
+      TemplateRootUrl:
+        default: Template Root URL
+
+# Parameters
+Parameters:    
+  AvailabilityZones:
+    Description: "Choose the two Availability Zones to deploy instances for AWS Batch."
+    Type: List<AWS::EC2::AvailabilityZone::Name>
+  S3BucketName:
+    Description: >-
+      A S3 bucket name for storing analysis results. 
+      The bucket name must respect the S3 bucket naming conventions 
+      (can contain lowercase letters, numbers, periods and hyphens).
+    Type: String
+    AllowedPattern: "(?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)"
+    ConstraintDescription: "Must respect S3 bucket naming conventions"
+  ExistingBucket:
+    Description: Does this bucket already exist?
+    Type: String
+    AllowedValues:
+      - Yes
+      - No
+    Default: No
+  KeyPairName:
+    Description: Key Pair name
+    Type: AWS::EC2::KeyPair::KeyName
+  SpotBidPercentage:
+    Description: The percent of on-demand pricing for max bid for Spot intances
+    Type: Number
+    Default: 100
+  DefaultCEMinvCpus:
+    Description: The minimum number of CPUs for the default Batch Compute Environment
+    Type: Number
+    Default: 0
+  DefaultCEMaxvCpus:
+    Description: The maximum number of CPUs for the default Batch Compute Environment
+    Type: Number
+    Default: 100
+  HighPriorityCEMinvCpus:
+    Description: The minimum number of CPUs for the high-priority Batch Compute Environment
+    Type: Number
+    Default: 0
+  HighPriorityCEMaxvCpus:
+    Description: The maximum number of CPUs for the high-priority Batch Compute Environment
+    Type: Number
+    Default: 100
+  StateMachine:
+    Description: >-
+      Step functions state machine to create.  The example state machine implements
+      a WGS secondary analysis workflow using bwa-mem, samtools, and bcftools.
+    Type: String
+    Default: example
+    AllowedValues:
+    - example
+  
+  TemplateRootUrl:
+    Type: String
+    Description: >-
+      Root URL for where nested templates are stored
+    Default: https://s3.amazonaws.com/aws-genomics-workflows/templates
+    ConstraintDescription: >-
+      Must be a valid S3 URL
+    AllowedPattern: "https://s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
+
+
+Resources:
+  VpcStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  https://aws-quickstart.s3.amazonaws.com/quickstart-aws-vpc/templates/aws-vpc.template
+      TimeoutInMinutes: 15
+      Parameters:
+        AvailabilityZones: !Join ["," , !Ref AvailabilityZones]
+        NumberOfAZs: "2"
+        KeyPairName: !Ref KeyPairName
+      Tags: !FindInMap ["TagMap", "default", "tags"]
+
+  GenomicsWorkflowStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  !Sub ${TemplateRootUrl}/aws-genomics-root-novpc.template.yaml
+      Parameters:
+        VpcId: !GetAtt 'VpcStack.Outputs.VPCID'
+        SubnetIds: !Sub "${VpcStack.Outputs.PrivateSubnet1AID}, ${VpcStack.Outputs.PrivateSubnet2AID}"
+        S3BucketName: !Ref S3BucketName
+        ExistingBucket: !Ref ExistingBucket
+        KeyPairName: !Ref 'KeyPairName'
+        WorkflowOrchestrator: cromwell
+        SpotBidPercentage: !Ref 'SpotBidPercentage'
+        DefaultCEMinvCpus: !Ref 'DefaultCEMinvCpus'
+        DefaultCEMaxvCpus: !Ref 'DefaultCEMaxvCpus'
+        HighPriorityCEMinvCpus: !Ref 'HighPriorityCEMinvCpus'
+        HighPriorityCEMaxvCpus: !Ref 'HighPriorityCEMaxvCpus'
+        TemplateRootUrl: !Ref TemplateRootUrl
+      Tags: !FindInMap ["TagMap", "default", "tags"]
+
+  SfnStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  !Sub ${TemplateRootUrl}/step-functions/sfn-example.template.yaml
+      Parameters:
+        S3BucketName: !Ref 'S3BucketName'
+        BatchJobQueue: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvDefaultJobQueueArn'
+      Tags: !FindInMap ["TagMap", "default", "tags"]
+
+
+Outputs:
+  StateMachine:
+    Value: !GetAtt 'SfnStack.Outputs.StateMachine'
+    Description: >-
+      Example AWS Step Functions state machine
+  StateMachineInput:
+    Value: !GetAtt 'SfnStack.Outputs.StateMachineInput'
+    Description: >-
+      Example input for the state machine.  Use this when executing your workflow.
+  S3Bucket:
+    Value: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvS3Bucket'
+    Description: >-
+      S3 bucket for storing genomics workflow input and output data
+  BatchDefaultQueue:
+    Value: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvDefaultJobQueueArn'
+    Description: >-
+      The default AWS Batch job queue for workflow jobs, based on EC2 SPOT instances
+  BatchHighPriorityQueue:
+    Value: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvHighPriorityJobQueueArn'
+    Description: >-
+      AWS Batch job queue for high priority workflow jobs, based on EC2 On-Demand
+      instances
+
+...
