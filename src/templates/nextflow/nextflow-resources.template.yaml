@@ -255,9 +255,8 @@ Resources:
                   - echo "Creating ECR image repository"
                   - aws ecr create-repository --repository-name nextflow || true
                   - echo "Getting source code from Github"
-                  - git clone https://github.com/wleepang/aws-genomics-workflows.git
+                  - git clone https://github.com/aws-samples/aws-genomics-workflows.git
                   - cd aws-genomics-workflows
-                  - git checkout nextflow-updates
                   - cd src/containers/nextflow
               build:
                 commands:
