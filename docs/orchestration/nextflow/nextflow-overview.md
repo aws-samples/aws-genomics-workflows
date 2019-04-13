@@ -27,15 +27,15 @@ To get started using Nextflow on AWS you'll need the following setup in your AWS
 * An IAM Role for the Nextflow head node job that allows it access to AWS Batch
 * (optional) An S3 Bucket to store your Nextflow workflow definitions
 
-The last four items above are created by the following CloudFormation template:
+The last five items above are created by the following CloudFormation template:
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | -- |
-{{ cfn_stack_row("Nextflow Resources", "NextflowResources", "nextflow/nextflow-resources.template.yaml", "Create Nextflow specific resources needed to run on AWS: an S3 Bucket for nextflow workflow scripts, AWS Batch Job Definition for a Nextflow head node, and an IAM role for the nextflow head node job") }}
+{{ cfn_stack_row("Nextflow Resources", "NextflowResources", "nextflow/nextflow-resources.template.yaml", "Create Nextflow specific resources needed to run on AWS: an S3 Bucket for nextflow workflow scripts, Nextflow container, AWS Batch Job Definition for a Nextflow head node, and an IAM role for the nextflow head node job") }}
 
 ### Nextflow container
 
-For AWS Batch to run Nextflow as a Batch Job, it needs to be containerized.  In the process of doing so you can add the ability to automatically create a config file based on environment variables passed in by Batch and use workflow scripts that are stored in S3.
+For AWS Batch to run Nextflow as a Batch Job, it needs to be containerized.  The template above will build a container using the methods described below which includes adding capabilities to automatically configure Nextflow and run workflow scripts in S3.  If you want to add specialized capabilities or require a particular version of Nextflow, you can modify the source code to best suit your needs.
 
 To create such a container, you can use a `Dockerfile` like the one below:
 
@@ -65,7 +65,7 @@ ENTRYPOINT ["/opt/bin/nextflow.aws.sh"]
 !!! note
     If you are trying to keep your container image as small as possible, keep in mind that Nextflow relies on basic linux tools such as `awk`, `bash`, `ps`, `date`, `sed`, `grep`, `egrep`, and `tail` which may need to be installed on extra minimalist base images like `alpine`.
 
-The script used for the entrypoint is:
+The script used for the entrypoint is shown below.  Notice that it automatically configures Nextflow based on environment variables set by AWS Batch.
 
 ```bash
 #!/bin/bash
