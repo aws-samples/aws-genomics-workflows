@@ -256,8 +256,9 @@ Resources:
                   - aws ecr create-repository --repository-name nextflow || true
                   - echo "Getting source code from Github"
                   - git clone https://github.com/wleepang/aws-genomics-workflows.git
+                  - cd aws-genomics-workflows
                   - git checkout nextflow-updates
-                  - cd aws-genomics-workflows/src/containers/nextflow
+                  - cd src/containers/nextflow
               build:
                 commands:
                   - echo "Building container"
