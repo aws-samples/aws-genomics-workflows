@@ -27,7 +27,6 @@ Metadata:
           - ExistingDataBucket
           - KeyPairName
           - AvailabilityZones
-          - NextflowContainerImage
       - Label:
           default: "AWS Batch"
         Parameters:
@@ -39,6 +38,7 @@ Metadata:
       - Label:
           default: "Nextflow Resources"
         Parameters:
+          - NextflowContainerImage
           - S3NextflowBucketName
           - ExistingNextflowBucket
           - S3NextflowScriptPrefix
@@ -139,8 +139,10 @@ Parameters:
   NextflowContainerImage:
     Type: String
     Description: >-
-      Container image for nextflow with custom entrypoint for workflow
-      script staging.  (Example, "<dockerhubuser>/nextflow:latest")
+      (Optional) Container image for nextflow with custom entrypoint for config and workflow
+      script staging. (Example, "<dockerhubuser>/nextflow:latest").  
+      Provide this if you have a specific version of nextflow you want to use, otherwise a 
+      container will be built using the latest version. 
   
   TemplateRootUrl:
     Type: String
@@ -214,6 +216,9 @@ Resources:
 
 
 Outputs:
+  NextflowContainerImage:
+    Value: !GetAtt NextflowStack.Outputs.NextflowContainerImage
+    
   NextflowJobDefinition:
     Value: !GetAtt NextflowStack.Outputs.NextflowJobDefinition
     Description: >-
