@@ -82,7 +82,6 @@ workDir = "$NF_WORKDIR"
 process.executor = "awsbatch"
 process.queue = "$NF_JOB_QUEUE"
 executor.awscli = "/home/ec2-user/miniconda/bin/aws"
-instanceStorageMount = "/scratch"
 EOF
 
 # AWS Batch places multiple jobs on an instance
@@ -101,7 +100,7 @@ NF_FILE=$(find . -name "*.nf")
 nextflow -c $NF_CONFIG run $NF_FILE
 ```
 
-The `AWS_BATCH_JOB_ID` and `AWS_BATCH_JOB_ATTEMPT` are [environment variables that are automatically provided](https://docs.aws.amazon.com/batch/latest/userguide/job_env_vars.html) to all AWS Batch jobs.  The `NF_WORKDIR` and `NF_JOB_QUEUE` variables are ones set by the Batch Job Definition ([see below](#batch-job-definition)). Nextflow uses the `instanceStorageMount` configuration to create an additional job definition mountpoint to ensure the `NF_WORKDIR` for the containers it launches are mounted to the /scratch volume on the host.
+The `AWS_BATCH_JOB_ID` and `AWS_BATCH_JOB_ATTEMPT` are [environment variables that are automatically provided](https://docs.aws.amazon.com/batch/latest/userguide/job_env_vars.html) to all AWS Batch jobs.  The `NF_WORKDIR` and `NF_JOB_QUEUE` variables are ones set by the Batch Job Definition ([see below](#batch-job-definition)).
 
 ### Job instance AWS CLI
 
