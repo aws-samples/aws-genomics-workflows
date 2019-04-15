@@ -25,10 +25,11 @@ Metadata:
           - S3DataBucketName
           - S3NextflowBucketName
           - ExistingBucket
-          - NextflowContainerImage
+          - BatchDefaultJobQueue
       - Label:
           default: "Optional"
         Parameters:
+          - NextflowContainerImage
           - S3ScriptPrefix
           - S3WorkDirPrefix
 
@@ -67,8 +68,10 @@ Parameters:
   NextflowContainerImage:
     Type: String
     Description: >-
-      Container image for nextflow with custom entrypoint for config and workflow
-      script staging.  (Example, "<dockerhubuser>/nextflow:latest")
+      (Optional) Container image for nextflow with custom entrypoint for config and workflow
+      script staging. (Example, "<dockerhubuser>/nextflow:latest").  
+      Provide this if you have a specific version of nextflow you want to use, otherwise a 
+      container will be built using the latest version. 
 
   BatchDefaultJobQueue:
     Type: String
@@ -80,7 +83,12 @@ Conditions:
     Fn::Equals:
       - !Ref S3NextflowBucketName
       - !Ref S3DataBucketName
-    
+  
+  BuildNextflowContainer:
+    Fn::Equals:
+      - !Ref NextflowContainerImage
+      - ""
+
   NextflowBucketDoesNotExist:
     Fn::Equals:
       - !Ref ExistingBucket
@@ -109,6 +117,70 @@ Resources:
           - ServerSideEncryptionByDefault:
              SSEAlgorithm: AES256
       Tags: !FindInMap ["TagMap", "default", "tags"]
+  
+  IAMCodeBuildRole:
+    Type: AWS::IAM::Role
+    Condition: BuildNextflowContainer
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
+          Action: sts:AssumeRole
+      
+      Policies:
+        - PolicyName: !Sub codebuild-ecr-access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              Effect: Allow
+              Resource: "*"
+              Action:
+                - "ecr:CreateRepository"
+                - "ecr:BatchCheckLayerAvailability"
+                - "ecr:CompleteLayerUpload"
+                - "ecr:GetAuthorizationToken"
+                - "ecr:InitiateLayerUpload"
+                - "ecr:PutImage"
+                - "ecr:UploadLayerPart"
+        - PolicyName: !Sub codebuild-logs-access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              Effect: Allow
+              Resource: "*"
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+
+  IAMLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Condition: BuildNextflowContainer
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+      Policies:
+        - PolicyName: !Sub codebuild-access-${AWS::Region}
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "codebuild:StartBuild"
+                  - "codebuild:BatchGetBuilds"
+                Resource: "*"
   
   IAMNextflowJobRole:
     Type: AWS::IAM::Role
@@ -152,6 +224,95 @@ Resources:
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
 
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Condition: BuildNextflowContainer
+    Properties:
+      Name: !Sub
+        - nextflow-container-${GUID}
+        - GUID: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
+      Description: >-
+        Builds a nextflow container for running genomics workflows
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        Type: LINUX_CONTAINER
+        Image: aws/codebuild/standard:1.0
+        ComputeType: BUILD_GENERAL1_SMALL
+        PrivilegedMode: True
+
+      ServiceRole: !GetAtt IAMCodeBuildRole.Arn
+      Source:
+        Type: NO_SOURCE
+        BuildSpec: !Sub
+          - |-
+            version: 0.2
+            phases:
+              pre_build:
+                commands:
+                  - echo "Docker Login to ECR"
+                  - $(aws ecr get-login --no-include-email --region ${AWS::Region})
+                  - echo "Creating ECR image repository"
+                  - aws ecr create-repository --repository-name nextflow || true
+                  - echo "Getting source code from Github"
+                  - git clone https://github.com/aws-samples/aws-genomics-workflows.git
+                  - cd aws-genomics-workflows
+                  - cd src/containers/nextflow
+              build:
+                commands:
+                  - echo "Building container"
+                  - docker build -t nextflow .
+              post_build:
+                commands:
+                  - echo "Tagging container image"
+                  - docker tag nextflow:latest ${REGISTRY}/nextflow:latest
+                  - echo "Pushing container image to ECR"
+                  - docker push ${REGISTRY}/nextflow:latest
+          - REGISTRY: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
+
+      Tags: !FindInMap ["TagMap", "default", "tags"]
+  
+  CodeBuildInvocation:
+    Type: Custom::CodeBuildInvocation
+    Condition: BuildNextflowContainer
+    Properties:
+      ServiceToken: !GetAtt CodeBuildInvocationFunction.Arn
+      BuildProject: !Ref CodeBuildProject
+  
+  CodeBuildInvocationFunction:
+    Type: AWS::Lambda::Function
+    Condition: BuildNextflowContainer
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt IAMLambdaExecutionRole.Arn
+      Runtime: python3.7
+      Timeout: 600
+      Code:
+        ZipFile: |
+          from time import sleep
+
+          import boto3
+          import cfnresponse
+
+          def handler(event, context):
+              if event['RequestType'] in ("Create", "Update"):
+                  codebuild = boto3.client('codebuild')
+                  build = codebuild.start_build(
+                      projectName=event["ResourceProperties"]["BuildProject"]
+                  )['build']
+                          
+                  id = build['id']
+                  status = build['buildStatus']
+                  while status == 'IN_PROGRESS':
+                      sleep(10)
+                      build = codebuild.batch_get_builds(ids=[id])['builds'][0]
+                      status = build['buildStatus']
+                  
+                  if status != "SUCCEEDED":
+                      cfnresponse.send(event, context, cfnresponse.FAILED, None)
+              
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, None)
+
   BatchNextflowJobDefinition:
     Type: AWS::Batch::JobDefinition
     Properties:
@@ -178,7 +339,11 @@ Resources:
         Memory: 1024
         JobRoleArn: !GetAtt IAMNextflowJobRole.Arn
         Vcpus: 2
-        Image: !Ref NextflowContainerImage
+        Image:
+          Fn::If:
+            - BuildNextflowContainer
+            - !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/nextflow:latest
+            - !Ref NextflowContainerImage
         Environment:
           - Name: "NF_JOB_QUEUE"
             Value: !Ref BatchDefaultJobQueue
@@ -217,6 +382,15 @@ Outputs:
       outputs is located.  If blank, then they are located at the root level of
       the bucket.
     Value: !Ref S3WorkDirPrefix
+
+  NextflowContainerImage:
+    Description: >-
+      The nextflow container used.
+    Value:
+      Fn::If:
+        - BuildNextflowContainer
+        - !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/nextflow:latest
+        - !Ref NextflowContainerImage
 
   NextflowJobDefinition:
     Description: >-

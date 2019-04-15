@@ -8,10 +8,16 @@ In the context of genomics workflows, the combination of AWS Step Functions with
 
 ## Full Stack Deployment (TL;DR)
 
-If you need something up and running in a hurry, a fully automated setup process
-is provided at this GitHub repository:
+If you need something up and running in a hurry, the follwoing CloudFormation template will create everything you need to run an example genomics workflow using `bwa-mem`, `samtools`, and `bcftools`.
+
+| Name | Description | Source | Launch Stack |
+| -- | -- | :--: | :--: |
+{{ cfn_stack_row("AWS Step Functions All-in-One Example", "AWSGenomicsWorkflow", "step-functions/sfn-aio.template.yaml", "Create all resources needed to run a genomics workflow with Step Functions: an S3 Bucket, AWS Batch Environment, State Machine, Batch Job Definitions, and container images") }}
+
+Another example that uses a scripted setup process is provided at this GitHub repository:
 
 [AWS Batch Genomics](https://github.com/aws-samples/aws-batch-genomics)
+
 
 If you are interested in creating your own solution with AWS Step Functions and AWS Batch,
 read through the rest of this page.
@@ -219,3 +225,39 @@ Inputs to a state machine that uses the above `BwaMemTask` would look like this:
 ```
 
 When the Task state completes Step Functions will add information to a new `status` key under `bwa-mem` in the JSON object.  The complete object will be passed on to the next state in the workflow.
+
+## Example state machine
+
+All of the above is created by the following CloudFormation template.
+
+| Name | Description | Source | Launch Stack |
+| -- | -- | :--: | :--: |
+{{ cfn_stack_row("AWS Step Functions Example", "SfnExample", "step-functions/sfn-example.template.yaml", "Create a Step Functions State Machine, Batch Job Definitions, and container images to run an example genomics workflow") }}
+
+!!! note
+    The stack above needs to create several IAM Roles.  You must have administrative privileges in your AWS Account for this to succeed.
+
+### Running the workflow
+
+When the stack above completes, go to the outputs tab and copy the JSON string provided in `StateMachineInput`.
+
+![cloud formation output tab](./images/cfn-stack-outputs-tab.png)
+![example state-machine input](./images/cfn-stack-outputs-statemachineinput.png)
+
+Next head to the AWS Step Functions console and select the state-machine that was created.
+
+![select state-machine](./images/sfn-console-statemachine.png)
+
+Click the "Start Execution" button.
+
+![start execution](./images/sfn-console-start-execution.png)
+
+In the dialog that appears, paste the input JSON into the "Input" field, and click the "Start Execution" button.  (A unique execution ID will be automatically generated).
+
+![start execution dialog](./images/sfn-console-start-execution-dialog.png)
+
+You will then be taken to the execution tracking page where you can monitor the progress of your workflow.
+
+![execution tracking](./images/sfn-console-execution-inprogress.png)
+
+The workflow takes approximately 5-6hrs to complete on `r4.2xlarge` SPOT instances.
