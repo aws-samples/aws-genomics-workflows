@@ -106,6 +106,11 @@ Parameters:
     Description: The maximum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
     Default: 100
+  ArtifactRootUrl:
+    Type: String
+    Default: https://aws-genomics-workflows.s3.amazonaws.com/artifacts
+    Description: >-
+      Root URL for where artifacts / additions scripts are stored
   TemplateRootUrl:
     Type: String
     Description: >-
@@ -141,6 +146,7 @@ Resources:
       TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-launch-template.template.yaml
       Parameters:
         WorkflowOrchestrator: !Ref WorkflowOrchestrator
+        ArtifactRootUrl: !Ref ArtifactRootUrl
   
   BatchStack:
     Type: AWS::CloudFormation::Stack
