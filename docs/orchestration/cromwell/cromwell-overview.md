@@ -41,7 +41,7 @@ these setup.
 
 ## Custom Compute Resource with Cromwell Additions
 
-Follow the [instructions on creating a custom compute resources](/core-env/create-custom-compute-resources/) with the following changes:
+Follow the [instructions on creating a custom compute resources](../../../core-env/create-custom-compute-resources/) with the following changes:
 
 * specify the scratch mount point as `/cromwell_root`
 * make sure that cromwell additions are included in the resource by selecting "cromwell" as the resource type.
