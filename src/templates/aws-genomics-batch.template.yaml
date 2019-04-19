@@ -139,6 +139,9 @@ Resources:
     Type: AWS::Batch::ComputeEnvironment
     DependsOn: GenomicsBatchSecurityGroup
     Properties:
+      ComputeEnvironmentName: !Sub 
+       - spot-${StackGuid}
+       - StackGuid: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
       ServiceRole: !Ref BatchServiceRoleArn
       Type: MANAGED
       State: ENABLED
@@ -157,11 +160,18 @@ Resources:
         SpotIamFleetRole: !Ref SpotFleetRoleArn
         Subnets: !Ref SubnetIds
         Type: SPOT
+        Tags:
+          Name: !Sub
+            - batch-spot-worker-${StackGuid}
+            - StackGuid: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
 
   GenomicsHighPriorityComputeEnv:
     Type: AWS::Batch::ComputeEnvironment
     DependsOn: GenomicsBatchSecurityGroup
     Properties:
+      ComputeEnvironmentName: !Sub 
+       - ondemand-${StackGuid}
+       - StackGuid: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
       ServiceRole: !Ref BatchServiceRoleArn
       Type: MANAGED
       State: ENABLED
@@ -178,6 +188,10 @@ Resources:
           - !Ref GenomicsBatchSecurityGroup
         Subnets: !Ref SubnetIds
         Type: EC2
+        Tags:
+          Name: !Sub
+            - batch-ondemand-worker-${StackGuid}
+            - StackGuid: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
 
   GenomicsHighPriorityQueue:
     Type: AWS::Batch::JobQueue
