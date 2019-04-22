@@ -196,6 +196,9 @@ Resources:
   GenomicsHighPriorityQueue:
     Type: AWS::Batch::JobQueue
     Properties:
+      JobQueueName: !Sub
+        - highpriority-${StackGuid}
+        - StackGuid: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
       Priority: 1000
       State: ENABLED
       ComputeEnvironmentOrder:
@@ -207,6 +210,9 @@ Resources:
   GenomicsDefaultQueue:
     Type: AWS::Batch::JobQueue
     Properties:
+      JobQueueName: !Sub
+        - default-${StackGuid}
+        - StackGuid: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
       Priority: 1
       State: ENABLED
       ComputeEnvironmentOrder:
