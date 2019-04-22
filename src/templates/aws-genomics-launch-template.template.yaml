@@ -23,8 +23,8 @@ Mappings:
     nextflow:
       additions: |-
         - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
-        - sh /opt/ecs-additions/ecs-additions-nextflow.sh
-
+        - sh /opt/ecs-additions/ecs-additions-nextflow.sh $scratchPath
+  
 Parameters:
   LaunchTemplateNamePrefix:
     Type: String
@@ -116,16 +116,7 @@ Resources:
               - pip install -U awscli boto3
               - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
               - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh ${ScratchMountPoint} /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
-              - service docker stop
-              - rm -rf /var/lib/docker
-              - lvremove docker/docker-pool -y
-              - lvcreate --wipesignatures y -n docker-pool docker -l 95%VG -y
-              - lvcreate --wipesignatures y -n thinpoolmeta docker -l 1%VG -y
-              - lvconvert -y --zero n -c 512K --thinpool docker/docker-pool --poolmetadata docker/thinpoolmeta
-              - sed -i 's@OPTIONS="@OPTIONS="--data-root /scratch @g' /etc/sysconfig/docker
-              - service docker start
-              - start ecs
-              
+              - scratchPath = "${ScratchMountPoint}"
               ${ECSAdditions}
 
               --==BOUNDARY==--

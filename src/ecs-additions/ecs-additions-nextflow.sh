@@ -39,3 +39,13 @@ $USER/miniconda/bin/conda install -c conda-forge -y awscli
 chown -R ec2-user:ec2-user $USER/miniconda
 
 rm Miniconda3-latest-Linux-x86_64.sh
+
+service docker stop
+rm -rf /var/lib/docker
+lvremove docker/docker-pool -y
+lvcreate --wipesignatures y -n docker-pool docker -l 95%VG -y
+lvcreate --wipesignatures y -n thinpoolmeta docker -l 1%VG -y
+lvconvert -y --zero n -c 512K --thinpool docker/docker-pool --poolmetadata docker/thinpoolmeta
+sed -i "s@OPTIONS="@OPTIONS="--data-root $1 @g" /etc/sysconfig/docker
+service docker start
+start ecs
