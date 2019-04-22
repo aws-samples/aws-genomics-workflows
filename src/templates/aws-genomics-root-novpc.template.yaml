@@ -49,6 +49,8 @@ Metadata:
         default: High Priority Min vCPU
       HighPriorityCEMaxvCpus:
         default: High Priority Max vCPU
+      ArtifactRootUrl:
+        default: Artifact Root URL
       TemplateRootUrl:
         default: Template Root URL
 
@@ -108,7 +110,7 @@ Parameters:
     Default: 100
   ArtifactRootUrl:
     Type: String
-    Default: https://aws-genomics-workflows.s3.amazonaws.com/artifacts
+    Default: https://s3.amazonaws.com/aws-genomics-workflows/artifacts
     Description: >-
       Root URL for where artifacts / additions scripts are stored
   TemplateRootUrl:
