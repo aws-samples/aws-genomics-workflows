@@ -1,0 +1,14 @@
+global:
+  marketplace-ami: false
+  owner: quickstart-eng@amazon.com
+  qsname: src
+  s3bucket: paulu-hclscollab-taskcat-bucket
+  regions:
+    - eu-west-1
+  reporting: true
+tests:
+  quickstart-biotech-blueprintt1:
+    parameter_input: biotech-blueprint-params.t1.json
+    template_file: bb.nextflow.template
+    regions:
+    - eu-west-1
