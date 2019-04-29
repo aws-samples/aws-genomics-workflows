@@ -18,12 +18,21 @@ Mappings:
       additions: ""
     cromwell:
       additions: |-
+        - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
+        - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh $scratchPath /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
         - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
         - sh /opt/ecs-additions/ecs-additions-cromwell.sh
     nextflow:
       additions: |-
+        - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
+        - service docker stop
+        - cp -au /var/lib/docker /var/lib/docker.bk
+        - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh $scratchPath /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
         - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
-        - sh /opt/ecs-additions/ecs-additions-nextflow.sh $scratchPath
+        - sh /opt/ecs-additions/ecs-additions-nextflow.sh 
+        - sed -i 's+OPTIONS=.*+OPTIONS="--storage-driver btrfs"+g' /etc/sysconfig/docker-storage
+        - service docker start
+        - start ecs
   
 Parameters:
   LaunchTemplateNamePrefix:
@@ -85,6 +94,11 @@ Resources:
               Value: !Ref WorkflowOrchestrator
         BlockDeviceMappings:
           - Ebs:
+              DeleteOnTermination: True
+              VolumeSize: 50
+              VolumeType: gp2 
+            DeviceName: /dev/xvda
+          - Ebs:
               Encrypted: True
               DeleteOnTermination: True
               VolumeSize: !Ref DockerImageAndMetadataVolumeSize
@@ -114,9 +128,7 @@ Resources:
 
               runcmd:
               - pip install -U awscli boto3
-              - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
-              - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh ${ScratchMountPoint} /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
-              - scratchPath = "${ScratchMountPoint}"
+              - scratchPath="${ScratchMountPoint}"
               ${ECSAdditions}
 
               --==BOUNDARY==--
