@@ -26,10 +26,6 @@
     {
         "ParameterKey": "S3NextflowScriptPrefix",
         "ParameterValue": "nf99"
-    },
-    {
-        "ParameterKey": "ScratchMountPoint",
-        "ParameterValue": "/var/lib/docker"
     }
 ]
 

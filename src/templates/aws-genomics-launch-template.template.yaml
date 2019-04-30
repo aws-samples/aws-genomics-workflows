@@ -4,6 +4,10 @@ Description: >-
   genomics workflows
 
 Mappings:
+  ScratchVolumeMap: 
+    MountLocation:
+      cromwell: "/cromwell_root"
+      nextflow: "/var/lib/docker"
   TagMap:
     default:
       architecture: "genomics-workflows"
@@ -60,7 +64,8 @@ Parameters:
     Default: /scratch
     Description: >-
       Path for the scratch mount point in the instance. If your workflow 
-      orchestrator is "Cromwell" the value here is overridden with "/cromwell_root"
+      orchestrator is "Cromwell" the value here is overridden with "/cromwell_root".
+      If you workflow orcheistrator is "Nextflow" the value here is overriden with "/var/lib/docker".
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -78,7 +83,8 @@ Metadata:
           - DockerImageAndMetadataVolumeSize
 Conditions:
   UseCromwell: !Equals [!Ref WorkflowOrchestrator, cromwell]
-
+  UseNextflow: !Equals [!Ref WorkflowOrchestrator, nextflow]
+  ScratchOverride: !Or [Condition: UseCromwell, Condition: UseNextflow]
 Resources:
   EC2LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
@@ -139,8 +145,8 @@ Resources:
                   - additions
               ScratchMountPoint: 
                 Fn::If:
-                  - UseCromwell
-                  - /cromwell_root
+                  - ScratchOverride
+                  - !FindInMap [ ScratchVolumeMap, MountLocation, !Ref WorkflowOrchestrator ]
                   - !Ref ScratchMountPoint
 
 Outputs:
