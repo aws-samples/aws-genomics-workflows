@@ -110,6 +110,12 @@ Parameters:
     AllowedValues:
     - example
   
+  ArtifactRootUrl:
+    Type: String
+    Default: https://aws-genomics-workflows.s3.amazonaws.com/artifacts
+    Description: >-
+      Root URL for where artifacts / additions scripts are stored
+  
   TemplateRootUrl:
     Type: String
     Description: >-
@@ -148,6 +154,7 @@ Resources:
         DefaultCEMaxvCpus: !Ref 'DefaultCEMaxvCpus'
         HighPriorityCEMinvCpus: !Ref 'HighPriorityCEMinvCpus'
         HighPriorityCEMaxvCpus: !Ref 'HighPriorityCEMaxvCpus'
+        ArtifactRootUrl: !Ref ArtifactRootUrl
         TemplateRootUrl: !Ref TemplateRootUrl
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
