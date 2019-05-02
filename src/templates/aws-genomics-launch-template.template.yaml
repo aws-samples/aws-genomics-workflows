@@ -4,6 +4,10 @@ Description: >-
   genomics workflows
 
 Mappings:
+  ScratchVolumeMap: 
+    MountLocation:
+      cromwell: "/cromwell_root"
+      nextflow: "/var/lib/docker"
   TagMap:
     default:
       architecture: "genomics-workflows"
@@ -18,11 +22,21 @@ Mappings:
       additions: ""
     cromwell:
       additions: |-
+        - cd /opt && wget $artifactRootUrl/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
+        - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh $scratchPath /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
+        - cd /opt && wget $artifactRootUrl/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
         - sh /opt/ecs-additions/ecs-additions-cromwell.sh
     nextflow:
       additions: |-
-        - sh /opt/ecs-additions/ecs-additions-nextflow.sh
-
+        - service docker stop
+        - cp -au /var/lib/docker /var/lib/docker.bk  
+        - cd /opt && wget $artifactRootUrl/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
+        - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh $scratchPath /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
+        - cd /opt && wget $artifactRootUrl/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
+        - sh /opt/ecs-additions/ecs-additions-nextflow.sh 
+        - sed -i 's+OPTIONS=.*+OPTIONS="--storage-driver btrfs"+g' /etc/sysconfig/docker-storage
+        - service docker start
+        - start ecs
 Parameters:
   LaunchTemplateNamePrefix:
     Type: String
@@ -49,13 +63,13 @@ Parameters:
     Default: /scratch
     Description: >-
       Path for the scratch mount point in the instance. If your workflow 
-      orchestrator is "Cromwell" the value here is overridden with "/cromwell_root"
+      orchestrator is "Cromwell" the value here is overridden with "/cromwell_root".
+      If you workflow orcheistrator is "Nextflow" the value here is overriden with "/var/lib/docker".
   ArtifactRootUrl:
     Type: String
     Default: https://s3.amazonaws.com/aws-genomics-workflows/artifacts
     Description: >-
       Root URL for where artifacts / additions scripts are stored
-  
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -72,7 +86,8 @@ Metadata:
           - DockerImageAndMetadataVolumeSize
 Conditions:
   UseCromwell: !Equals [!Ref WorkflowOrchestrator, cromwell]
-
+  UseNextflow: !Equals [!Ref WorkflowOrchestrator, nextflow]
+  ScratchOverride: !Or [Condition: UseCromwell, Condition: UseNextflow]
 Resources:
   EC2LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
@@ -87,6 +102,11 @@ Resources:
             - Key: solution
               Value: !Ref WorkflowOrchestrator
         BlockDeviceMappings:
+          - Ebs:
+              DeleteOnTermination: True
+              VolumeSize: 50
+              VolumeType: gp2 
+            DeviceName: /dev/xvda
           - Ebs:
               Encrypted: True
               DeleteOnTermination: True
@@ -117,9 +137,8 @@ Resources:
 
               runcmd:
               - pip install -U awscli boto3
-              - cd /opt && wget ${ArtifactRootUrl}/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
-              - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh ${ScratchMountPoint} /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
-              - cd /opt && wget ${ArtifactRootUrl}/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
+              - scratchPath="${ScratchMountPoint}"
+              - artifactRootUrl="${ArtifactRootUrl}"
               ${ECSAdditions}
 
               --==BOUNDARY==--
@@ -130,8 +149,8 @@ Resources:
                   - additions
               ScratchMountPoint: 
                 Fn::If:
-                  - UseCromwell
-                  - /cromwell_root
+                  - ScratchOverride
+                  - !FindInMap [ ScratchVolumeMap, MountLocation, !Ref WorkflowOrchestrator ]
                   - !Ref ScratchMountPoint
 
 Outputs:
