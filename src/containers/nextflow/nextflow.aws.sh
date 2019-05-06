@@ -1,11 +1,13 @@
 #!/bin/bash
-
+echo $@
 NEXTFLOW_SCRIPT=$1
+shift
+NEXTFLOW_PARAMS=$@
 
 # Create the default config using environment variables
 # passed into the container
 mkdir -p /opt/config
-NF_CONFIG=/opt/config/nextflow.config
+NF_CONFIG=~/.nextflow/config
 
 cat << EOF > $NF_CONFIG
 workDir = "$NF_WORKDIR"
@@ -23,12 +25,10 @@ mkdir -p /opt/work/$GUID
 cd /opt/work/$GUID
 
 # stage workflow definition
-aws s3 cp --no-progress $NEXTFLOW_SCRIPT .
+aws s3 sync --only-show-errors --exclude '.*' $NEXTFLOW_SCRIPT .
 
-NF_FILE=$(find . -name "*.nf")
-
-echo "== Nextflow Configuration =="
-cat $NF_CONFIG
+NF_FILE=$(find . -name "*.nf" -maxdepth 1)
 
 echo "== Running Workflow =="
-nextflow -c $NF_CONFIG run $NF_FILE
+echo "nextflow run $NF_FILE $NEXTFLOW_PARAMS"
+nextflow run $NF_FILE $NEXTFLOW_PARAMS
