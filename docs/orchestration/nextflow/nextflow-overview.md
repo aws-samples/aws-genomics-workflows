@@ -426,33 +426,20 @@ This is what starting a workflow via the AWS CLI would look like:
 ```bash
 
 git clone https://github.com/nf-core/rnaseq.git
-aws s3 sync nf-core/rnaseq s3://path/to/workflow/folder
+aws s3 sync rnaseq s3://path/to/workflow/folder
 
 aws batch submit-job \
     --job-name run-workflow-nf \
     --job-queue <queue-name> \
     --job-definition nextflow \
-    --command \
-        "s3://path/to/workflow/folder" \
-        "--reads", "s3://1000genomes/phase3/data/HG00243/sequence_read/SRR*_{1,2}.filt.fastq.gz", \
-        "--genome", "GRCh37", \
-        "--skip_qc"
-        
-        
-git clone https://github.com/nf-core/rnaseq.git
-aws s3 sync rnaseq s3://devspacepaul/nfcli    
-        
-aws batch submit-job \
-    --job-name run-workflow-nf \
-    --job-queue default-74d99c60-704a-11e9-a5fb-023c5f756674 \
-    --job-definition nextflow \
-    --container-overrides command="s3://devspacepaul/nfcli",\
-    "--reads","s3://1000genomes/phase3/data/HG00243/sequence_read/SRR*_{1,2}.filt.fastq.gz",\
-    "--genome","GRCh37",\
-    "--skip_qc"
-        
+    --container-overrides command=s3://path/to/workflow/folder,\
+"--reads","'s3://1000genomes/phase3/data/HG00243/sequence_read/SRR*_{1,2}.filt.fastq.gz'",\
+"--genome","GRCh37",\
+"--skip_qc"
 ```
 
 After submitting a workflow, you can monitor the progress of tasks via the AWS Batch console.
 
 For the "Hello World" workflow above you will see three jobs run in Batch - one for the head node, and one for each `Channel` text as it goes through the `hello` process.
+
+For the nf-core example "rnaseq" workflow you will see 11 jobs run in Batch over the course of a couple hours - the head node will last the whole duration of the pipeline while the others will stop once their step is complete. You can look at the CloudWatch logs for the head node job to monitor workflow progress. Note the additional single quotes wrapping the 1000genomes path.
