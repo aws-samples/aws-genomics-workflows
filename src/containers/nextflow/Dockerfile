@@ -18,4 +18,3 @@ RUN chmod +x /opt/bin/nextflow.aws.sh
 
 WORKDIR /opt/work
 ENTRYPOINT ["/opt/bin/nextflow.aws.sh"]
-

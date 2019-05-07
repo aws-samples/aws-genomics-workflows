@@ -65,17 +65,19 @@ ENTRYPOINT ["/opt/bin/nextflow.aws.sh"]
 !!! note
     If you are trying to keep your container image as small as possible, keep in mind that Nextflow relies on basic linux tools such as `awk`, `bash`, `ps`, `date`, `sed`, `grep`, `egrep`, and `tail` which may need to be installed on extra minimalist base images like `alpine`.
 
-The script used for the entrypoint is shown below.  Notice that it automatically configures Nextflow based on environment variables set by AWS Batch.
+The script used for the entrypoint is shown below. The first parameter is the folder in S3 where you have staged your Nextflow scripts and supporting files (like additional config files). Any additional parameters are passed along to the Nextflow executable. This is important to remember when submiting the head node job. Notice that it automatically configures some Nextflow values based on environment variables set by AWS Batch.
 
 ```bash
 #!/bin/bash
-
+echo $@
 NEXTFLOW_SCRIPT=$1
+shift
+NEXTFLOW_PARAMS=$@
 
 # Create the default config using environment variables
 # passed into the container
 mkdir -p /opt/config
-NF_CONFIG=/opt/config/nextflow.config
+NF_CONFIG=~/.nextflow/config
 
 cat << EOF > $NF_CONFIG
 workDir = "$NF_WORKDIR"
@@ -93,11 +95,13 @@ mkdir -p /opt/work/$GUID
 cd /opt/work/$GUID
 
 # stage workflow definition
-aws s3 cp --no-progress $NEXTFLOW_SCRIPT .
+aws s3 sync --only-show-errors --exclude '.*' $NEXTFLOW_SCRIPT .
 
-NF_FILE=$(find . -name "*.nf")
+NF_FILE=$(find . -name "*.nf" -maxdepth 1)
 
-nextflow -c $NF_CONFIG run $NF_FILE
+echo "== Running Workflow =="
+echo "nextflow run $NF_FILE $NEXTFLOW_PARAMS"
+nextflow run $NF_FILE $NEXTFLOW_PARAMS
 ```
 
 The `AWS_BATCH_JOB_ID` and `AWS_BATCH_JOB_ATTEMPT` are [environment variables that are automatically provided](https://docs.aws.amazon.com/batch/latest/userguide/job_env_vars.html) to all AWS Batch jobs.  The `NF_WORKDIR` and `NF_JOB_QUEUE` variables are ones set by the Batch Job Definition ([see below](#batch-job-definition)).
@@ -420,14 +424,22 @@ To run a workflow you submit a `nextflow` Batch job to the appropriate Batch Job
 This is what starting a workflow via the AWS CLI would look like:
 
 ```bash
+
+git clone https://github.com/nf-core/rnaseq.git
+aws s3 sync rnaseq s3://path/to/workflow/folder
+
 aws batch submit-job \
     --job-name run-workflow-nf \
     --job-queue <queue-name> \
     --job-definition nextflow \
-    --parameters \
-        "NextflowScript=s3://path/to/workflow.nf"
+    --container-overrides command=s3://path/to/workflow/folder,\
+"--reads","'s3://1000genomes/phase3/data/HG00243/sequence_read/SRR*_{1,2}.filt.fastq.gz'",\
+"--genome","GRCh37",\
+"--skip_qc"
 ```
 
 After submitting a workflow, you can monitor the progress of tasks via the AWS Batch console.
 
 For the "Hello World" workflow above you will see three jobs run in Batch - one for the head node, and one for each `Channel` text as it goes through the `hello` process.
+
+For the nf-core example "rnaseq" workflow you will see 11 jobs run in Batch over the course of a couple hours - the head node will last the whole duration of the pipeline while the others will stop once their step is complete. You can look at the CloudWatch logs for the head node job to monitor workflow progress. Note the additional single quotes wrapping the 1000genomes path.
