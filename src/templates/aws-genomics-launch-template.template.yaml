@@ -19,7 +19,9 @@ Mappings:
           Value: "default"
   ECSAdditionsMap:
     step-functions:
-      additions: ""
+      additions: |-
+        - cd /opt && wget $artifactRootUrl/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
+        - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh $scratchPath /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
     cromwell:
       additions: |-
         - cd /opt && wget $artifactRootUrl/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
