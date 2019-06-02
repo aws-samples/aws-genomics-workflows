@@ -145,9 +145,6 @@ Resources:
                 - "logs:PutLogEvents"
                 - "logs:DescribeLogStreams"
 
-      ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
-
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
