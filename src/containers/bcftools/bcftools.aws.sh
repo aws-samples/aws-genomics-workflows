@@ -31,7 +31,7 @@ function call() {
         -m \
         --threads 8 \
         -o $OUTPUT_PATH/${SAMPLE_ID}.vcf \
-        $INPUT_PATH/${SAMPLE_ID}.mpileup.vcf.gz \
+        $INPUT_PATH/${SAMPLE_ID}.mpileup.vcf.gz
 
     aws s3 cp \
         --no-progress \
