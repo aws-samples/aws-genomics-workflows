@@ -50,9 +50,14 @@ Parameters:
       version of Cromwell from Github.
     AllowedValues:
       - latest
-      - 36.1
-      - 36
-    Default: 36.1
+      - specify ...
+    Default: latest
+  
+  CromwellVersionSpecified:
+    Type: String
+    Description: >-
+      Specific version of Cromwell to install.  Must match a released version number.
+      For example, 36, 36.1, 41, 42, etc.  Ignored if "Cromwell Version" is set to "latest".
 
   InstanceName:
     Type: String
@@ -253,7 +258,7 @@ Resources:
                   Fn::If:
                   - GetLatestCromwellVersion
                   - !Ref CromwellVersion
-                  - !Join ["/", ["tags", !Ref CromwellVersion]]
+                  - !Join ["/", ["tags", !Ref CromwellVersionSpecified]]
 
               mode: "000755"
               owner: "ec2-user"
@@ -516,6 +521,7 @@ Metadata:
           default: "Cromwell Configuration"
         Parameters:
           - CromwellVersion
+          - CromwellVersionSpecified
           - S3BucketName
           - BatchQueue
       
@@ -540,6 +546,8 @@ Metadata:
         default: "Default Batch Queue"
       CromwellVersion:
         default: "Cromwell Version"
+      CromwellVersionSpecified:
+        default: "..."
 
 Outputs:
   EC2Instance:
