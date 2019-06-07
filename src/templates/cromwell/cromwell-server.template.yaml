@@ -122,16 +122,22 @@ Resources:
                 - "batch:ListJobs"
                 - "batch:DescribeComputeEnvironments"
 
-        - PolicyName: !Sub CromwellServer-S3Bucket-Access-${AWS::Region}
+        - PolicyName: !Sub CromwellServer-S3-Access-${AWS::Region}
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              Effect: Allow
-              Resource:
-                - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName]] 
-                - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
-              Action:
-                - "s3:*"
+              - Effect: Allow
+                Resource:
+                  - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName]] 
+                  - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+                Action:
+                  - "s3:*"
+              - Effect: Allow
+                Resource: "*"
+                Action:
+                  - "s3:ListBucket"
+                  - "s3:ListAllMyBuckets"
+
         
         - PolicyName: !Sub CromwellServer-CloudWatch-Access-${AWS::Region}
           PolicyDocument:
