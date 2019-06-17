@@ -1,4 +1,4 @@
-# TL;DR - For rapid deployment
+# Quick Start - For rapid deployment
 
 ## Step 0: Amazon VPC
 

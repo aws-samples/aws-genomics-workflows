@@ -6,7 +6,7 @@
 
 In the context of genomics workflows, the combination of AWS Step Functions with Batch and Lambda constitutes a robust, scalable, and serverless task orchestration solution.
 
-## Full Stack Deployment (TL;DR)
+## Full Stack Deployment
 
 If you need something up and running in a hurry, the follwoing CloudFormation template will create everything you need to run an example genomics workflow using `bwa-mem`, `samtools`, and `bcftools`.
 

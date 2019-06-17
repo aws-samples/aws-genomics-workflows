@@ -6,7 +6,7 @@
 
 Nextflow can be run either locally or on a dedicated EC2 instance.  The latter is preferred if you have long running workflows - with the caveat that you are responsible for stopping the instance when your workflow is complete.  The architecture presented in this guide demonstrates how you can run Nextflow using AWS Batch in a managed and cost effective fashion.
 
-## Full Stack Deployment (TL;DR)
+## Full Stack Deployment
 
 The following CloudFormation template will launch an EC2 instance pre-configured for using Nextflow.
 
