@@ -71,16 +71,16 @@ calc_threshold() {
 }
 calc_new_size() {
   local num_devices=$1
-  local new_size=50
+  local new_size=150
 
   if [ "$num_devices" -ge "4" ] && [ "$num_devices" -le "6" ]; then
-    new_size=100
+    new_size=300
   elif [ "$num_devices" -gt "6" ] && [ "$num_devices" -le "10" ]; then
-    new_size=500
-  elif [ "$num_devices" -gt "10" ]; then
     new_size=1000
+  elif [ "$num_devices" -gt "10" ]; then
+    new_size=1500
   else
-    new_size=50
+    new_size=150
   fi
   echo ${new_size}
 }
