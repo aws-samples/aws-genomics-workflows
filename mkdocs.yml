@@ -2,7 +2,7 @@ site_name: Genomics Workflows on AWS
 nav:
   - Overview: index.md
   - Disclaimer: disclaimer.md
-  - TL;DR: tldr.md
+  - Quick Start: quick-start.md
   - Getting Started:
     - Introduction: core-env/introduction.md
     - Data Storage: core-env/create-s3-bucket.md

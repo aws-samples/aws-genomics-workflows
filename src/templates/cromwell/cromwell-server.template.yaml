@@ -50,9 +50,14 @@ Parameters:
       version of Cromwell from Github.
     AllowedValues:
       - latest
-      - 36.1
-      - 36
-    Default: 36.1
+      - specify ...
+    Default: latest
+  
+  CromwellVersionSpecified:
+    Type: String
+    Description: >-
+      Specific version of Cromwell to install.  Must match a released version number.
+      For example, 36, 36.1, 41, 42, etc.  Ignored if "Cromwell Version" is set to "latest".
 
   InstanceName:
     Type: String
@@ -122,16 +127,22 @@ Resources:
                 - "batch:ListJobs"
                 - "batch:DescribeComputeEnvironments"
 
-        - PolicyName: !Sub CromwellServer-S3Bucket-Access-${AWS::Region}
+        - PolicyName: !Sub CromwellServer-S3-Access-${AWS::Region}
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              Effect: Allow
-              Resource:
-                - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName]] 
-                - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
-              Action:
-                - "s3:*"
+              - Effect: Allow
+                Resource:
+                  - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName]] 
+                  - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+                Action:
+                  - "s3:*"
+              - Effect: Allow
+                Resource: "*"
+                Action:
+                  - "s3:ListBucket"
+                  - "s3:ListAllMyBuckets"
+
         
         - PolicyName: !Sub CromwellServer-CloudWatch-Access-${AWS::Region}
           PolicyDocument:
@@ -144,9 +155,6 @@ Resources:
                 - "logs:CreateLogStream"
                 - "logs:PutLogEvents"
                 - "logs:DescribeLogStreams"
-
-      ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
 
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -250,7 +258,7 @@ Resources:
                   Fn::If:
                   - GetLatestCromwellVersion
                   - !Ref CromwellVersion
-                  - !Join ["/", ["tags", !Ref CromwellVersion]]
+                  - !Join ["/", ["tags", !Ref CromwellVersionSpecified]]
 
               mode: "000755"
               owner: "ec2-user"
@@ -513,6 +521,7 @@ Metadata:
           default: "Cromwell Configuration"
         Parameters:
           - CromwellVersion
+          - CromwellVersionSpecified
           - S3BucketName
           - BatchQueue
       
@@ -537,6 +546,8 @@ Metadata:
         default: "Default Batch Queue"
       CromwellVersion:
         default: "Cromwell Version"
+      CromwellVersionSpecified:
+        default: "..."
 
 Outputs:
   EC2Instance:

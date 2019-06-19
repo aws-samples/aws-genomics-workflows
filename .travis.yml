@@ -31,4 +31,5 @@ deploy:
   script: bash _scripts/deploy.sh
   skip_cleanup: true
   on:
+    repo: aws-samples/aws-genomics-workflows
     branch: master

@@ -55,8 +55,8 @@ Resources:
             Version: 2012-10-17
             Statement:
               ## This block enforces encrypted transfers of results from job 
-              ## instances to S3.  It is commented for now - waiting for the a
-              ## ecs-proxy container to be built per PR #4377
+              ## instances to S3.  Its use depends on if the orchestration engine
+              ## supports it.
               # - Sid: S3DenyIncorrectEncryptionHeader
               #   Effect: Deny
               #   Action:
@@ -94,7 +94,6 @@ Resources:
       ManagedPolicyArns:
       - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
       - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
-      - "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
   GenomicsEnvBatchInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:

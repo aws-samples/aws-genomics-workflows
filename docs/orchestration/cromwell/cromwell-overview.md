@@ -6,7 +6,7 @@
 system for scientific workflows developed by the [Broad Institute](https://broadinstitute.org/)
 and supports job execution using [AWS Batch](https://aws.amazon.com/batch/).
 
-## Full Stack Deployment (TL;DR)
+## Full Stack Deployment
 
 If you need a Cromwell server backed by AWS **now** and will worry about the
 details later, use the CloudFormation template below.

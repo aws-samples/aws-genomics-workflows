@@ -2,7 +2,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
   (WWPS-GLS-WF-SFN-EXAMPLE) Creates the complete set of resources needed to run
-  genomics workflows using Cromwell on AWS Batch
+  genomics workflows using AWS Step-Functions on AWS Batch
 
 Mappings:
   TagMap:

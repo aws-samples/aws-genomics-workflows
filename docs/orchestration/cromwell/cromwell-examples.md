@@ -299,8 +299,6 @@ task HaplotypeCaller {
   Float? contamination
   Int? max_alt_alleles
 
-  Int preemptible_tries
-  Int disk_size
   String mem_size
 
   String docker_image
@@ -338,8 +336,6 @@ task MergeGVCFs {
   String vcf_name
   String vcf_index
 
-  Int preemptible_tries
-  Int disk_size
   String mem_size
 
   String docker_image
