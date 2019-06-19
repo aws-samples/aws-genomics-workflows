@@ -334,7 +334,7 @@ For each process in your workflow, Nextflow will create a corresponding Batch Jo
 You can customize these job definitions to incorporate additional environment variables or volumes/mount points as needed.
 
 !!! important
-    In order to take advantage of automatically [expandable scratch space](/core-env/create-custom-compute-resources/) in the host instance, you will need to modify Nextflow created job definitions to map a container volume from `/scratch` on the host to `/tmp` in the container.
+    In order to take advantage of automatically [expandable scratch space](../../../core-env/create-custom-compute-resources/) in the host instance, you will need to modify Nextflow created job definitions to map a container volume from `/scratch` on the host to `/tmp` in the container.
 
 For example, a customized job definition for the process above that maps `/scratch` on the host to `/scratch` in the container and still work with Nextflow would be:
 
