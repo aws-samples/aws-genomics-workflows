@@ -37,6 +37,7 @@ Metadata:
           default: "Cromwell Server"
         Parameters:
           - CromwellVersion
+          - CromwellVersionSpecified
           - InstanceType
           - InstanceName
           - SSHLocation
