@@ -130,9 +130,13 @@ Parameters:
       version of Cromwell from Github.
     AllowedValues:
       - latest
-      - 36.1
-      - 36
-    Default: 36.1
+      - specify ...
+    Default: latest
+  CromwellVersionSpecified:
+    Type: String
+    Description: >-
+      Specific version of Cromwell to install.  Must match a released version number.
+      For example, 36, 36.1, 41, 42, etc.  Ignored if "Cromwell Version" is set to "latest".
   SSHLocation:
     Description: "The IP address range that has SSH access to the EC2 instances"
     Type: String
@@ -165,6 +169,11 @@ Parameters:
       Must be a valid S3 URL
     AllowedPattern: "https://s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
 
+Conditions:
+  GetLatestCromwellVersion:
+    Fn::Equals:
+      - !Ref CromwellVersion
+      - latest
 
 Resources:
   VpcStack:
@@ -208,6 +217,7 @@ Resources:
         PublicSubnetID: !GetAtt 'VpcStack.Outputs.PublicSubnet1ID'
         InstanceName: !Join ["-", [!Ref 'InstanceName', !Select [2, !Split ["/", !Ref "AWS::StackId" ]]]]
         CromwellVersion: !Ref CromwellVersion
+        CromwellVersionSpecified: !Ref CromwellVersionSpecified
         KeyName: !Ref 'KeyPairName'
         SSHLocation: !Ref 'SSHLocation'
         HTTPLocation: !Ref 'HTTPLocation'
@@ -225,7 +235,11 @@ Outputs:
   CromwellServerVersion:
     Description: >-
       Version of Cromwell installed.
-    Value: !Ref CromwellVersion
+    Value:
+      Fn::If:
+        - GetLatestCromwellVersion
+        - !Ref CromwellVersion
+        - !Ref CromwellVersionSpecified
   VpcId:
     Description: >-
       The VPC created for your Cromwell stack. Use this ID if you need to launch
