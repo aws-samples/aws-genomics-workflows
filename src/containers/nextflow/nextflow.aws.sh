@@ -31,7 +31,7 @@ mkdir -p /opt/work/$GUID
 cd /opt/work/$GUID
 
 # stage workflow definition
-$NF_FILE=""
+NF_FILE=""
 if [ ! -z "$NEXTFLOW_PROJECT" ]; then
     aws s3 sync --only-show-errors --exclude 'runs/*' --exclude '.*' $NEXTFLOW_PROJECT .
     NF_FILE=$(find . -maxdepth 1 -name "*.nf")
