@@ -48,7 +48,8 @@ In the above, we assume that the `MyInstanceProfileWithProperPermissions` EC2 In
                 "ec2:DescribeVolumes",
                 "ec2:ModifyInstanceAttribute",
                 "ec2:DescribeVolumeAttribute",
-                "ec2:CreateVolume"
+                "ec2:CreateVolume",
+                "ec2:DeleteVolume"
             ],
             "Resource": "*"
         }
