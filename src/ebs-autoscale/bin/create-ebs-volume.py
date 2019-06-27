@@ -49,7 +49,8 @@ def device_exists(path):
         return False
 
 alphabet = []
-for letter in range(97,123):
+# Use letters b..z
+for letter in range(98,123):
     alphabet.append(chr(letter))
 
 def detect_devices():
@@ -59,8 +60,12 @@ def detect_devices():
     return devices
 
 def get_next_logical_device():
-    d = "/dev/sd{0}".format( alphabet[len(detect_devices())] )
-    return d
+    devices = detect_devices()
+    for letter in alphabet:
+        d = "/dev/sd{0}".format(letter)
+        if d not in devices:
+            return d
+    return None
 
 def get_metadata(key):
     return urllib.urlopen(("/").join(['http://169.254.169.254/latest/meta-data', key])).read()
@@ -87,6 +92,12 @@ def create_and_attach_volume(size=10, vol_type="gp2", encrypted=True, max_attach
             "maximum number of attached volumes reached ({})".format(max_attached_volumes)
         )
 
+    device = get_next_logical_device()
+    if not device:
+        raise RuntimeError(
+            "could not find unused device"
+        )
+
     # Attempt to create the volume
     # A ClientError is thrown if there are insufficient permissions or if
     # service limits are reached (e.g. hitting the limit for a storage class in a region)
@@ -103,8 +114,6 @@ def create_and_attach_volume(size=10, vol_type="gp2", encrypted=True, max_attach
             break
         else:
             time.sleep(1)
-
-    device = get_next_logical_device()
 
     # Need to assure that the created volume is successfully attached to be
     # cost efficient.  If attachment fails, delete the volume.
