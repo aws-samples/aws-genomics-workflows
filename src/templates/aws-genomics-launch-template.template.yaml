@@ -4,10 +4,13 @@ Description: >-
   genomics workflows
 
 Mappings:
-  ScratchVolumeMap: 
-    MountLocation:
-      cromwell: "/cromwell_root"
-      nextflow: "/var/lib/docker"
+  ScratchMountPointMap: 
+    step-functions:
+      mountpoint: "/scratch"
+    cromwell:
+      mountpoint: "/cromwell_root"
+    nextflow:
+      mountpoint: "/var/lib/docker"
   TagMap:
     default:
       architecture: "genomics-workflows"
@@ -66,7 +69,7 @@ Parameters:
     Description: >-
       Path for the scratch mount point in the instance. If your workflow 
       orchestrator is "Cromwell" the value here is overridden with "/cromwell_root".
-      If you workflow orcheistrator is "Nextflow" the value here is overriden with "/var/lib/docker".
+      If your workflow orcheistrator is "Nextflow" the value here is overriden with "/var/lib/docker".
   ArtifactRootUrl:
     Type: String
     Default: https://s3.amazonaws.com/aws-genomics-workflows/artifacts
@@ -152,7 +155,7 @@ Resources:
               ScratchMountPoint: 
                 Fn::If:
                   - ScratchOverride
-                  - !FindInMap [ ScratchVolumeMap, MountLocation, !Ref WorkflowOrchestrator ]
+                  - !FindInMap [ ScratchMountPointMap, !Ref WorkflowOrchestrator, mountpoint ]
                   - !Ref ScratchMountPoint
 
 Outputs:
