@@ -65,9 +65,10 @@ Parameters:
     Type: List<AWS::EC2::AvailabilityZone::Name>
   S3BucketName:
     Description: >-
-      A S3 bucket name for storing analysis results. 
+      A S3 bucket name for storing analysis results.
       The bucket name must respect the S3 bucket naming conventions 
       (can contain lowercase letters, numbers, periods and hyphens).
+      If left blank a unique bucket name will be generated.
     Type: String
     AllowedPattern: "(?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)"
     ConstraintDescription: "Must respect S3 bucket naming conventions"

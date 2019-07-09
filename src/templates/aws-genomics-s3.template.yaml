@@ -20,7 +20,8 @@ Parameters:
       A S3 bucket name for storing analysis results.
       The bucket name must respect the S3 bucket naming conventions 
       (can contain lowercase letters, numbers, periods and hyphens).
-    AllowedPattern: "(?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)"
+      If left blank a unique bucket name will be generated.
+    AllowedPattern: "((?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)|(^.{0}$))"
     ConstraintDescription: "Must respect AWS naming conventions"
   ExistingBucket:
     Type: String
@@ -35,6 +36,10 @@ Conditions:
     Fn::Equals:
       - !Ref ExistingBucket
       - No
+  GenerateBucketName:
+    Fn::Equals:
+      - !Ref S3BucketName
+      - ""
 
 Resources:
   GenomicsEnvS3Bucket:
@@ -42,7 +47,14 @@ Resources:
     Condition: BucketDoesNotExist
     DeletionPolicy: Retain
     Properties:
-      BucketName: !Ref S3BucketName
+      BucketName:
+        Fn::If:
+          - GenerateBucketName
+          - Fn::Join: 
+            - "-"
+            - - "genomics-workflows"
+              - !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
+          - !Ref S3BucketName
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
