@@ -140,7 +140,7 @@ Resources:
       TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-iam.template.yaml
       TimeoutInMinutes: 10
       Parameters:
-        S3BucketName: !Ref S3BucketName
+        S3BucketName: !Sub ${S3Stack.Outputs.BucketName}
   
   LaunchTplStack:
     Type: AWS::CloudFormation::Stack
