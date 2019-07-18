@@ -425,14 +425,11 @@ This is what starting a workflow via the AWS CLI would look like:
 
 ```bash
 
-git clone https://github.com/nf-core/rnaseq.git
-aws s3 sync rnaseq s3://path/to/workflow/folder
-
 aws batch submit-job \
-    --job-name run-workflow-nf \
+    --job-name nf-core-rnaseq \
     --job-queue <queue-name> \
     --job-definition nextflow \
-    --container-overrides command=s3://path/to/workflow/folder,\
+    --container-overrides command=nf-core/rnaseq,\
 "--reads","'s3://1000genomes/phase3/data/HG00243/sequence_read/SRR*_{1,2}.filt.fastq.gz'",\
 "--genome","GRCh37",\
 "--skip_qc"
