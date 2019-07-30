@@ -8,11 +8,22 @@ mkdocs build
 ASSET_BUCKET=s3://aws-genomics-workflows
 ASSET_STAGE=${1:-production}
 
-function artifacts() {
+
+function s3_uri() {
+    BUCKET=$1
+    shift
+
     IFS=""
-    S3_URI_PARTS=($ASSET_BUCKET $ASSET_STAGE_PATH "artifacts")
-    S3_URI_PARTS=(${S3_URI_PARTS[@]})
-    S3_URI=$(printf '/%s' "${S3_URI_PARTS[@]%/}")
+    PREFIX_PARTS=("$@")
+    PREFIX_PARTS=(${PREFIX_PARTS[@]})
+    PREFIX=$(printf '/%s' "${PREFIX_PARTS[@]%/}")
+    
+    echo "${BUCKET%/}/${PREFIX:1}"
+}
+
+
+function artifacts() {
+    S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH "artifacts")
 
     echo "publishing artifacts: $S3_URI"
     aws s3 sync \
@@ -24,11 +35,8 @@ function artifacts() {
 }
 
 function templates() {
-    IFS=""
-    S3_URI_PARTS=($ASSET_BUCKET $ASSET_STAGE_PATH "artifacts")
-    S3_URI_PARTS=(${S3_URI_PARTS[@]})
-    S3_URI=$(printf '/%s' "${S3_URI_PARTS[@]%/}")
-    
+    S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH "templates")
+
     echo "publishing templates: $S3_URI"
     aws s3 sync \
         --profile asset-publisher \
