@@ -21,7 +21,7 @@ cat << EOF > $NF_CONFIG
 workDir = "$NF_WORKDIR"
 process.executor = "awsbatch"
 process.queue = "$NF_JOB_QUEUE"
-executor.awscli = "/home/ec2-user/miniconda/bin/aws"
+aws.batch.cliPath = "/home/ec2-user/miniconda/bin/aws"
 EOF
 
 # AWS Batch places multiple jobs on an instance
