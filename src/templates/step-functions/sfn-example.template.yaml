@@ -155,9 +155,12 @@ Resources:
                 commands:
                   - echo "Building containers"
                   - ROOT="$(pwd)/src/containers"
-                  - cd $ROOT/bwa && ./build.sh
-                  - cd $ROOT/samtools && ./build.sh
-                  - cd $ROOT/bcftools && ./build.sh
+                  # run container builds in parallel to avoid hitting Lambda time limit
+                  # output is captured in logs and `cat`d below to ease debugging
+                  - (cd $ROOT/bwa && ./build.sh > ./build.log) & (cd $ROOT/samtools && ./build.sh > ./build.log) & (cd $ROOT/bcftools && ./build.sh > ./build.log) & wait
+                  - cat $ROOT/bwa/build.log
+                  - cat $ROOT/samtools/build.log
+                  - cat $ROOT/bcftools/build.log
               post_build:
                 commands:
                   - echo "Tagging container images"
@@ -165,9 +168,8 @@ Resources:
                   - docker tag samtools:aws ${REGISTRY}/samtools:aws
                   - docker tag bcftools:aws ${REGISTRY}/bcftools:aws
                   - echo "Pushing container images to ECR"
-                  - docker push ${REGISTRY}/bwa:aws
-                  - docker push ${REGISTRY}/samtools:aws
-                  - docker push ${REGISTRY}/bcftools:aws
+                  # push containers in parallel to avoid hitting Lambda time limit
+                  - docker push ${REGISTRY}/bwa:aws & docker push ${REGISTRY}/samtools:aws & docker push ${REGISTRY}/bcftools:aws & wait
           - REGISTRY: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
 
       Tags: !FindInMap ["TagMap", "default", "tags"]
@@ -184,7 +186,7 @@ Resources:
       Handler: index.handler
       Role: !GetAtt IAMLambdaExecutionRole.Arn
       Runtime: python3.7
-      Timeout: 600
+      Timeout: 900
       Code:
         ZipFile: |
           from time import sleep
