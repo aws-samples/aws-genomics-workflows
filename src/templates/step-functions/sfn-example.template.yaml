@@ -130,7 +130,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         Image: aws/codebuild/standard:1.0
-        ComputeType: BUILD_GENERAL1_SMALL
+        ComputeType: BUILD_GENERAL1_LARGE
         PrivilegedMode: True
 
       ServiceRole: !GetAtt IAMCodeBuildRole.Arn
