@@ -29,7 +29,8 @@ function call() {
     
     bcftools call \
         -m \
-        --threads 8 \
+        --threads 16 \
+        -t chr21 \
         -o $OUTPUT_PATH/${SAMPLE_ID}.vcf \
         $INPUT_PATH/${SAMPLE_ID}.mpileup.vcf.gz
 
@@ -51,7 +52,8 @@ function mpileup() {
         ${INPUT_PREFIX}/${SAMPLE_ID}.bam $INPUT_PATH
     
     bcftools mpileup \
-        --threads 8 \
+        --threads 16 \
+        -r chr21 \
         -Oz \
         -f $REFERENCE_PATH/${REFERENCE_NAME}.fasta \
         $INPUT_PATH/${SAMPLE_ID}.bam \

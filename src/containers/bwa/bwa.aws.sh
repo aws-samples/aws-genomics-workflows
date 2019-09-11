@@ -39,7 +39,7 @@ function mem() {
         ${INPUT_PREFIX} $INPUT_PATH
 
     # command
-    bwa mem -p \
+    bwa mem -t 16 -p \
         $REFERENCE_PATH/${REFERENCE_NAME}.fasta \
         $INPUT_PATH/${SAMPLE_ID}_1.fastq.gz \
         > $OUTPUT_PATH/${SAMPLE_ID}.sam
