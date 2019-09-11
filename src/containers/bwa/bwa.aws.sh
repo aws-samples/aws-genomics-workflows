@@ -41,7 +41,7 @@ function mem() {
     # command
     bwa mem -t 16 -p \
         $REFERENCE_PATH/${REFERENCE_NAME}.fasta \
-        $INPUT_PATH/${SAMPLE_ID}_1.fastq.gz \
+        $INPUT_PATH/${SAMPLE_ID}_*1*.fastq.gz \
         > $OUTPUT_PATH/${SAMPLE_ID}.sam
 
     # data staging
