@@ -49,7 +49,10 @@ function mpileup() {
 
     aws s3 cp \
         --no-progress \
-        ${INPUT_PREFIX}/${SAMPLE_ID}.bam $INPUT_PATH
+        --recursive \
+        --exclude "*" \
+        --include "${SAMPLE_ID}.bam*"\
+        ${INPUT_PREFIX}/ $INPUT_PATH
     
     bcftools mpileup \
         --threads 16 \
