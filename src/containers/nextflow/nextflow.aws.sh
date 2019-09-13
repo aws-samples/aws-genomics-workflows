@@ -8,7 +8,12 @@
 #  * NF_WORKDIR: where intermmediate results are stored
 
 
+echo "=== ENVIRONMENT ==="
+echo `env`
+
+echo "=== RUN COMMAND ==="
 echo "$@"
+
 NEXTFLOW_PROJECT=$1
 shift
 NEXTFLOW_PARAMS="$@"
