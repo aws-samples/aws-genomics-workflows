@@ -65,25 +65,28 @@ ENTRYPOINT ["/opt/bin/nextflow.aws.sh"]
 !!! note
     If you are trying to keep your container image as small as possible, keep in mind that Nextflow relies on basic linux tools such as `awk`, `bash`, `ps`, `date`, `sed`, `grep`, `egrep`, and `tail` which may need to be installed on extra minimalist base images like `alpine`.
 
-The script used for the entrypoint is shown below. The first parameter is the folder in S3 where you have staged your Nextflow scripts and supporting files (like additional config files). Any additional parameters are passed along to the Nextflow executable. This is important to remember when submiting the head node job. Notice that it automatically configures some Nextflow values based on environment variables set by AWS Batch.
+The script used for the entrypoint is shown below. The first parameter should be a Nextflow "project".  Nextflow supports pulling projects directly from Git repositories.  This script also allows for projects to be specified as an S3 URI - a bucket and folder therein where you have staged your Nextflow scripts and supporting files (like additional config files). Any additional parameters are passed along to the Nextflow executable.  Also, the script automatically configures some Nextflow values based on environment variables set by AWS Batch.
 
 ```bash
-#!/bin/bash
-echo $@
-NEXTFLOW_SCRIPT=$1
+echo "=== ENVIRONMENT ==="
+echo `env`
+
+echo "=== RUN COMMAND ==="
+echo "$@"
+
+NEXTFLOW_PROJECT=$1
 shift
-NEXTFLOW_PARAMS=$@
+NEXTFLOW_PARAMS="$@"
 
 # Create the default config using environment variables
 # passed into the container
-mkdir -p /opt/config
 NF_CONFIG=~/.nextflow/config
 
 cat << EOF > $NF_CONFIG
 workDir = "$NF_WORKDIR"
 process.executor = "awsbatch"
 process.queue = "$NF_JOB_QUEUE"
-executor.awscli = "/home/ec2-user/miniconda/bin/aws"
+aws.batch.cliPath = "/home/ec2-user/miniconda/bin/aws"
 EOF
 
 # AWS Batch places multiple jobs on an instance
@@ -91,20 +94,41 @@ EOF
 # to create a unique path
 GUID="$AWS_BATCH_JOB_ID/$AWS_BATCH_JOB_ATTEMPT"
 
+if [ "$GUID" = "/" ]; then
+    GUID=`date | md5sum | cut -d " " -f 1`
+fi
+
 mkdir -p /opt/work/$GUID
 cd /opt/work/$GUID
 
-# stage workflow definition
-aws s3 sync --only-show-errors --exclude '.*' $NEXTFLOW_SCRIPT .
+# stage in session cache
+# .nextflow directory holds all session information for the current and past runs.
+# it should be `sync`'d with an s3 uri, so that runs from previous sessions can be 
+# resumed
+aws s3 sync --only-show-errors $NF_LOGSDIR/.nextflow .nextflow
 
-NF_FILE=$(find . -name "*.nf" -maxdepth 1)
+# stage workflow definition
+if [[ "$NEXTFLOW_PROJECT" =~ "^s3://.*" ]]; then
+    aws s3 sync --only-show-errors --exclude 'runs/*' --exclude '.*' $NEXTFLOW_PROJECT ./project
+    NEXTFLOW_PROJECT=./project
+fi
 
 echo "== Running Workflow =="
-echo "nextflow run $NF_FILE $NEXTFLOW_PARAMS"
-nextflow run $NF_FILE $NEXTFLOW_PARAMS
+echo "nextflow run $NEXTFLOW_PROJECT $NEXTFLOW_PARAMS"
+nextflow run $NEXTFLOW_PROJECT $NEXTFLOW_PARAMS
+
+# stage out session cache
+aws s3 sync --only-show-errors .nextflow $NF_LOGSDIR/.nextflow
+
+# .nextflow.log file has more detailed logging from the workflow run and is
+# nominally unique per run.
+#
+# when run locally, .nextflow.logs are automatically rotated
+# when syncing to S3 uniquely identify logs by the batch GUID
+aws s3 cp --only-show-errors .nextflow.log $NF_LOGSDIR/.nextflow.log.${GUID/\//.}
 ```
 
-The `AWS_BATCH_JOB_ID` and `AWS_BATCH_JOB_ATTEMPT` are [environment variables that are automatically provided](https://docs.aws.amazon.com/batch/latest/userguide/job_env_vars.html) to all AWS Batch jobs.  The `NF_WORKDIR` and `NF_JOB_QUEUE` variables are ones set by the Batch Job Definition ([see below](#batch-job-definition)).
+The `AWS_BATCH_JOB_ID` and `AWS_BATCH_JOB_ATTEMPT` are [environment variables that are automatically provided](https://docs.aws.amazon.com/batch/latest/userguide/job_env_vars.html) to all AWS Batch jobs.  The `NF_WORKDIR`, `NF_LOGSDIR`, and `NF_JOB_QUEUE` variables are ones set by the Batch Job Definition ([see below](#batch-job-definition)).
 
 ### Job instance AWS CLI
 
@@ -146,51 +170,41 @@ An AWS Batch Job Definition for the containerized Nextflow described above is sh
 {
     "jobDefinitionName": "nextflow",
     "jobDefinitionArn": "arn:aws:batch:<region>:<account-number>:job-definition/nextflow:1",
-    "revision": 1,
-    "status": "ACTIVE",
     "type": "container",
-    "parameters": {
-        "NextflowScript": "s3://<bucket-name>/nextflow/workflow.nf"
-    },
+    "parameters": {},
     "containerProperties": {
-        "image": "<dockerhub-user>/nextflow:latest",
+        "image": "<account-number>.dkr.ecr.<region>.amazonaws.com/nextflow:latest",
         "vcpus": 2,
         "memory": 1024,
-        "command": [
-            "Ref::NextflowScript"
-        ],
-        "volumes": [
-            {
-                "host": {
-                    "sourcePath": "/scratch"
-                },
-                "name": "scratch"
-            }
-        ],
+        "command": [],
+        "jobRoleArn": "<nextflowJobRoleArn>",
+        "volumes": [],
         "environment": [
+            {
+                "name": "NF_LOGSDIR",
+                "value": "s3://<bucket>/_nextflow/logs"
+            },
             {
                 "name": "NF_JOB_QUEUE",
                 "value": "<jobQueueArn>"
             },
             {
                 "name": "NF_WORKDIR",
-                "value": "s3://<bucket-name>/runs"
+                "value": "s3://<bucket>/_nextflow/runs"
             }
         ],
-        "mountPoints": [
-            {
-                "containerPath": "/opt/work",
-                "sourceVolume": "scratch"
-            }
-        ],
-        "ulimits": []
+        "mountPoints": [],
+        "ulimits": [],
+        "resourceRequirements": []
     }
 }
 ```
 
+The `<nextflowJobRoleArn>` is described below.
+
 ### Nextflow IAM Role
 
-Nextflow needs to be able to create and submit Batch Job Defintions and Batch Jobs, and read workflow script files in an S3 bucket. These permissions are provided via a Job Role associated with the Job Definition.  Policies for this role would look like the following:
+Nextflow needs to be able to create and submit Batch Job Defintions and Batch Jobs, and read workflow logs and session information from an S3 bucket. These permissions are provided via a Job Role associated with the Job Definition.  Policies for this role would look like the following:
 
 #### Nextflow-Batch-Access
 
@@ -213,7 +227,7 @@ This policy gives **full** access to AWS Batch.
 
 #### Nextflow-S3Bucket-Access
 
-This policy gives **full** access to the buckets used to store data and workflow scripts.
+This policy gives **full** access to the buckets used to store workflow data and Nextflow session metadata.
 
 ```json
 {
@@ -224,8 +238,8 @@ This policy gives **full** access to the buckets used to store data and workflow
                 "s3:*"
             ],
             "Resource": [
-                "arn:aws:s3:::<script-bucket-name>",
-                "arn:aws:s3:::<script-bucket-name>/*",
+                "arn:aws:s3:::<nextflow-bucket-name>",
+                "arn:aws:s3:::<nextflow-bucket-name>/*",
                 "arn:aws:s3:::<data-bucket-name>",
                 "arn:aws:s3:::<data-bucket-name>/*"
             ],
@@ -237,7 +251,9 @@ This policy gives **full** access to the buckets used to store data and workflow
 
 ## A Nextflow S3 Bucket
 
-The containerized version of `nextflow` above reads a `*.nf` script from an S3 bucket and writes workflow logs and outputs back to it.  This bucket can either be the same one that your workflow inputs and outputs are stored (e.g. in a separate folder therein) or it can be another bucket entirely.
+Because running as a container will be an ephemeral process, the containerized version of `nextflow` stores workflow session information in S3 using paths described by `NF_WORKDIR` and `NF_LOGSDIR` environment variables.  These allow you to use Nextflow's `-resume` flag to restart a workflow that was previously interrupted at the step it left off at.
+
+This bucket can be independent of the S3 bucket used to store workflow input and output data if necessary.
 
 ## Running a workflow
 
@@ -333,86 +349,11 @@ For each process in your workflow, Nextflow will create a corresponding Batch Jo
 
 You can customize these job definitions to incorporate additional environment variables or volumes/mount points as needed.
 
+!!! note
+    As of Nextflow 19.07 you can use the `aws.batch.volumes` config option to define additional volumes and mount points.
+
 !!! important
-    In order to take advantage of automatically [expandable scratch space](../../../core-env/create-custom-compute-resources/) in the host instance, you will need to modify Nextflow created job definitions to map a container volume from `/scratch` on the host to `/tmp` in the container.
-
-For example, a customized job definition for the process above that maps `/scratch` on the host to `/scratch` in the container and still work with Nextflow would be:
-
-```json
-{
-    "jobDefinitionName": "nf-ubuntu-latest",
-    "jobDefinitionArn": "arn:aws:batch:<region>:<account-number>:job-definition/nf-ubuntu-latest:2",
-    "revision": 2,
-    "status": "ACTIVE",
-    "type": "container",
-    "parameters": {
-        "nf-token": "43869867b5fbae16fa7cfeb5ea2c3522"
-    },
-    "containerProperties": {
-        "image": "ubuntu:latest",
-        "vcpus": 1,
-        "memory": 1024,
-        "command": [
-            "true"
-        ],
-        "volumes": [
-            {
-                "host": {
-                    "sourcePath": "/home/ec2-user/miniconda"
-                },
-                "name": "aws-cli"
-            },
-            {
-                "host": {
-                    "sourcePath": "/scratch"
-                },
-                "name": "scratch"
-            }
-        ],
-        "environment": [],
-        "mountPoints": [
-            {
-                "containerPath": "/home/ec2-user/miniconda",
-                "readOnly": true,
-                "sourceVolume": "aws-cli"
-            },
-            {
-                "containerPath": "/scratch",
-                "sourceVolume": "scratch"
-            }
-        ],
-        "ulimits": []
-    }
-}
-```
-
-Nextflow will use the most recent revision of a Job Definition.
-
-You can also predefine Job Definitions that leverage extra volume mappings and refer to them in the process definition.  Assuming you had an existing Job Definition named `say-hello`, a process definition that utilized it would look like:
-
-```groovy
-texts = Channel.from("AWS", "Nextflow")
-
-process hello {
-    // directives
-    // substitute the container image reference with a job-definition reference
-    container "job-definition://say-hello"
-
-    // compute resources for the Batch Job
-    cpus 1
-    memory '512 MB'
-
-    input:
-    val text from texts
-
-    output:
-    file 'hello.txt'
-
-    """
-    echo "Hello $text" > hello.txt
-    """
-}
-```
+    Instances provisioned using the Nextflow specific EC2 Launch Template configure `/var/lib/docker` in the host instance to use automatically [expandable scratch space](../../../core-env/create-custom-compute-resources/), allowing containerized jobs to stage as much data as needed without running into disk space limits.
 
 ### Running the workflow
 
@@ -421,10 +362,22 @@ To run a workflow you submit a `nextflow` Batch job to the appropriate Batch Job
 * the AWS Batch Console
 * or the command line with the AWS CLI
 
-This is what starting a workflow via the AWS CLI would look like:
+This is what starting a workflow via the AWS CLI would look like using Nextflow's built-in "hello-world" workflow:
 
 ```bash
+aws batch submit-job \
+    --job-name nf-hello \
+    --job-queue <queue-name> \
+    --job-definition nextflow \
+    --container-overrides command=hello
+```
 
+After submitting a workflow, you can monitor the progress of tasks via the AWS Batch console.
+For the "Hello World" workflow above you will see five jobs run in Batch - one for the head node, and one for each `Channel` text as it goes through the `hello` process.
+
+For a more complex example, you can try the following, which will run the [RNASeq workflow](https://nf-co.re/rnaseq) developed by the [NF-Core project](https://nf-co.re/) against data in the [1000 Genomes AWS Public Dataset](https://registry.opendata.aws/1000-genomes/):
+
+```bash
 aws batch submit-job \
     --job-name nf-core-rnaseq \
     --job-queue <queue-name> \
@@ -434,9 +387,5 @@ aws batch submit-job \
 "--genome","GRCh37",\
 "--skip_qc"
 ```
-
-After submitting a workflow, you can monitor the progress of tasks via the AWS Batch console.
-
-For the "Hello World" workflow above you will see three jobs run in Batch - one for the head node, and one for each `Channel` text as it goes through the `hello` process.
 
 For the nf-core example "rnaseq" workflow you will see 11 jobs run in Batch over the course of a couple hours - the head node will last the whole duration of the pipeline while the others will stop once their step is complete. You can look at the CloudWatch logs for the head node job to monitor workflow progress. Note the additional single quotes wrapping the 1000genomes path.
