@@ -15,7 +15,6 @@ Metadata:
           - WorkflowOrchestrator
           - VpcId
           - SubnetIds
-          - KeyPairName
       - Label:
           default: Optional
         Parameters:
@@ -37,8 +36,6 @@ Metadata:
         default: VPC ID
       SubnetIds:
         default: VPC Subnet IDs
-      KeyPairName:
-        default: EC2 Key Pair Name
       SpotBidPercentage:
         default: Spot Bid %
       DefaultCEMinvCpus:
@@ -85,9 +82,6 @@ Parameters:
       - cromwell
       - nextflow
     Default: step-functions
-  KeyPairName:
-    Description: Key Pair name
-    Type: AWS::EC2::KeyPair::KeyName
   SpotBidPercentage:
     Description: The percent of on-demand pricing for max bid for Spot intances
     Type: Number
@@ -160,7 +154,6 @@ Resources:
       TimeoutInMinutes: 10
       Parameters:
         LaunchTemplateId: !Sub ${LaunchTplStack.Outputs.LaunchTemplateId}
-        Ec2KeyPairName: !Ref KeyPairName
         VpcId: !Ref VpcId
         SubnetIds: !Join [",", !Ref SubnetIds ]
         SpotBidPercentage: !Ref SpotBidPercentage

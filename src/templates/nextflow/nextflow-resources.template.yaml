@@ -30,7 +30,8 @@ Metadata:
           default: "Optional"
         Parameters:
           - NextflowContainerImage
-          - S3ScriptPrefix
+          - S3NextflowPrefix
+          - S3LogsDirPrefix
           - S3WorkDirPrefix
 
 
@@ -44,32 +45,43 @@ Parameters:
   S3NextflowBucketName:
     Type: String
     Description: >-
-      S3 Bucket used to store *.nf scripts.
+      S3 Bucket used to store Nextflow metadata (session cache, logs, and intermediate results)
     
-  S3ScriptPrefix:
-    Type: String
-    Description: >-
-      (Optional) Parent folder in the S3 bucket that contains *.nf workflow scripts
-  
-  S3WorkDirPrefix:
-    Type: String
-    Description: >-
-      (Optional) Parent folder in the S3 bucket that contains workflow execution logs
-  
   ExistingBucket:
     Type: String
     Description: >-
-      Does the S3 Bucket for *.nf scripts already exist?  If not, it will be created.
+      Does the S3 Bucket for Nextflow metadata already exist?  If not, it will be created.
     AllowedValues:
       - Yes
       - No
     Default: No
   
+  S3NextflowPrefix:
+    Type: String
+    Description: >-
+      (Optional) Parent folder in the Nextflow metadata bucket for metadata folders.
+      Used only if the Nextflow metadata bucket is the same as the Data bucket.
+    Default: _nextflow
+
+  S3LogsDirPrefix:
+    Type: String
+    Description: >-
+      (Optional) Folder in the Nextflow metadata bucket (under the {Nextflow Prefix} if needed)
+      for session cache and logs.
+    Default: logs
+  
+  S3WorkDirPrefix:
+    Type: String
+    Description: >-
+      (Optional) Folder in the Nextflow metadata bucket (under the {Nextflow Prefix} if needed)
+      that contains workflow intermediate results
+    Default: runs
+  
   NextflowContainerImage:
     Type: String
     Description: >-
       (Optional) Container image for nextflow with custom entrypoint for config and workflow
-      script staging. (Example, "<dockerhubuser>/nextflow:latest").  
+      script staging. (Example, "<dockerhub-user>/nextflow:latest").  
       Provide this if you have a specific version of nextflow you want to use, otherwise a 
       container will be built using the latest version. 
 
@@ -93,16 +105,6 @@ Conditions:
     Fn::Equals:
       - !Ref ExistingBucket
       - No
-    
-  NoS3ScriptPrefix:
-    Fn::Equals:
-      - !Ref S3ScriptPrefix
-      - ""
-  
-  NoS3WorkDirPrefix:
-    Fn::Equals:
-      - !Ref S3WorkDirPrefix
-      - ""
 
 
 Resources:
@@ -317,15 +319,6 @@ Resources:
     Type: AWS::Batch::JobDefinition
     Properties:
       Type: container
-      Parameters:
-        NextflowScript: 
-          Fn::Join:
-            - "/"
-            - - Fn::If:
-                  - NoS3ScriptPrefix
-                  - !Sub "s3://${S3NextflowBucketName}"
-                  - !Join ["/", [!Sub "s3://${S3NextflowBucketName}", !Ref S3ScriptPrefix]]
-              - workflow.nf
       ContainerProperties: 
         MountPoints: 
           - ContainerPath: /opt/work
@@ -347,41 +340,61 @@ Resources:
         Environment:
           - Name: "NF_JOB_QUEUE"
             Value: !Ref BatchDefaultJobQueue
+          - Name: "NF_LOGSDIR"
+            Value: 
+              Fn::Join: 
+                - "/"
+                - - Fn::If:
+                      - DataBucketIsNextflowBucket
+                      - !Join ["/", [!Sub "s3://${S3NextflowBucketName}", !Ref S3NextflowPrefix]]
+                      - !Sub "s3://${S3NextflowBucketName}"
+                  - !Ref S3LogsDirPrefix
           - Name: "NF_WORKDIR"
             Value: 
               Fn::Join: 
-              - "/"
-              - - Fn::If:
-                    - NoS3WorkDirPrefix
-                    - !Sub "s3://${S3NextflowBucketName}"
-                    - !Join ["/", [!Sub "s3://${S3NextflowBucketName}", !Ref S3WorkDirPrefix]]
-                - runs
-            
+                - "/"
+                - - Fn::If:
+                      - DataBucketIsNextflowBucket
+                      - !Join ["/", [!Sub "s3://${S3NextflowBucketName}", !Ref S3NextflowPrefix]]
+                      - !Sub "s3://${S3NextflowBucketName}"
+                  - !Ref S3WorkDirPrefix
+              
       JobDefinitionName: nextflow
 
 
 Outputs:
-  BucketName:
+  NextflowBucket:
     Description: >-
-      S3 Bucket used to store *.nf scripts
+      S3 Bucket used to store Nextflow metadata (session cache, logs, and intermediate results)
     Value:
       Fn::If:
         - NextflowBucketDoesNotExist
         - !Ref S3NextflowBucket
         - !Ref S3NextflowBucketName
-    
-  ScriptPrefix:
+  
+  LogsDir:
     Description: >-
-      Path in the S3 bucket where *.nf script files are located.  If blank,
-      then they are located at the root level of the bucket.
-    Value: !Ref S3ScriptPrefix
+      S3 URI where nextflow session cache and logs are stored.
+    Value:
+      Fn::Join:
+        - "/"
+        - - Fn::If:
+              - DataBucketIsNextflowBucket
+              - !Join ["/", [!Sub "s3://${S3NextflowBucketName}", !Ref S3NextflowPrefix]]
+              - !Sub "s3://${S3NextflowBucketName}"
+          - !Ref S3LogsDirPrefix
 
-  WorkDirPrefix:
+  WorkDir:
     Description: >-
-      Path in the S3 bucket where "runs" folder with workflow logs and final 
-      outputs is located.  If blank, then they are located at the root level of
-      the bucket.
-    Value: !Ref S3WorkDirPrefix
+      S3 URI where workflow intermediate results are stored.
+    Value:
+      Fn::Join: 
+        - "/"
+        - - Fn::If:
+              - DataBucketIsNextflowBucket
+              - !Join ["/", [!Sub "s3://${S3NextflowBucketName}", !Ref S3NextflowPrefix]]
+              - !Sub "s3://${S3NextflowBucketName}"
+          - !Ref S3WorkDirPrefix
 
   NextflowContainerImage:
     Description: >-
@@ -401,3 +414,4 @@ Outputs:
     Description: >-
       IAM Role that allows the nextflow head node job access to S3 and Batch
     Value: !GetAtt IAMNextflowJobRole.Arn
+...
