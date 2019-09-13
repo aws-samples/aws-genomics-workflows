@@ -62,7 +62,8 @@ function all() {
     site
 }
 
-case $STAGE in
+echo "DEPLOYMENT STAGE: $ASSET_STAGE"
+case $ASSET_STAGE in
     production)
         ASSET_STAGE_PATH=""
         all
@@ -73,6 +74,6 @@ case $STAGE in
         templates
         ;;
     *)
-        echo "unsupported staging level"
+        echo "unsupported staging level - $ASSET_STAGE"
         exit 1
 esac
