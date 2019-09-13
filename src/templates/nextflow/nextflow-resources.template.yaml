@@ -30,7 +30,8 @@ Metadata:
           default: "Optional"
         Parameters:
           - NextflowContainerImage
-          - S3ScriptPrefix
+          - S3NextflowPrefix
+          - S3LogsDirPrefix
           - S3WorkDirPrefix
 
 
