@@ -29,6 +29,9 @@ process.queue = "$NF_JOB_QUEUE"
 aws.batch.cliPath = "/home/ec2-user/miniconda/bin/aws"
 EOF
 
+echo "=== CONFIGURATION ==="
+cat ~/.nextflow/config
+
 # AWS Batch places multiple jobs on an instance
 # To avoid file path clobbering use the JobID and JobAttempt
 # to create a unique path
