@@ -21,7 +21,7 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "Required"
+          default: "Data Storage"
         Parameters:
           - S3DataBucketName
           - ExistingDataBucket
@@ -141,7 +141,7 @@ Parameters:
     Type: String
     Description: >-
       Root URL for where nested templates are stored
-    Default: https://s3.amazonaws.com/pwyming-demo-templates/nextflow-workshop
+    Default: https://s3.amazonaws.com/aws-genomics-workflows/templates
     ConstraintDescription: >-
       Must be a valid S3 URL
     AllowedPattern: "https://s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
@@ -214,6 +214,8 @@ Resources:
 Outputs:
   NextflowContainerImage:
     Value: !GetAtt NextflowStack.Outputs.NextflowContainerImage
+    Export:
+      Name: !Sub "${AWS::StackName}-NextflowJobDefinition"
     
   NextflowJobDefinition:
     Value: !GetAtt NextflowStack.Outputs.NextflowJobDefinition
@@ -264,3 +266,4 @@ Outputs:
     Description: >-
       AWS Batch job queue for high priority workflow jobs, based on EC2 On-Demand
       instances
+...
