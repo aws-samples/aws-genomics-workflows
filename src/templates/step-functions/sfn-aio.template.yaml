@@ -19,12 +19,10 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "Required"
+          default: "Data Storage"
         Parameters:
           - S3BucketName
           - ExistingBucket
-          - KeyPairName
-          - AvailabilityZones
       - Label:
           default: "AWS Batch"
         Parameters:
@@ -60,9 +58,6 @@ Metadata:
 
 # Parameters
 Parameters:    
-  AvailabilityZones:
-    Description: "Choose the two Availability Zones to deploy instances for AWS Batch."
-    Type: List<AWS::EC2::AvailabilityZone::Name>
   S3BucketName:
     Description: >-
       A S3 bucket name for storing analysis results.
@@ -79,9 +74,6 @@ Parameters:
       - Yes
       - No
     Default: No
-  KeyPairName:
-    Description: Key Pair name
-    Type: AWS::EC2::KeyPair::KeyName
   SpotBidPercentage:
     Description: The percent of on-demand pricing for max bid for Spot intances
     Type: Number
@@ -113,7 +105,7 @@ Parameters:
   
   ArtifactRootUrl:
     Type: String
-    Default: https://aws-genomics-workflows.s3.amazonaws.com/artifacts
+    Default: https://s3.amazonaws.com/aws-genomics-workflows/artifacts
     Description: >-
       Root URL for where artifacts / additions scripts are stored
   
@@ -134,9 +126,12 @@ Resources:
       TemplateURL:  https://aws-quickstart.s3.amazonaws.com/quickstart-aws-vpc/templates/aws-vpc.template
       TimeoutInMinutes: 15
       Parameters:
-        AvailabilityZones: !Join ["," , !Ref AvailabilityZones]
+        AvailabilityZones:
+          Fn::Join:
+            - "," 
+            - - !Sub "${AWS::Region}a"
+              - !Sub "${AWS::Region}b"
         NumberOfAZs: "2"
-        KeyPairName: !Ref KeyPairName
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
   GenomicsWorkflowStack:
@@ -148,7 +143,6 @@ Resources:
         SubnetIds: !Sub "${VpcStack.Outputs.PrivateSubnet1AID}, ${VpcStack.Outputs.PrivateSubnet2AID}"
         S3BucketName: !Ref S3BucketName
         ExistingBucket: !Ref ExistingBucket
-        KeyPairName: !Ref 'KeyPairName'
         WorkflowOrchestrator: step-functions
         SpotBidPercentage: !Ref 'SpotBidPercentage'
         DefaultCEMinvCpus: !Ref 'DefaultCEMinvCpus'
@@ -173,22 +167,34 @@ Resources:
 Outputs:
   StateMachine:
     Value: !GetAtt 'SfnStack.Outputs.StateMachine'
+    Export:
+      Name: !Sub ${AWS::StackName}-StateMachine
     Description: >-
       Example AWS Step Functions state machine
   StateMachineInput:
     Value: !GetAtt 'SfnStack.Outputs.StateMachineInput'
     Description: >-
       Example input for the state machine.  Use this when executing your workflow.
+  VpcId:
+    Description: >-
+      The VPC created for your Nextflow stack.
+    Value: !GetAtt 'VpcStack.Outputs.VPCID'
   S3Bucket:
     Value: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvS3Bucket'
+    Export:
+      Name: !Sub ${AWS::StackName}-S3Bucket
     Description: >-
       S3 bucket for storing genomics workflow input and output data
   BatchDefaultQueue:
     Value: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvDefaultJobQueueArn'
+    Export:
+      Name: !Sub ${AWS::StackName}-DefaultJobQueue
     Description: >-
       The default AWS Batch job queue for workflow jobs, based on EC2 SPOT instances
   BatchHighPriorityQueue:
     Value: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvHighPriorityJobQueueArn'
+    Export:
+      Name: !Sub ${AWS::StackName}-HighPrioirityJobQueue
     Description: >-
       AWS Batch job queue for high priority workflow jobs, based on EC2 On-Demand
       instances
