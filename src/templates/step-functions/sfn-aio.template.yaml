@@ -41,8 +41,6 @@ Metadata:
         default: S3 Bucket Name
       ExistingBucket:
         default: Existing Bucket?
-      KeyPairName:
-        default: EC2 Key Pair Name
       SpotBidPercentage:
         default: Spot Bid %
       DefaultCEMinvCpus:
