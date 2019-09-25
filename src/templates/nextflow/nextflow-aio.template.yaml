@@ -21,12 +21,10 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "Required"
+          default: "Data Storage"
         Parameters:
           - S3DataBucketName
           - ExistingDataBucket
-          - KeyPairName
-          - AvailabilityZones
       - Label:
           default: "AWS Batch"
         Parameters:
@@ -41,8 +39,6 @@ Metadata:
           - NextflowContainerImage
           - S3NextflowBucketName
           - ExistingNextflowBucket
-          - S3NextflowScriptPrefix
-          - S3NextflowWorkDirPrefix
 
     ParameterLabels:
       S3DataBucketName:
@@ -53,8 +49,6 @@ Metadata:
         default: S3 Nextflow Bucket Name
       ExistingNextflowBucket:
         default: Existing Nextflow Bucket?
-      KeyPairName:
-        default: EC2 Key Pair Name
       SpotBidPercentage:
         default: Spot Bid %
       DefaultCEMinvCpus:
@@ -70,9 +64,6 @@ Metadata:
 
 
 Parameters:
-  AvailabilityZones:
-    Description: "Choose the two Availability Zones to deploy instances for AWS Batch."
-    Type: List<AWS::EC2::AvailabilityZone::Name>
   S3DataBucketName:
     Description: >-
       A S3 bucket name for storing analysis results
@@ -81,8 +72,10 @@ Parameters:
       If left blank a unique bucket name will be generated.
 
     Type: String
+    Default: ""
     AllowedPattern: "((?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)|(^.{0}$))"
     ConstraintDescription: "Must respect S3 bucket naming conventions"
+
   ExistingDataBucket:
     Description: Does this bucket already exist?
     Type: String
@@ -90,9 +83,6 @@ Parameters:
       - Yes
       - No
     Default: No
-  KeyPairName:
-    Description: Key Pair name
-    Type: AWS::EC2::KeyPair::KeyName
   SpotBidPercentage:
     Description: The percent of on-demand pricing for max bid for Spot intances
     Type: Number
@@ -116,22 +106,13 @@ Parameters:
   
   S3NextflowBucketName:
     Type: String
+    Default: ""
     Description: >-
-      (Optional) S3 Bucket used to store *.nf scripts.
+      (Optional) S3 Bucket used to store Nextflow metadata (session cache, logs, and intermediate results).
       Defaults to the S3 Bucket used for data.
     AllowedPattern: "(^$|(?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$))"
     ConstraintDescription: "Must respect S3 bucket naming conventions"
-  
-  S3NextflowWorkDirPrefix:
-    Type: String
-    Description: >-
-      (Optional) Parent folder in the S3 bucket that contains workflow execution logs
-  
-  S3NextflowScriptPrefix:
-    Type: String
-    Description: >-
-      (Optional) Parent folder in the S3 bucket that contains *.nf workflow scripts
-  
+      
   ExistingNextflowBucket:
     Type: String
     Description: >-
@@ -143,6 +124,7 @@ Parameters:
   
   NextflowContainerImage:
     Type: String
+    Default: ""
     Description: >-
       (Optional) Container image for nextflow with custom entrypoint for config and workflow
       script staging. (Example, "<dockerhubuser>/nextflow:latest").  
@@ -151,7 +133,7 @@ Parameters:
   
   ArtifactRootUrl:
     Type: String
-    Default: https://aws-genomics-workflows.s3.amazonaws.com/artifacts
+    Default: https://s3.amazonaws.com/aws-genomics-workflows/artifacts
     Description: >-
       Root URL for where artifacts / additions scripts are stored
 
@@ -179,9 +161,12 @@ Resources:
       TemplateURL:  https://aws-quickstart.s3.amazonaws.com/quickstart-aws-vpc/templates/aws-vpc.template
       TimeoutInMinutes: 15
       Parameters:
-        AvailabilityZones: !Join ["," , !Ref AvailabilityZones]
+        AvailabilityZones:
+          Fn::Join:
+            - "," 
+            - - !Sub "${AWS::Region}a"
+              - !Sub "${AWS::Region}b"
         NumberOfAZs: "2"
-        KeyPairName: !Ref KeyPairName
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
   GenomicsWorkflowStack:
@@ -193,7 +178,6 @@ Resources:
         SubnetIds: !Sub "${VpcStack.Outputs.PrivateSubnet1AID}, ${VpcStack.Outputs.PrivateSubnet2AID}"
         S3BucketName: !Ref S3DataBucketName
         ExistingBucket: !Ref ExistingDataBucket
-        KeyPairName: !Ref 'KeyPairName'
         WorkflowOrchestrator: nextflow
         SpotBidPercentage: !Ref 'SpotBidPercentage'
         DefaultCEMinvCpus: !Ref 'DefaultCEMinvCpus'
@@ -222,8 +206,6 @@ Resources:
             - UseOneBucket
             - True  # by the time this stack is created, the data bucket should exist
             - !Ref ExistingNextflowBucket
-        S3WorkDirPrefix: !Ref S3NextflowWorkDirPrefix
-        S3ScriptPrefix: !Ref S3NextflowScriptPrefix
         NextflowContainerImage: !Ref NextflowContainerImage
         BatchDefaultJobQueue: !GetAtt GenomicsWorkflowStack.Outputs.GenomicsEnvDefaultJobQueueArn
       Tags: !FindInMap ["TagMap", "default", "tags"]
@@ -232,21 +214,34 @@ Resources:
 Outputs:
   NextflowContainerImage:
     Value: !GetAtt NextflowStack.Outputs.NextflowContainerImage
+    Export:
+      Name: !Sub "${AWS::StackName}-NextflowJobDefinition"
     
   NextflowJobDefinition:
     Value: !GetAtt NextflowStack.Outputs.NextflowJobDefinition
+    Export:
+      Name: !Sub "${AWS::StackName}-NextflowJobDefinition"
     Description: >-
       Batch Job Definition that creates a nextflow head node for running workflows
   
   S3NextFlowBucket:
-    Value: !GetAtt NextflowStack.Outputs.BucketName
+    Value: !GetAtt NextflowStack.Outputs.NextflowBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-NextflowBucket"
     Description: >-
-      S3 Bucket used to store *.nf scripts
-  S3NextflowScriptPrefix:
-    Value: !GetAtt NextflowStack.Outputs.ScriptPrefix
+      S3 Bucket used to store Nextflow metadata (session cache, logs, and intermediate results)
+  S3NextflowLogsDir:
+    Value: !GetAtt NextflowStack.Outputs.LogsDir
+    Export:
+      Name: !Sub "${AWS::StackName}-NextflowLogsDir"
     Description: >-
-      Path in the S3 bucket where *.nf script files are located.  If blank,
-      then they are located at the root level of the "nextflow" bucket.
+      S3 URI where nextflow session cache and logs are stored.
+  S3NextflowWorkDir:
+    Value: !GetAtt NextflowStack.Outputs.WorkDir
+    Export:
+      Name: !Sub "${AWS::StackName}-NextflowWorkDir"
+    Description: >-
+      S3 URI where workflow intermediate results are stored.
   
   VpcId:
     Description: >-
@@ -254,14 +249,21 @@ Outputs:
     Value: !GetAtt 'VpcStack.Outputs.VPCID'
   S3DataBucket:
     Value: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvS3Bucket'
+    Export:
+      Name: !Sub "${AWS::StackName}-DataBucket"
     Description: >-
       S3 bucket for storing genomics workflow input and output data
   BatchDefaultQueue:
     Value: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvDefaultJobQueueArn'
+    Export:
+      Name: !Sub "${AWS::StackName}-DefaultJobQueue"
     Description: >-
       The default AWS Batch job queue for workflow jobs, based on EC2 SPOT instances
   BatchHighPriorityQueue:
     Value: !GetAtt 'GenomicsWorkflowStack.Outputs.GenomicsEnvHighPriorityJobQueueArn'
+    Export:
+      Name: !Sub "${AWS::StackName}-HighPriorityJobQueue"
     Description: >-
       AWS Batch job queue for high priority workflow jobs, based on EC2 On-Demand
       instances
+...

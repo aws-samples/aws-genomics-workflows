@@ -130,7 +130,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         Image: aws/codebuild/standard:1.0
-        ComputeType: BUILD_GENERAL1_SMALL
+        ComputeType: BUILD_GENERAL1_LARGE
         PrivilegedMode: True
 
       ServiceRole: !GetAtt IAMCodeBuildRole.Arn
@@ -155,9 +155,12 @@ Resources:
                 commands:
                   - echo "Building containers"
                   - ROOT="$(pwd)/src/containers"
-                  - cd $ROOT/bwa && ./build.sh
-                  - cd $ROOT/samtools && ./build.sh
-                  - cd $ROOT/bcftools && ./build.sh
+                  # run container builds in parallel to avoid hitting Lambda time limit
+                  # output is captured in logs and `cat`d below to ease debugging
+                  - (cd $ROOT/bwa && ./build.sh > ./build.log) & (cd $ROOT/samtools && ./build.sh > ./build.log) & (cd $ROOT/bcftools && ./build.sh > ./build.log) & wait
+                  - cat $ROOT/bwa/build.log
+                  - cat $ROOT/samtools/build.log
+                  - cat $ROOT/bcftools/build.log
               post_build:
                 commands:
                   - echo "Tagging container images"
@@ -165,9 +168,8 @@ Resources:
                   - docker tag samtools:aws ${REGISTRY}/samtools:aws
                   - docker tag bcftools:aws ${REGISTRY}/bcftools:aws
                   - echo "Pushing container images to ECR"
-                  - docker push ${REGISTRY}/bwa:aws
-                  - docker push ${REGISTRY}/samtools:aws
-                  - docker push ${REGISTRY}/bcftools:aws
+                  # push containers in parallel to avoid hitting Lambda time limit
+                  - docker push ${REGISTRY}/bwa:aws & docker push ${REGISTRY}/samtools:aws & docker push ${REGISTRY}/bcftools:aws & wait
           - REGISTRY: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
 
       Tags: !FindInMap ["TagMap", "default", "tags"]
@@ -184,7 +186,7 @@ Resources:
       Handler: index.handler
       Role: !GetAtt IAMLambdaExecutionRole.Arn
       Runtime: python3.7
-      Timeout: 600
+      Timeout: 900
       Code:
         ZipFile: |
           from time import sleep
@@ -221,7 +223,7 @@ Resources:
         command: mem
         reference_prefix: "s3://broad-references/hg38/v0"
         reference_name: "Homo_sapiens_assembly38"
-        sample_id: "SRR1919605"
+        sample_id: "NIST7035"
         input_prefix: "s3://aws-batch-genomics-resources/fastq"
         output_prefix: !Sub "s3://${S3BucketName}/genomics-workflow"
       
@@ -253,7 +255,7 @@ Resources:
         command: sort
         reference_prefix: "s3://broad-references/hg38/v0"
         reference_name: "Homo_sapiens_assembly38"
-        sample_id: "SRR1919605"
+        sample_id: "NIST7035"
         input_prefix: !Sub s3://${S3BucketName}/genomics-workflow"
         output_prefix: !Sub "s3://${S3BucketName}/genomics-workflow"
       
@@ -285,7 +287,7 @@ Resources:
         command: mpileup
         reference_prefix: "s3://broad-references/hg38/v0"
         reference_name: "Homo_sapiens_assembly38"
-        sample_id: "SRR1919605"
+        sample_id: "NIST7035"
         input_prefix: !Sub s3://${S3BucketName}/genomics-workflow"
         output_prefix: !Sub "s3://${S3BucketName}/genomics-workflow"
       
@@ -419,86 +421,89 @@ Outputs:
   
   StateMachineInput:
     Description: Example input for the state machine
-    Value: !Sub |
-      {
-          "defaults": {
-              "queue": "${BatchJobQueue}"
-          },
-          "bwa": {
-              "mem": {
-                  "parameters": {
-                      "reference_prefix": "s3://broad-references/hg38/v0",
-                      "reference_name": "Homo_sapiens_assembly38",
-                      "sample_id": "SRR1919605",
-                      "input_prefix": "s3://aws-batch-genomics-resources/fastq",
-                      "output_prefix": "s3://${S3BucketName}/genomics-workflow",
-                      "command": "mem"
-                  },
-                  "resources": {
-                      "Vcpus": 8,
-                      "Memory": 64000
-                  }
-              }
-          },
-          "samtools": {
-              "sort": {
-                  "parameters": {
-                      "reference_prefix": "s3://broad-references/hg38/v0",
-                      "reference_name": "Homo_sapiens_assembly38",
-                      "sample_id": "SRR1919605",
-                      "input_prefix": "s3://${S3BucketName}/genomics-workflow",
-                      "output_prefix": "s3://${S3BucketName}/genomics-workflow",
-                      "command": "sort"
-                  },
-                  "resources": {
-                      "Vcpus": 8,
-                      "Memory": 32000
+    Value:
+      Fn::Sub:
+        - |
+          {
+              "defaults": {
+                  "queue": "${BatchJobQueue}"
+              },
+              "bwa": {
+                  "mem": {
+                      "parameters": {
+                          "reference_prefix": "s3://broad-references/hg38/v0",
+                          "reference_name": "Homo_sapiens_assembly38",
+                          "sample_id": "${SampleID}",
+                          "input_prefix": "s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq/",
+                          "output_prefix": "s3://${S3BucketName}/genomics-workflow",
+                          "command": "mem"
+                      },
+                      "resources": {
+                          "Vcpus": 8,
+                          "Memory": 64000
+                      }
                   }
               },
-              "index": {
-                  "parameters": {
-                      "reference_prefix": "s3://broad-references/hg38/v0",
-                      "reference_name": "Homo_sapiens_assembly38",
-                      "sample_id": "SRR1919605",
-                      "input_prefix": "s3://${S3BucketName}/genomics-workflow",
-                      "output_prefix": "s3://${S3BucketName}/genomics-workflow",
-                      "command": "index"
+              "samtools": {
+                  "sort": {
+                      "parameters": {
+                          "reference_prefix": "s3://broad-references/hg38/v0",
+                          "reference_name": "Homo_sapiens_assembly38",
+                          "sample_id": "${SampleID}",
+                          "input_prefix": "s3://${S3BucketName}/genomics-workflow",
+                          "output_prefix": "s3://${S3BucketName}/genomics-workflow",
+                          "command": "sort"
+                      },
+                      "resources": {
+                          "Vcpus": 8,
+                          "Memory": 32000
+                      }
                   },
-                  "resources": {
-                      "Vcpus": 8,
-                      "Memory": 32000
-                  }
-              }
-          },
-          "bcftools": {
-              "mpileup": {
-                  "parameters": {
-                      "reference_prefix": "s3://broad-references/hg38/v0",
-                      "reference_name": "Homo_sapiens_assembly38",
-                      "sample_id": "SRR1919605",
-                      "input_prefix": "s3://${S3BucketName}/genomics-workflow",
-                      "output_prefix": "s3://${S3BucketName}/genomics-workflow",
-                      "command": "mpileup"
-                  },
-                  "resources": {
-                      "Vcpus": 8,
-                      "Memory": 32000
+                  "index": {
+                      "parameters": {
+                          "reference_prefix": "s3://broad-references/hg38/v0",
+                          "reference_name": "Homo_sapiens_assembly38",
+                          "sample_id": "${SampleID}",
+                          "input_prefix": "s3://${S3BucketName}/genomics-workflow",
+                          "output_prefix": "s3://${S3BucketName}/genomics-workflow",
+                          "command": "index"
+                      },
+                      "resources": {
+                          "Vcpus": 8,
+                          "Memory": 32000
+                      }
                   }
               },
-              "call": {
-                  "parameters": {
-                      "reference_prefix": "s3://broad-references/hg38/v0",
-                      "reference_name": "Homo_sapiens_assembly38",
-                      "sample_id": "SRR1919605",
-                      "input_prefix": "s3://${S3BucketName}/genomics-workflow",
-                      "output_prefix": "s3://${S3BucketName}/genomics-workflow",
-                      "command": "call"
+              "bcftools": {
+                  "mpileup": {
+                      "parameters": {
+                          "reference_prefix": "s3://broad-references/hg38/v0",
+                          "reference_name": "Homo_sapiens_assembly38",
+                          "sample_id": "${SampleID}",
+                          "input_prefix": "s3://${S3BucketName}/genomics-workflow",
+                          "output_prefix": "s3://${S3BucketName}/genomics-workflow",
+                          "command": "mpileup"
+                      },
+                      "resources": {
+                          "Vcpus": 8,
+                          "Memory": 32000
+                      }
                   },
-                  "resources": {
-                      "Vcpus": 8,
-                      "Memory": 32000
+                  "call": {
+                      "parameters": {
+                          "reference_prefix": "s3://broad-references/hg38/v0",
+                          "reference_name": "Homo_sapiens_assembly38",
+                          "sample_id": "${SampleID}",
+                          "input_prefix": "s3://${S3BucketName}/genomics-workflow",
+                          "output_prefix": "s3://${S3BucketName}/genomics-workflow",
+                          "command": "call"
+                      },
+                      "resources": {
+                          "Vcpus": 8,
+                          "Memory": 32000
+                      }
                   }
               }
           }
-      }
+        - SampleID: "NIST7035"
 ...

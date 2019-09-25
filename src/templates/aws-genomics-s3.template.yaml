@@ -60,8 +60,6 @@ Resources:
           - ServerSideEncryptionByDefault:
              SSEAlgorithm: AES256
       Tags:
-        - Key: Name
-          Value: genomics-base-ami
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
 

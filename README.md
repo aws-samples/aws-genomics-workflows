@@ -11,7 +11,7 @@ The documentation is built using mkdocs.
 Install dependencies:
 
 ```bash
-$ conda env create --file enviroment.yaml
+$ conda env create --file environment.yaml
 ```
 
 This will create a `conda` environment called `mkdocs`

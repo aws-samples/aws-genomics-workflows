@@ -1,54 +1,36 @@
-# Genomics on AWS CloudFormation templates
+# Genomics Workflows on AWS CloudFormation templates
 
-This directory contains example CloudFormation templates for setting up the resources for working with genomics and other large-scale biomedical research data.
+Contained herein are CloudFormation templates for creating AWS resources for working with large-scale biomedical data - e.g. genomics.
 
+## Core Stack
 
-root = to do
-* inputs:
-  - stack name root
-  - az
-  - tags
-  - key pair name
-  - s3 bucket name
-* outputs:
-  - job queue names
-  - s3 bucket name
+Templates at the root level represent the "core" stack.  The root template is:
 
+| File | Description |
+| :--- | :---------- |
+| `aws-genomics-root-novpc.template.yaml` | Root stack that invokes nested stacks (see below) |
 
-vpc = https://raw.githubusercontent.com/aws-quickstart/quickstart-aws-vpc/master/templates/aws-vpc.template
-* inputs:
-  * stack name
-  * Availability Zones
-  * tag for public & private subnets
-  * key pair name
-* outputs:
-  - az
-  - sg
-  -
-s3 = to do
-* input:
-  - stack name
-  - s3 bucket name
+Nested stacks are as follows and listed in order of creation:
 
-iam = to do
-* inputs:
-  - stack name
-  - s3 bucket name
-* outputs
-  - iam instance profile
-  - iam ecs service role
-  - iam ecs task roles
-  - iam batch service role
+| File | Description |
+| :--- | :---------- |
+| `aws-genomics-s3.template.yaml` | Creates an S3 bucket for storing workflow input and output data |
+| `aws-genomics-launch-template.template.yaml` | Creates an EC2 Launch Template used in AWS Batch Compute Environments |
+| `aws-genomics-iam.template.yaml` | Creates IAM roles for AWS Batch resources |
+| `aws-genomics-batch.template.yaml` | Creates AWS Batch Job Queues and Compute Environments for job execution |
 
-batch =
-* inputs:
-  - stack name
-  - azs
-  - key pair name
-  - iam instance profile
-  - iam ecs role
-  - iam ecs task roles
-  - iam batch service role
-  - iam batch spot fleet role
-- outputs:
-  - job Queue names
+## All-in-One ("AIO") Stacks
+
+All-in-One stacks are provided for solutions that utilize:
+
+* AWS Step-Functions
+* Cromwell
+* Nextflow
+
+and build atop the Core Stackk above.  They also include additional stacks specific to the solution:
+
+| File | Description |
+| :--- | :---------- |
+| `step-functions/sfn-example.template.yaml` | Creates an example AWS Step Functions state-machine and containers for an example genomics workflow using BWA, samtools, and bcftools. |
+| `cromwell/cromwell-server.template.yaml` | Creates an EC2 instance with Cromwell pre-installed and launched in "server" mode |
+| `nextflow/nextflow-resources.template.yaml` | Creates a nextflow container and AWS Batch Job Definition for running nextflow |

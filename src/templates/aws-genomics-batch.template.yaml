@@ -11,7 +11,6 @@ Metadata:
           default: "AWS Batch Environment Config"
         Parameters:
         - LaunchTemplateId
-        - Ec2KeyPairName
         - VpcId
         - SubnetIds
         - SpotBidPercentage
@@ -19,15 +18,12 @@ Metadata:
         - DefaultCEMaxvCpus
         - HighPriorityCEMinvCpus
         - HighPriorityCEMaxvCpus
-        - DefaultRetryNumber
         - BatchServiceRoleArn
         - Ec2InstanceProfileArn
         - SpotFleetRoleArn
     ParameterLabels:
       LaunchTemplateId:
         default: Launch Template ID
-      Ec2KeyPairName:
-        default: EC2 Key Pair Name
       VpcId:
         default: VPC ID
       SubnetIds:
@@ -66,9 +62,6 @@ Parameters:
   LaunchTemplateId:
     Type: String
     Description: Launch Template you want your AWS Batch Compute Environments to use
-  Ec2KeyPairName:
-    Type: AWS::EC2::KeyPair::KeyName
-    Description: Name of the EC2 Key Pair for connecting to EC2 instances launched in your compute environment
   HighPriorityCEMinvCpus:
     Type: Number
     Description: Minimum number of CPUs in the high-priority compute environment. Default 0.
@@ -109,7 +102,6 @@ Resources:
         Ref: VpcId
   SGSSHIngress:
     Type: AWS::EC2::SecurityGroupIngress
-    DependsOn: GenomicsBatchSecurityGroup
     Properties:
       GroupId: !Ref GenomicsBatchSecurityGroup
       IpProtocol: tcp
@@ -118,7 +110,6 @@ Resources:
       CidrIp: 0.0.0.0/0
   SGAllTcpEgress:
     Type: AWS::EC2::SecurityGroupEgress
-    DependsOn: GenomicsBatchSecurityGroup
     Properties:
       GroupId: !Ref GenomicsBatchSecurityGroup
       IpProtocol: tcp
@@ -127,7 +118,6 @@ Resources:
       CidrIp: 0.0.0.0/0
   SGAllTcpSelfIngress:
     Type: AWS::EC2::SecurityGroupIngress
-    DependsOn: GenomicsBatchSecurityGroup
     Properties:
       GroupId: !Ref GenomicsBatchSecurityGroup
       IpProtocol: tcp
@@ -137,7 +127,6 @@ Resources:
 
   GenomicsDefaultComputeEnv:
     Type: AWS::Batch::ComputeEnvironment
-    DependsOn: GenomicsBatchSecurityGroup
     Properties:
       ComputeEnvironmentName: !Sub 
        - spot-${StackGuid}
@@ -147,7 +136,7 @@ Resources:
       State: ENABLED
       ComputeResources:
         BidPercentage: !Ref SpotBidPercentage
-        Ec2KeyPair: !Ref Ec2KeyPairName
+        # Ec2KeyPair: !Ref Ec2KeyPairName
         LaunchTemplate:
           LaunchTemplateId: !Ref LaunchTemplateId
         InstanceRole: !Ref Ec2InstanceProfileArn
@@ -167,7 +156,6 @@ Resources:
 
   GenomicsHighPriorityComputeEnv:
     Type: AWS::Batch::ComputeEnvironment
-    DependsOn: GenomicsBatchSecurityGroup
     Properties:
       ComputeEnvironmentName: !Sub 
        - ondemand-${StackGuid}
@@ -176,7 +164,6 @@ Resources:
       Type: MANAGED
       State: ENABLED
       ComputeResources:
-        Ec2KeyPair: !Ref Ec2KeyPairName
         LaunchTemplate:
           LaunchTemplateId: !Ref LaunchTemplateId
         InstanceRole:  !Ref Ec2InstanceProfileArn

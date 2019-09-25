@@ -23,15 +23,15 @@ The above template uses the AWS Quickstart reference for a [Modular and Scalable
 
 For architectural details, best practices, step-by-step instructions, and customization options, see the [deployment guide](https://fwd.aws/9VdxN).
 
-## Step 1: Compute Environment
+## Step 1: Core Environment
 
 ### Option A: Full stack
 
-The "Full Stack" CloudFormation template below will create all of the AWS resources required - S3 Bucket, EC2 Launch Templates, IAM Roles, Batch Compute Environments, Batch Job Queues - for your genomics workflow environment into an existing VPC.
+The "Full Stack" CloudFormation template below will create all of the AWS resources required - S3 Bucket, EC2 Launch Templates, IAM Roles, Batch Compute Environments, Batch Job Queues - you will need for a genomics workflow environment into an existing VPC.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("Full Stack (Existing VPC)", "GenomicsEnv-Full", "aws-genomics-root-novpc.template.yaml", "Create EC2 Launch Templates, AWS Batch Job Queues and Compute Environments, a secure Amazon S3 bucket, and IAM policies and roles within an **existing** VPC. _NOTE: You must provide VPC ID, and subnet IDs_.") }}
+{{ cfn_stack_row("Full Stack (Existing VPC)", "GWFCore-Full", "aws-genomics-root-novpc.template.yaml", "Create EC2 Launch Templates, AWS Batch Job Queues and Compute Environments, a secure Amazon S3 bucket, and IAM policies and roles within an **existing** VPC. _NOTE: You must provide VPC ID, and subnet IDs_.") }}
 
 Prior to the final create button, be sure to acknowledge "IAM CAPABILITIES".
 
@@ -51,10 +51,10 @@ Below are the stand-alone CloudFormation templates for each of the sub-stacks. T
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("Amazon IAM Roles", "GenomicsWorkflow-IAM", "aws-genomics-iam.template.yaml", "Create the necessary IAM Roles. This is useful to hand to someone with the right permissions to create these on your behalf. _You will need to provide an Amazon S3 bucket name_.") }}
-{{ cfn_stack_row("EC2 Launch Template", "GenomicsWorkflow-LT", "aws-genomics-launch-template.template.yaml", "Creates an EC2 Launch Template that provisions instances on first boot for processing genomics workflow tasks.") }}
-{{ cfn_stack_row("Amazon S3 Bucket", "GenomicsWorkflow-S3", "aws-genomics-s3.template.yaml", "Creates a secure Amazon S3 bucket to read inputs and write results.") }}
-{{ cfn_stack_row("AWS Batch", "GenomicsWorkflow-Batch", "aws-genomics-batch.template.yaml", "Creates AWS Batch Job Queues and Compute Environments. You will need to provide the details on IAM roles and instance profiles, and the IDs for a VPC and subnets.") }}
+{{ cfn_stack_row("Amazon S3 Bucket", "GWFCore-S3", "aws-genomics-s3.template.yaml", "Creates a secure Amazon S3 bucket to read inputs and write results.") }}
+{{ cfn_stack_row("Amazon IAM Roles", "GWFCore-IAM", "aws-genomics-iam.template.yaml", "Create the necessary IAM Roles. This is useful to hand to someone with the right permissions to create these on your behalf. _You will need to provide an Amazon S3 bucket name_.") }}
+{{ cfn_stack_row("EC2 Launch Template", "GWFCore-LT", "aws-genomics-launch-template.template.yaml", "Creates an EC2 Launch Template that provisions instances on first boot for processing genomics workflow tasks.") }}
+{{ cfn_stack_row("AWS Batch", "GWFCore-Batch", "aws-genomics-batch.template.yaml", "Creates AWS Batch Job Queues and Compute Environments. _You will need to provide the details for your Launch Template ID, IAM roles and instance profiles, and the IDs for a VPC and subnets._") }}
 
 ## Step 2: Worklow Orchestrators
 
