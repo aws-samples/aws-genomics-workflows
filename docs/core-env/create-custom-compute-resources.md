@@ -1,19 +1,16 @@
-# Creating Custom Compute Resources
+# Custom Compute Resources
 
 Genomics is a data-heavy workload and requires some modification to the defaults
-used for batch job processing. In particular, instances running the Tasks/Jobs 
-need scalable storage to meet unpredictable runtime demands.
+used by AWS Batch for job processing.  To efficiently use resources, AWS Batch places multiple jobs on an worker instance.  The data requirements for individual jobs can range from a few MB to 100s of GB.  Instances running workflow jobs will not know beforehand how much space is required, and need scalable storage to meet unpredictable runtime demands.
 
-By default, AWS Batch relies upon the [Amazon ECS-Optimized AMI](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)
-to launch container instances for running jobs.  This is sufficient in most cases, but specialized needs, such as the large 
-storage requirements noted above, require customization of the base AMI.
-
-This section provides two methods for customizing the base ECS-Optimized AMI 
-that adds an expandable working directory for jobs to write data.
-A process will monitor the directory and add more EBS volumes on the fly to expand the free space 
-based on the capacity threshold, like so:
+To handle this use case, we can use a process that monitors a scratch directory on an instance and expands free space as needed based on capacity thresholds. This can be done using logical volume management and attaching EBS volumes as needed to the instance like so:
 
 ![Autoscaling EBS storage](images/ebs-autoscale.png)
+
+The above process - "EBS autoscaling" - requires a few small dependencies and a simple daemon installed on the host instance.
+
+By default, AWS Batch uses the [Amazon ECS-Optimized AMI](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)
+to launch instances for running jobs.  This is sufficient in most cases, but specialized needs, such as the large storage requirements noted above, require customization of the base AMI.  Because the provisioning requirements for EBS autoscaling are fairly simple and light weight, one can use an EC2 Launch Template to customize instances.
 
 ## EC2 Launch Template
 
@@ -43,11 +40,13 @@ packages:
 - python27-pip
 - sed
 - wget
+# add more package names here if you need them
 
 runcmd:
 - pip install -U awscli boto3
 - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
 - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh /scratch /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
+# you can add more commands here if you have additional provisioning steps
 
 --==BOUNDARY==--
 ```
@@ -58,23 +57,113 @@ If you want this volume to be larger initially, you can specify a bigger one
 mapped to `/dev/sdc`  the Launch Template.
 
 !!! note
-    The mount point is specific to what orchestration method / engine you intend
-    to use.  `/scratch` is considered the default for AWS Step Functions.  If you
-    are using a 3rd party workflow orchestration engine this mount point will need
-    to be adjusted to fit that engine's expectations.
+    The mount point is specific to what orchestration method / engine you intend to use.  `/scratch` is considered a generic default.  If you are using a 3rd party workflow orchestration engine this mount point will need to be adjusted to fit that engine's expectations.
+
+Also note that the script has MIME multi-part boundaries.  This is because AWS Batch will combind this script with others that it uses to provision instances.
+
+## Creating an EC2 Launch Template
+
+Instructions on how to create a launch template are below.  Once your Launch Template is created, you can reference it when you setup resources in AWS Batch to ensure that jobs run therein have your customizations available
+to them.
+
+### Automated via CloudFormation
 
 You can use the following CloudFormation template to create a Launch Template
 suitable for your needs.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("EC2 Launch Template", "GenomicsWorkflow-LT", "aws-genomics-launch-template.template.yaml", "Creates an EC2 Launch Template that provisions instances on first boot for processing genomics workflow tasks.") }}
+{{ cfn_stack_row("EC2 Launch Template", "GWFCore-LT", "aws-genomics-launch-template.template.yaml", "Creates an EC2 Launch Template that provisions instances on first boot for processing genomics workflow tasks.") }}
 
-Once your Launch Template is created, you can reference it when you setup resources
-in AWS Batch to ensure that jobs run therein have your customizations available
-to them.
+### Manually via the AWS CLI
 
-## Custom AMI
+In most cases, EC2 Launch Templates can be created using the AWS EC2 Console.
+For this case, we need to use the AWS CLI.
+
+Create a file named `launch-template-data.json` with the following contents:
+
+```json
+{
+  "TagSpecifications": [
+    {
+      "ResourceType": "instance",
+      "Tags": [
+        {
+          "Key": "architecture",
+          "Value": "genomics-workflow"
+        },
+        {
+          "Key": "solution",
+          "Value": "nextflow"
+        }
+      ]
+    }
+  ],
+  "BlockDeviceMappings": [
+    {
+      "Ebs": {
+        "DeleteOnTermination": true,
+        "VolumeSize": 50,
+        "VolumeType": "gp2"
+      },
+      "DeviceName": "/dev/xvda"
+    },
+    {
+      "Ebs": {
+        "Encrypted": true,
+        "DeleteOnTermination": true,
+        "VolumeSize": 75,
+        "VolumeType": "gp2"
+      },
+      "DeviceName": "/dev/xvdcz"
+    },
+    {
+      "Ebs": {
+        "Encrypted": true,
+        "DeleteOnTermination": true,
+        "VolumeSize": 20,
+        "VolumeType": "gp2"
+      },
+      "DeviceName": "/dev/sdc"
+    }
+  ],
+  "UserData": "...base64-encoded-string..."
+}
+```
+
+The above template will create an instance with three attached EBS volumes.
+
+* `/dev/xvda`: will be used for the root volume
+* `/dev/xvdcz`: will be used for the docker metadata volume
+* `/dev/sdc`: will be the initial volume use for scratch space (more on this below)
+
+The `UserData` value should be the `base64` encoded version of the UserData script used to provision instances.
+
+Use the command below to create the corresponding launch template:
+
+```bash
+aws ec2 \
+    create-launch-template \
+        --launch-template-name genomics-workflow-template \
+        --launch-template-data file://launch-template-data.json
+```
+
+You should get something like the following as a response:
+
+```json
+{
+    "LaunchTemplate": {
+        "LatestVersionNumber": 1, 
+        "LaunchTemplateId": "lt-0123456789abcdef0", 
+        "LaunchTemplateName": "genomics-workflow-template", 
+        "DefaultVersionNumber": 1, 
+        "CreatedBy": "arn:aws:iam::123456789012:user/alice", 
+        "CreateTime": "2019-01-01T00:00:00.000Z"
+    }
+}
+```
+
+## Custom AMIs
 
 A slightly more involved method for customizing an instance is
 to create a new AMI based on the ECS Optimized AMI.  This is good if you have 
@@ -82,15 +171,6 @@ a lot of customization to do - lots of software to install and/or need large
 datasets preloaded that will be needed by all your jobs.
 
 You can learn more about how to [create your own AMIs in the EC2 userguide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html).
-
-The CloudFormation template below automates the tasks needed to create an AMI and should take about 10-15min to complete.
-
-| Name | Description | Source | Launch Stack |
-| -- | -- | :--: | :--: |
-{{ cfn_stack_row("Custom AMI (Existing VPC)", "GenomicsWorkflow-AMI", "deprecated/aws-genomics-ami.template.yaml", "Creates a custom AMI that EC2 instances can be based on for processing genomics workflow tasks.  The creation process will happen in a VPC you specify") }}
-
-Once your AMI is created, you will need to jot down its unique AMI Id.  You will
-need this when creating compute resources in AWS Batch.
 
 !!! note
     This is considered advanced use.  All documentation and CloudFormation templates hereon assumes use of EC2 Launch Templates.
