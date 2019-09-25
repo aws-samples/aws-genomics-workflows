@@ -215,7 +215,7 @@ Outputs:
   NextflowContainerImage:
     Value: !GetAtt NextflowStack.Outputs.NextflowContainerImage
     Export:
-      Name: !Sub "${AWS::StackName}-NextflowJobDefinition"
+      Name: !Sub "${AWS::StackName}-NextflowContainerImage"
     
   NextflowJobDefinition:
     Value: !GetAtt NextflowStack.Outputs.NextflowJobDefinition
