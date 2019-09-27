@@ -51,7 +51,7 @@ cd /opt/work/$GUID
 aws s3 sync --only-show-errors $NF_LOGSDIR/.nextflow .nextflow
 
 # stage workflow definition
-if [[ "$NEXTFLOW_PROJECT" =~ "^s3://.*" ]]; then
+if [[ "$NEXTFLOW_PROJECT" =~ ^s3://.* ]]; then
     aws s3 sync --only-show-errors --exclude 'runs/*' --exclude '.*' $NEXTFLOW_PROJECT ./project
     NEXTFLOW_PROJECT=./project
 fi
