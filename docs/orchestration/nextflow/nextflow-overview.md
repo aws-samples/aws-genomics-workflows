@@ -68,6 +68,10 @@ ENTRYPOINT ["/opt/bin/nextflow.aws.sh"]
 The script used for the entrypoint is shown below. The first parameter should be a Nextflow "project".  Nextflow supports pulling projects directly from Git repositories.  This script also allows for projects to be specified as an S3 URI - a bucket and folder therein where you have staged your Nextflow scripts and supporting files (like additional config files). Any additional parameters are passed along to the Nextflow executable.  Also, the script automatically configures some Nextflow values based on environment variables set by AWS Batch.
 
 ```bash
+#!/bin/bash
+
+set -e  # fail on any error
+
 echo "=== ENVIRONMENT ==="
 echo `env`
 
@@ -89,6 +93,9 @@ process.queue = "$NF_JOB_QUEUE"
 aws.batch.cliPath = "/home/ec2-user/miniconda/bin/aws"
 EOF
 
+echo "=== CONFIGURATION ==="
+cat ~/.nextflow/config
+
 # AWS Batch places multiple jobs on an instance
 # To avoid file path clobbering use the JobID and JobAttempt
 # to create a unique path
@@ -105,10 +112,32 @@ cd /opt/work/$GUID
 # .nextflow directory holds all session information for the current and past runs.
 # it should be `sync`'d with an s3 uri, so that runs from previous sessions can be 
 # resumed
+echo "== Restoring Session Cache =="
 aws s3 sync --only-show-errors $NF_LOGSDIR/.nextflow .nextflow
+
+function preserve_session() {
+    # stage out session cache
+    if [ -d .nextflow ]; then
+        echo "== Preserving Session Cache =="
+        aws s3 sync --only-show-errors .nextflow $NF_LOGSDIR/.nextflow
+    fi
+
+    # .nextflow.log file has more detailed logging from the workflow run and is
+    # nominally unique per run.
+    #
+    # when run locally, .nextflow.logs are automatically rotated
+    # when syncing to S3 uniquely identify logs by the batch GUID
+    if [ -f .nextflow.log ]; then
+        echo "== Preserving Session Log =="
+        aws s3 cp --only-show-errors .nextflow.log $NF_LOGSDIR/.nextflow.log.${GUID/\//.}
+    fi
+}
+
+trap preserve_session EXIT
 
 # stage workflow definition
 if [[ "$NEXTFLOW_PROJECT" =~ ^s3://.* ]]; then
+    echo "== Staging S3 Project =="
     aws s3 sync --only-show-errors --exclude 'runs/*' --exclude '.*' $NEXTFLOW_PROJECT ./project
     NEXTFLOW_PROJECT=./project
 fi
@@ -116,16 +145,6 @@ fi
 echo "== Running Workflow =="
 echo "nextflow run $NEXTFLOW_PROJECT $NEXTFLOW_PARAMS"
 nextflow run $NEXTFLOW_PROJECT $NEXTFLOW_PARAMS
-
-# stage out session cache
-aws s3 sync --only-show-errors .nextflow $NF_LOGSDIR/.nextflow
-
-# .nextflow.log file has more detailed logging from the workflow run and is
-# nominally unique per run.
-#
-# when run locally, .nextflow.logs are automatically rotated
-# when syncing to S3 uniquely identify logs by the batch GUID
-aws s3 cp --only-show-errors .nextflow.log $NF_LOGSDIR/.nextflow.log.${GUID/\//.}
 ```
 
 The `AWS_BATCH_JOB_ID` and `AWS_BATCH_JOB_ATTEMPT` are [environment variables that are automatically provided](https://docs.aws.amazon.com/batch/latest/userguide/job_env_vars.html) to all AWS Batch jobs.  The `NF_WORKDIR`, `NF_LOGSDIR`, and `NF_JOB_QUEUE` variables are ones set by the Batch Job Definition ([see below](#batch-job-definition)).
