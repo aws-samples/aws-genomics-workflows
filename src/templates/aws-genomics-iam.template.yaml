@@ -49,8 +49,6 @@ Resources:
                 - "ec2.amazonaws.com"
             Action:
               - "sts:AssumeRole"
-      ManagedPolicyArns: 
-        - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
       Policies:
         - PolicyName: !Sub GenomicsEnv-S3Bucket-Access-${AWS::Region}
           PolicyDocument:
@@ -96,6 +94,7 @@ Resources:
       ManagedPolicyArns:
       - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
       - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+      - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   GenomicsEnvBatchInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
