@@ -143,11 +143,14 @@ Resources:
               - python27-pip
               - sed
               - wget
+              - amazon-ssm-agent
 
               runcmd:
               - pip install -U awscli boto3
               - scratchPath="${ScratchMountPoint}"
               - artifactRootUrl="${ArtifactRootUrl}"
+              - start amazon-ssm-agent
+
               ${ECSAdditions}
 
               --==BOUNDARY==--
