@@ -9,7 +9,7 @@ Nextflow can be run either locally or on a dedicated EC2 instance.  The latter i
 ## Full Stack Deployment
 
 _For the impatient:_
-The following CloudFormation template will launch a complete architecture that runs Nextflow using the "Batch-Squared" concept shown above.  It combines the CloudFormation stacks referenced below in the [Requirements](#requirements) section.
+The following CloudFormation template will create all the resources you need to runs Nextflow using the architecture shown above.  It combines the CloudFormation stacks referenced below in the [Requirements](#requirements) section.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | -- |
