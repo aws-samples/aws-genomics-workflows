@@ -148,6 +148,7 @@ function stage_out() (
     done
 )
 
+printenv
 stage_in $JOB_INPUTS
 
 # command, for example:
