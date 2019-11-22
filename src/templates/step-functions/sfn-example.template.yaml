@@ -232,19 +232,14 @@ Resources:
         Vcpus: 8
         Memory: 64000
         Command:
-          - Ref::command
-          - Ref::reference_prefix
-          - Ref::reference_name
-          - Ref::sample_id
-          - Ref::input_prefix
-          - Ref::output_prefix
+          - bwa
         Volumes:
           - Host:
-              SourcePath: /scratch
-            Name: scratch
+              SourcePath: /opt/miniconda
+            Name: awscli
         MountPoints:
-          - ContainerPath: /scratch
-            SourceVolume: scratch
+          - ContainerPath: /opt/miniconda
+            SourceVolume: awscli
       
   BatchJobDefSamtools:
     Type: AWS::Batch::JobDefinition
@@ -264,19 +259,14 @@ Resources:
         Vcpus: 8
         Memory: 32000
         Command:
-          - Ref::command
-          - Ref::reference_prefix
-          - Ref::reference_name
-          - Ref::sample_id
-          - Ref::input_prefix
-          - Ref::output_prefix
+          - samtools
         Volumes:
           - Host:
-              SourcePath: /scratch
-            Name: scratch
+              SourcePath: /opt/miniconda
+            Name: awscli
         MountPoints:
-          - ContainerPath: /scratch
-            SourceVolume: scratch
+          - ContainerPath: /opt/miniconda
+            SourceVolume: awscli
 
   BatchJobDefBcftools:
     Type: AWS::Batch::JobDefinition
@@ -296,19 +286,14 @@ Resources:
         Vcpus: 8
         Memory: 32000
         Command:
-          - Ref::command
-          - Ref::reference_prefix
-          - Ref::reference_name
-          - Ref::sample_id
-          - Ref::input_prefix
-          - Ref::output_prefix
+          - bcftools
         Volumes:
           - Host:
-              SourcePath: /scratch
-            Name: scratch
+              SourcePath: /opt/miniconda
+            Name: awscli
         MountPoints:
-          - ContainerPath: /scratch
-            SourceVolume: scratch
+          - ContainerPath: /opt/miniconda
+            SourceVolume: awscli
 
   SfnStateMachine:
     Type: AWS::StepFunctions::StateMachine
