@@ -137,7 +137,7 @@ function stage_out() (
                     --no-progress \
                     $OUTPUT_PATH/$item $prefix/${item_key}
 
-            elif [[ $JOB_OUTPUT_PREFIX && ! $JOB_OUTPUT_PREFIX =~ ^s3:// ]] then
+            elif [[ $JOB_OUTPUT_PREFIX && ! $JOB_OUTPUT_PREFIX =~ ^s3:// ]]; then
                 echo "[output] ERROR: unsupported remote output destination $JOB_OUTPUT_PREFIX"
 
             else
