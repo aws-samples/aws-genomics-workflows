@@ -51,13 +51,6 @@
 set -e  # exit on error
 set -x  # enable echo
 
-# Command is specified in the JobSubmission container overrides.
-# gives the user flexibility to specify tooling options as needed.
-#
-# Note that AWS Batch has an implicit 8kb limit on the amount of data allowed in
-# container overrides, which includes environment variable data.
-COMMAND="$@"
-
 DEFAULT_AWS_CLI_PATH=/opt/miniconda/bin
 AWS_CLI_PATH=${JOB_AWS_CLI_PATH:-$DEFAULT_AWS_CLI_PATH}
 PATH=$PATH:$AWS_CLI_PATH
@@ -148,6 +141,13 @@ function stage_out() (
         fi
     done
 )
+
+# Command is specified in the JobSubmission container overrides.
+# gives the user flexibility to specify tooling options as needed.
+#
+# Note that AWS Batch has an implicit 8kb limit on the amount of data allowed in
+# container overrides, which includes environment variable data.
+COMMAND="$@"
 
 printenv
 stage_in $JOB_INPUTS
