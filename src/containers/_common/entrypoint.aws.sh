@@ -48,7 +48,8 @@
 #       Default: null
 #       S3 location (e.g. s3://bucket/prefix) were job outputs will be stored
 
-set -e
+set -e  # exit on error
+set -x  # enable echo
 
 # Command is specified in the JobSubmission container overrides.
 # gives the user flexibility to specify tooling options as needed.
@@ -156,6 +157,7 @@ stage_in $JOB_INPUTS
 #     $INPUT_PATH/${REFERENCE_NAME}.fasta \
 #     $INPUT_PATH/${SAMPLE_ID}_*1*.fastq.gz \
 #     > $OUTPUT_PATH/${SAMPLE_ID}.sam
+echo $COMMAND
 $COMMAND
 
 
