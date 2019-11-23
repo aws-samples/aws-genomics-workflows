@@ -110,11 +110,11 @@ function stage_out() (
             if [[ $JOB_OUTPUT_PREFIX && $JOB_OUTPUT_PREFIX =~ ^s3:// ]]; then
                 local item_key=`basename $item`
 
-                echo "[output] remote: ./$item ==> $prefix/${item_key}"
+                echo "[output] remote: ./$item ==> $JOB_OUTPUT_PREFIX/${item_key}"
 
                 aws s3 cp \
                     --no-progress \
-                    ./$item $prefix/${item_key}
+                    ./$item $JOB_OUTPUT_PREFIX/${item_key}
 
             elif [[ $JOB_OUTPUT_PREFIX && ! $JOB_OUTPUT_PREFIX =~ ^s3:// ]]; then
                 echo "[output] ERROR: unsupported remote output destination $JOB_OUTPUT_PREFIX"
