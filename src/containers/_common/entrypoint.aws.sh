@@ -104,7 +104,7 @@ function stage_out() (
             # If an expected output is not found it is generally considered an
             # error.  To suppress this error when using glob expansion you can 
             # set the `nullglob` option (`shopt -s nullglob`)
-            echo "[output] ERROR: $item does not exist"
+            echo "[output] ERROR: $item does not exist" 1>&2
             exit 1
         else
             if [[ $JOB_OUTPUT_PREFIX && $JOB_OUTPUT_PREFIX =~ ^s3:// ]]; then
@@ -117,7 +117,7 @@ function stage_out() (
                     ./$item $JOB_OUTPUT_PREFIX/${item_key}
 
             elif [[ $JOB_OUTPUT_PREFIX && ! $JOB_OUTPUT_PREFIX =~ ^s3:// ]]; then
-                echo "[output] ERROR: unsupported remote output destination $JOB_OUTPUT_PREFIX"
+                echo "[output] ERROR: unsupported remote output destination $JOB_OUTPUT_PREFIX" 1>&2
 
             else
                 echo "[output] local: ./$item"
@@ -137,11 +137,6 @@ COMMAND="$*"
 printenv
 stage_in $JOB_INPUTS
 
-# command, for example:
-# bwa mem -t 16 -p \
-#     $INPUT_PATH/${REFERENCE_NAME}.fasta \
-#     $INPUT_PATH/${SAMPLE_ID}_*1*.fastq.gz \
-#     > $OUTPUT_PATH/${SAMPLE_ID}.sam
 echo $COMMAND
 $COMMAND
 
