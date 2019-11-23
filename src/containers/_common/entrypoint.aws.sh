@@ -13,21 +13,11 @@
 #       sufficiently self-contained.  Using a standard python virtualenv does
 #       not work.
 # 
-#   JOB_INPUT_PATH
-#       Optional
-#       Default: container CWD or WORKDIR
-#       Path within container where input files will be staged.
-#
-#   JOB_OUTPUT_PATH
-#       Optional
-#       Default: container CWD or WORKDIR
-#       Path within container where output files are expected.
-#
 #   JOB_DATA_ISOLATION
 #       Optional
 #       Default: null
 #       Set to 1 if container will need to use an isolated data space - e.g.
-#       it will use a volume mounted from the host for scratch
+#       it will operate in a volume mounted from the host for scratch
 #
 #   JOB_INPUTS
 #       Optional
@@ -58,12 +48,6 @@ DEFAULT_AWS_CLI_PATH=/opt/miniconda/bin
 AWS_CLI_PATH=${JOB_AWS_CLI_PATH:-$DEFAULT_AWS_CLI_PATH}
 PATH=$PATH:$AWS_CLI_PATH
 
-DEFAULT_INPUT_PATH=.
-DEFAULT_OUTPUT_PATH=.
-
-INPUT_PATH=${JOB_INPUT_PATH:-$DEFAULT_INPUT_PATH}
-OUTPUT_PATH=${JOB_OUTPUT_PATH:-$DEFAULT_OUTPUT_PATH}
-
 if [[ $JOB_DATA_ISOLATION && $JOB_DATA_ISOLATION == 1 ]]; then
     ## AWS Batch places multiple jobs on an instance
     ## To avoid file path clobbering if using a host mounted scratch use the JobID 
@@ -75,11 +59,9 @@ if [[ $JOB_DATA_ISOLATION && $JOB_DATA_ISOLATION == 1 ]]; then
         GUID=`date | md5sum | cut -d " " -f 1`
     fi
 
-    INPUT_PATH=$INPUT_PATH/$GUID
-    OUTPUT_PATH=$OUTPUT_PATH/$GUID
+    mkdir -p $GUID
+    cd $GUID
 fi
-
-mkdir -p $INPUT_PATH $OUTPUT_PATH
 
 function stage_in() (
     # loops over list of inputs (patterns allowed) which are a space delimited list
@@ -96,14 +78,14 @@ function stage_in() (
             local item_key=`basename $item`
             local item_prefix=`dirname $item`
 
-            echo "[input] remote: $item ==> $INPUT_PATH/$item_key"
+            echo "[input] remote: $item ==> ./$item_key"
             
             aws s3 cp \
                 --no-progress \
                 --recursive \
                 --exclude "*" \
                 --include "${item_key}" \
-                ${item_prefix} $INPUT_PATH
+                ${item_prefix} .
 
         else
             echo "[input] local: $item"
@@ -128,17 +110,17 @@ function stage_out() (
             if [[ $JOB_OUTPUT_PREFIX && $JOB_OUTPUT_PREFIX =~ ^s3:// ]]; then
                 local item_key=`basename $item`
 
-                echo "[output] remote: $OUTPUT_PATH/$item ==> $prefix/${item_key}"
+                echo "[output] remote: ./$item ==> $prefix/${item_key}"
 
                 aws s3 cp \
                     --no-progress \
-                    $OUTPUT_PATH/$item $prefix/${item_key}
+                    ./$item $prefix/${item_key}
 
             elif [[ $JOB_OUTPUT_PREFIX && ! $JOB_OUTPUT_PREFIX =~ ^s3:// ]]; then
                 echo "[output] ERROR: unsupported remote output destination $JOB_OUTPUT_PREFIX"
 
             else
-                echo "[output] local: $item"
+                echo "[output] local: ./$item"
 
             fi
         fi
@@ -150,7 +132,7 @@ function stage_out() (
 #
 # Note that AWS Batch has an implicit 8kb limit on the amount of data allowed in
 # container overrides, which includes environment variable data.
-eval COMMAND="$@"
+COMMAND="$*"
 
 printenv
 stage_in $JOB_INPUTS
