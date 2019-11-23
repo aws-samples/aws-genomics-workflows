@@ -49,7 +49,10 @@
 #       S3 location (e.g. s3://bucket/prefix) were job outputs will be stored
 
 set -e  # exit on error
-set -x  # enable echo
+
+if [[ $JOB_VERBOSE ]]; then
+    set -x  # enable echo
+fi
 
 DEFAULT_AWS_CLI_PATH=/opt/miniconda/bin
 AWS_CLI_PATH=${JOB_AWS_CLI_PATH:-$DEFAULT_AWS_CLI_PATH}
@@ -147,7 +150,7 @@ function stage_out() (
 #
 # Note that AWS Batch has an implicit 8kb limit on the amount of data allowed in
 # container overrides, which includes environment variable data.
-COMMAND="$@"
+COMMAND=`echo $@`
 
 printenv
 stage_in $JOB_INPUTS
