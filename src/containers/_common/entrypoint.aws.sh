@@ -99,7 +99,7 @@ function stage_out() (
     #   file1 [file2 [...]]
     # uses the AWS CLI to upload objects
 
-    for item in ${items[@]}; do
+    for item in $@; do
         if [ ! -f $item ]; then
             # If an expected output is not found it is generally considered an
             # error.  To suppress this error when using glob expansion you can 
