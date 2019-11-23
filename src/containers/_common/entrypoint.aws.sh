@@ -150,7 +150,8 @@ function stage_out() (
 #
 # Note that AWS Batch has an implicit 8kb limit on the amount of data allowed in
 # container overrides, which includes environment variable data.
-eval COMMAND=`echo $@`
+COMMAND=`echo $@`
+eval COMMAND="$COMMAND"
 
 printenv
 stage_in $JOB_INPUTS
