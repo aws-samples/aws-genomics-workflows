@@ -73,7 +73,7 @@ function stage_in() (
     # local filesystem. this setting is local to the function
     set -o noglob
 
-    for item in $@; do
+    for item in "$@"; do
         if [[ $item =~ ^s3:// ]]; then
             local item_key=`basename $item`
             local item_prefix=`dirname $item`
@@ -99,7 +99,7 @@ function stage_out() (
     #   file1 [file2 [...]]
     # uses the AWS CLI to upload objects
 
-    for item in $@; do
+    for item in "$@"; do
         if [ ! -f $item ]; then
             # If an expected output is not found it is generally considered an
             # error.  To suppress this error when using glob expansion you can 
@@ -132,7 +132,7 @@ function stage_out() (
 #
 # Note that AWS Batch has an implicit 8kb limit on the amount of data allowed in
 # container overrides, which includes environment variable data.
-COMMAND="$*"
+COMMAND=`echo "$*" | envsubst`
 
 printenv
 stage_in $JOB_INPUTS
