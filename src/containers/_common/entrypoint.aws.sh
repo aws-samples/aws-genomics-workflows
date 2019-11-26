@@ -137,7 +137,7 @@ COMMAND=`echo "$*" | envsubst`
 printenv
 stage_in $JOB_INPUTS
 
-echo $COMMAND
+echo "[command]: $COMMAND"
 $COMMAND
 
 
