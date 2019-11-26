@@ -74,6 +74,7 @@ function stage_in() (
     set -o noglob
 
     for item in "$@"; do
+        item=`echo $item | envsubst`
         if [[ $item =~ ^s3:// ]]; then
             local item_key=`basename $item`
             local item_prefix=`dirname $item`
