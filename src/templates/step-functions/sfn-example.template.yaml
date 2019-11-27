@@ -455,12 +455,18 @@ Outputs:
 
   BwaJobDefinition:
     Value: !Ref BatchJobDefBwa
+    Export:
+      Name: BatchJobDefinition-bwa
   
   SamtoolsJobDefinition:
     Value: !Ref BatchJobDefSamtools
+    Export:
+      Name: BatchJobDefinition-samtools
   
   BcftoolsJobDefinition:
     Value: !Ref BatchJobDefBcftools
+    Export:
+      Name: BatchJobDefinition-bcftools
   
   StateMachine:
     Value: !Ref SfnStateMachine
