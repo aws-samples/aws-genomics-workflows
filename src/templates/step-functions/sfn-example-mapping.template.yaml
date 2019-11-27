@@ -262,10 +262,10 @@ Outputs:
                     "JOB_AWS_CLI_PATH": "/home/ec2-user/miniconda/bin"
                 },
                 "chromosomes": [
-                  "chr18",
                   "chr19",
                   "chr20",
-                  "chr21"
+                  "chr21",
+                  "chr22"
                 ]
             }
         }
