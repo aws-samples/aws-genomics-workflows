@@ -17,7 +17,7 @@ Mappings:
 
 Parameters:
   S3BucketName:
-    Description: S3 bucket you are using for workflow inputs and outputs
+    Description: S3 URI (e.g. s3://bucket/prefix) you are using for workflow inputs and outputs
     Type: String
   
   IAMStepFunctionsExecutionRole:
@@ -257,7 +257,7 @@ Outputs:
                     "REFERENCE_NAME": "Homo_sapiens_assembly38",
                     "SAMPLE_ID": "NIST7035",
                     "SOURCE_DATA_PREFIX": "s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq",
-                    "JOB_OUTPUT_PREFIX": "s3://${S3BucketName}",
+                    "JOB_OUTPUT_PREFIX": "${S3BucketName}",
                     "JOB_AWS_CLI_PATH": "/opt/miniconda/bin"
                 },
                 "chromosomes": [
