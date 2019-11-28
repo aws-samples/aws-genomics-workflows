@@ -90,7 +90,7 @@ Resources:
                             "Environment": [
                                 {"Name": "JOB_WORKFLOW_NAME", "Value.$": "$.workflow.name"},
                                 {"Name": "JOB_WORKFLOW_EXECUTION", "Value.$": "$.workflow.execution"},
-                                {"Name": "JOB_INPUTS", "Value": "s3://broad-references/hg38/v0/Homo_sapiens_assembly38.fasta* ${SOURCE_DATA_PREFIX}/${SAMPLE_ID}*"},
+                                {"Name": "JOB_INPUTS", "Value": "s3://broad-references/hg38/v0/Homo_sapiens_assembly38.fasta* ${!SOURCE_DATA_PREFIX}/${!SAMPLE_ID}*"},
                                 {"Name": "JOB_OUTPUTS", "Value": "*.sam"},
                                 {"Name": "JOB_OUTPUT_PREFIX", "Value.$": "$.params.environment.JOB_OUTPUT_PREFIX"},
                                 {"Name": "JOB_AWS_CLI_PATH", "Value.$": "$.params.environment.JOB_AWS_CLI_PATH"},
@@ -99,7 +99,7 @@ Resources:
                                 {"Name": "REFERENCE_NAME", "Value.$": "$.params.environment.REFERENCE_NAME"}
                             ],
                             "Command": [
-                                "bwa mem -t 16 -p -o ${SAMPLE_ID}.sam ${REFERENCE_NAME}.fasta ${SAMPLE_ID}_*1*.fastq.gz"
+                                "bwa mem -t 16 -p -o ${!SAMPLE_ID}.sam ${!REFERENCE_NAME}.fasta ${!SAMPLE_ID}_*1*.fastq.gz"
                             ]
                         }
                     },
@@ -127,7 +127,7 @@ Resources:
                                 {"Name": "SAMPLE_ID", "Value.$": "$.params.environment.SAMPLE_ID"}
                             ],
                             "Command": [
-                                "samtools sort -@ 16 -o ${SAMPLE_ID}.bam ${SAMPLE_ID}.sam"
+                                "samtools sort -@ 16 -o ${!SAMPLE_ID}.bam ${!SAMPLE_ID}.sam"
                             ]
                         }
                     },
@@ -155,7 +155,7 @@ Resources:
                                 {"Name": "SAMPLE_ID", "Value.$": "$.params.environment.SAMPLE_ID"}
                             ],
                             "Command": [
-                                "samtools index ${SAMPLE_ID}.bam"
+                                "samtools index ${!SAMPLE_ID}.bam"
                             ]
                         }
                     },
@@ -200,7 +200,7 @@ Resources:
                                             {"Name": "CHROMOSOME", "Value.$": "$.chromosome"}
                                         ],
                                         "Command": [
-                                            "bcftools mpileup --threads 16 -r ${CHROMOSOME} -Oz -f ${REFERENCE_NAME}.fasta -o ${SAMPLE_ID}.${CHROMOSOME}.mpileup.gz ${SAMPLE_ID}.bam"
+                                            "bcftools mpileup --threads 16 -r ${!CHROMOSOME} -Oz -f ${!REFERENCE_NAME}.fasta -o ${!SAMPLE_ID}.${!CHROMOSOME}.mpileup.gz ${!SAMPLE_ID}.bam"
                                         ]
                                     }
                                 },
@@ -221,7 +221,7 @@ Resources:
                                         "Environment": [
                                             {"Name": "JOB_WORKFLOW_NAME", "Value.$": "$.workflow.name"},
                                             {"Name": "JOB_WORKFLOW_EXECUTION", "Value.$": "$.workflow.execution"},
-                                            {"Name": "JOB_INPUTS", "Value": "$JOB_OUTPUT_PREFIX/*.${CHROMOSOME}.mpileup.gz"},
+                                            {"Name": "JOB_INPUTS", "Value": "$JOB_OUTPUT_PREFIX/*.${!CHROMOSOME}.mpileup.gz"},
                                             {"Name": "JOB_OUTPUTS", "Value": "*.vcf.gz"},
                                             {"Name": "JOB_OUTPUT_PREFIX", "Value.$": "$.params.environment.JOB_OUTPUT_PREFIX"},
                                             {"Name": "JOB_AWS_CLI_PATH", "Value.$": "$.params.environment.JOB_AWS_CLI_PATH"},
@@ -229,7 +229,7 @@ Resources:
                                             {"Name": "CHROMOSOME", "Value.$": "$.chromosome"}
                                         ],
                                         "Command": [
-                                            "bcftools call -m --threads 16 -t ${CHROMOSOME} -Oz -o ${SAMPLE_ID}.${CHROMOSOME}.vcf.gz ${SAMPLE_ID}.${CHROMOSOME}.mpileup.gz"
+                                            "bcftools call -m --threads 16 -t ${!CHROMOSOME} -Oz -o ${!SAMPLE_ID}.${!CHROMOSOME}.vcf.gz ${!SAMPLE_ID}.${!CHROMOSOME}.mpileup.gz"
                                         ]
                                     }
                                 },
@@ -249,8 +249,7 @@ Outputs:
   
   StateMachineInput:
     Description: Example input for the state machine
-    Value:
-      Fn::Sub:
+    Value: !Sub |-
         {
             "params": {
                 "queue": "${BatchJobQueue}",
@@ -259,7 +258,7 @@ Outputs:
                     "SAMPLE_ID": "NIST7035",
                     "SOURCE_DATA_PREFIX": "s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq",
                     "JOB_OUTPUT_PREFIX": "s3://${S3BucketName}",
-                    "JOB_AWS_CLI_PATH": "/home/ec2-user/miniconda/bin"
+                    "JOB_AWS_CLI_PATH": "/opt/miniconda/bin"
                 },
                 "chromosomes": [
                   "chr19",
