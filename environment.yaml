@@ -4,7 +4,7 @@ channels:
 dependencies:
   - python=3.6.6
   - pip:
-    - cfn-lint==0.16.0
+    - cfn-lint==0.25.5
     - fontawesome-markdown==0.2.6
     - mkdocs==1.0.4
     - mkdocs-macros-plugin==0.2.4
