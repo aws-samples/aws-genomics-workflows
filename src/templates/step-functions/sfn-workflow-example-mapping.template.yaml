@@ -1,8 +1,9 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  (WWPS-GLS-WF-SFN-EXAMPLE-MAPPING) Creates an example AWS Step-Functions StateMachine
-  that demonstrates how to use dynamic parallelism for a genomics workflow.
+  (WWPS-GLS-WF-SFN-WORKFLOW-EXAMPLE-MAPPING) Creates an example AWS Step-Functions 
+  StateMachine that demonstrates how to use dynamic parallelism with the Map state 
+  for a genomics workflow.
 
 Mappings:
   TagMap:
@@ -49,7 +50,7 @@ Resources:
     Type: AWS::StepFunctions::StateMachine
     Properties:
       StateMachineName: !Sub
-        - example-genomics-workflow-${GUID}
+        - sfn-example-mapping-genomics-workflow-${GUID}
         - GUID: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
       RoleArn: !Ref IAMStepFunctionsExecutionRole
       Tags: !FindInMap ["TagMap", "default", "tags"]
@@ -86,7 +87,7 @@ Resources:
                         "JobQueue.$": "$.params.queue",
                         "ContainerOverrides": {
                             "Vcpus": 8,
-                            "Memory": 32000,
+                            "Memory": 8000,
                             "Environment": [
                                 {"Name": "JOB_WORKFLOW_NAME", "Value.$": "$.workflow.name"},
                                 {"Name": "JOB_WORKFLOW_EXECUTION", "Value.$": "$.workflow.execution"},
@@ -99,7 +100,7 @@ Resources:
                                 {"Name": "REFERENCE_NAME", "Value.$": "$.params.environment.REFERENCE_NAME"}
                             ],
                             "Command": [
-                                "bwa mem -t 16 -p -o ${!SAMPLE_ID}.sam ${!REFERENCE_NAME}.fasta ${!SAMPLE_ID}_*1*.fastq.gz"
+                                "bwa mem -t 8 -p -o ${!SAMPLE_ID}.sam ${!REFERENCE_NAME}.fasta ${!SAMPLE_ID}_*1*.fastq.gz"
                             ]
                         }
                     },
@@ -115,8 +116,8 @@ Resources:
                         "JobDefinition.$": "$.jobdefs.samtools",
                         "JobQueue.$": "$.params.queue",
                         "ContainerOverrides": {
-                            "Vcpus": 8,
-                            "Memory": 32000,
+                            "Vcpus": 4,
+                            "Memory": 8000,
                             "Environment": [
                                 {"Name": "JOB_WORKFLOW_NAME", "Value.$": "$.workflow.name"},
                                 {"Name": "JOB_WORKFLOW_EXECUTION", "Value.$": "$.workflow.execution"},
@@ -127,7 +128,7 @@ Resources:
                                 {"Name": "SAMPLE_ID", "Value.$": "$.params.environment.SAMPLE_ID"}
                             ],
                             "Command": [
-                                "samtools sort -@ 16 -o ${!SAMPLE_ID}.bam ${!SAMPLE_ID}.sam"
+                                "samtools sort -@ 4 -o ${!SAMPLE_ID}.bam ${!SAMPLE_ID}.sam"
                             ]
                         }
                     },
@@ -143,8 +144,8 @@ Resources:
                         "JobDefinition.$": "$.jobdefs.samtools",
                         "JobQueue.$": "$.params.queue",
                         "ContainerOverrides": {
-                            "Vcpus": 8,
-                            "Memory": 32000,
+                            "Vcpus": 1,
+                            "Memory": 1024,
                             "Environment": [
                                 {"Name": "JOB_WORKFLOW_NAME", "Value.$": "$.workflow.name"},
                                 {"Name": "JOB_WORKFLOW_EXECUTION", "Value.$": "$.workflow.execution"},
@@ -186,8 +187,8 @@ Resources:
                                     "JobDefinition.$": "$.jobdefs.bcftools",
                                     "JobQueue.$": "$.params.queue",
                                     "ContainerOverrides": {
-                                        "Vcpus": 8,
-                                        "Memory": 32000,
+                                        "Vcpus": 2,
+                                        "Memory": 1024,
                                         "Environment": [
                                             {"Name": "JOB_WORKFLOW_NAME", "Value.$": "$.workflow.name"},
                                             {"Name": "JOB_WORKFLOW_EXECUTION", "Value.$": "$.workflow.execution"},
@@ -200,7 +201,7 @@ Resources:
                                             {"Name": "CHROMOSOME", "Value.$": "$.chromosome"}
                                         ],
                                         "Command": [
-                                            "bcftools mpileup --threads 16 -r ${!CHROMOSOME} -Oz -f ${!REFERENCE_NAME}.fasta -o ${!SAMPLE_ID}.${!CHROMOSOME}.mpileup.gz ${!SAMPLE_ID}.bam"
+                                            "bcftools mpileup --threads 2 -r ${!CHROMOSOME} -Oz -f ${!REFERENCE_NAME}.fasta -o ${!SAMPLE_ID}.${!CHROMOSOME}.mpileup.gz ${!SAMPLE_ID}.bam"
                                         ]
                                     }
                                 },
@@ -216,8 +217,8 @@ Resources:
                                     "JobDefinition.$": "$.jobdefs.bcftools",
                                     "JobQueue.$": "$.params.queue",
                                     "ContainerOverrides": {
-                                        "Vcpus": 8,
-                                        "Memory": 32000,
+                                        "Vcpus": 2,
+                                        "Memory": 1024,
                                         "Environment": [
                                             {"Name": "JOB_WORKFLOW_NAME", "Value.$": "$.workflow.name"},
                                             {"Name": "JOB_WORKFLOW_EXECUTION", "Value.$": "$.workflow.execution"},
@@ -229,7 +230,7 @@ Resources:
                                             {"Name": "CHROMOSOME", "Value.$": "$.chromosome"}
                                         ],
                                         "Command": [
-                                            "bcftools call -m --threads 16 -t ${!CHROMOSOME} -Oz -o ${!SAMPLE_ID}.${!CHROMOSOME}.vcf.gz ${!SAMPLE_ID}.${!CHROMOSOME}.mpileup.gz"
+                                            "bcftools call -m --threads 2 -t ${!CHROMOSOME} -Oz -o ${!SAMPLE_ID}.${!CHROMOSOME}.vcf.gz ${!SAMPLE_ID}.${!CHROMOSOME}.mpileup.gz"
                                         ]
                                     }
                                 },
