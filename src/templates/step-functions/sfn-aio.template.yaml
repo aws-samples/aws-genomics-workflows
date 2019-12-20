@@ -32,10 +32,6 @@ Metadata:
           - DefaultCEMaxvCpus
           - HighPriorityCEMinvCpus
           - HighPriorityCEMaxvCpus
-      - Label:
-          default: "Step Functions"
-        Parameters:
-          - StateMachine
 
     ParameterLabels:
       S3BucketName:
