@@ -66,7 +66,7 @@ State machines that use AWS Batch for job execution and send events to CloudWatc
 
 ## Step Functions State Machine
 
-Workflows in AWS Step Functions are built using [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) (ASL), a declarative, JSON-based, structured language used to define your state machine, a collection of states that can do work (Task states), determine which states to transition to next (Choice states), stop an execution with an error (Fail states), and so on.
+Workflows in AWS Step Functions are built using [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) (ASL), a declarative, JSON-based, structured language used to define a "state-machine".  An AWS Step Functions State-Machine is a collection of states that can do work (Task states), determine which states to transition to next (Choice states), stop an execution with an error (Fail states), and so on.
 
 ### Building workflows with AWS Step Functions
 
@@ -123,9 +123,7 @@ Step Functions [ASL documentation](https://docs.aws.amazon.com/step-functions/la
 
 ### Batch Job Definitions
 
-It is recommended to have [Batch Job Definitions](https://docs.aws.amazon.com/batch/latest/userguide/job_definitions.html) created for your tooling prior to building a Step Functions state machine.  These can then be referenced in state machine `Task` states by their respective ARNs.
-
-Step Functions will use the Batch Job Definition to define compute resource requirements and parameter defaults for the Batch Job it submits.
+[AWS Batch Job Definitions](https://docs.aws.amazon.com/batch/latest/userguide/job_definitions.html) are used to define compute resource requirements and parameter defaults for an AWS Batch Job.  These are then referenced in state machine `Task` states by their respective ARNs.
 
 An example Job Definition for the `bwa-mem` sequence aligner is shown below:
 
@@ -134,20 +132,18 @@ An example Job Definition for the `bwa-mem` sequence aligner is shown below:
     "jobDefinitionName": "bwa-mem",
     "type": "container",
     "parameters": {
-        "InputReferenceS3Prefix": "s3://<bucket-name>/reference",
-        "InputFastqS3Path1": "s3://<bucket-name>/<sample-name>/fastq/read1.fastq.gz",
-        "InputFastqS3Path2": "s3://<bucket-name>/<sample-name>/fastq/read2.fastq.gz",
-        "OutputS3Prefix": "s3://<bucket-name>/<sample-name>/aligned"
+        "threads": "16"
     },
     "containerProperties": {
         "image": "<dockerhub-user>/bwa-mem:latest",
         "vcpus": 8,
         "memory": 32000,
         "command": [
-            "Ref::InputReferenceS3Prefix",
-            "Ref::InputFastqS3Path1",
-            "Ref::InputFastqS3Path2",
-            "Ref::OutputS3Prefix",
+            "bwa", "mem",
+            "-t", "Ref::threads",
+            "-p",
+            "reference.fasta",
+            "sample_1.fastq.gz"
         ],
         "volumes": [
             {
@@ -155,13 +151,36 @@ An example Job Definition for the `bwa-mem` sequence aligner is shown below:
                     "sourcePath": "/scratch"
                 },
                 "name": "scratch"
+            },
+            {
+                "host": {
+                    "sourcePath": "/opt/miniconda"
+                },
+                "name": "aws-cli"
             }
         ],
-        "environment": [],
+        "environment": [
+            {
+                "name": "REFERENCE_URI",
+                "value": "s3://<bucket-name>/reference/*"
+            },
+            {
+                "name": "INPUT_DATA_URI",
+                "value": "s3://<bucket-name>/<sample-name>/fastq/*.fastq.gz"
+            },
+            {
+                "name": "OUTPUT_DATA_URI",
+                "value": "s3://<bucket-name>/<sample-name>/aligned"
+            }
+        ],
         "mountPoints": [
             {
                 "containerPath": "/opt/work",
                 "sourceVolume": "scratch"
+            },
+            {
+                "containerPath": "/opt/miniconda",
+                "sourceVolume": "aws-cli"
             }
         ],
         "ulimits": []
@@ -169,23 +188,26 @@ An example Job Definition for the `bwa-mem` sequence aligner is shown below:
 }
 ```
 
-!!! note
-    The Job Definition above assumes that `bwa-mem` has been containerized with an
-    `entrypoint` script that handles Amazon S3 URIs for input and output data
-    staging.
+There are three key parts of the above definition to take note of.
 
-    Because data staging requirements can be unique to the tooling used, neither AWS Batch nor Step Functions handles this automatically.
+* Command and Parameters
 
-!!! note
-    The `volumes` and `mountPoints` specifications allow the job container to
-    use scratch storage space on the instance it is placed on.  This is equivalent
-    to the `-v host_path:container_path` option provided to a `docker run` call
-    at the command line.
+    The **command** is a list of strings that will be sent to the container.  This is the same as the `...` arguments that you would provide to a `docker run mycontainer ...` command.
+
+    **Parameters** are placeholders that you define whose values are substituted when a job is submitted.  In the case above a `threads` parameter is defined with a default value of `16`.  The job definition's `command` references this parameter with `Ref::threads`.
+
+* Environment
+
+    **Environment** defines a set of environment variables that will be available for the container. For example, you can define environment variables used by the  container entrypoint script to identify data it needs to stage in.
+
+* Volumes and Mount Points
+
+    Together, **volumes** and **mountPoints** define what you would provide as using a `-v hostpath:containerpath` option to a `docker run` command.  These can be used to map host directories with resources (e.g. data or tools) used by all containers.  In the example above, there a `scratch` volume is mapped to the host so that the container can utilize a larger disk on the host.  Also, a version of the AWS CLI installed with `conda` is mapped into the container - enabling the container to have access to it (e.g. so it can transfer data from S3 and back) with out explicitly building in.
+
 
 ### State Machine Batch Job Tasks
 
-Conveniently for genomics workflows, AWS Step Functions has built-in integration with AWS Batch (and [several other services](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-connectors.html)), and provides snippets of code to make developing your state-machine
-Batch tasks easier.
+AWS Step Functions has built-in integration with AWS Batch (and [several other services](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-connectors.html)), and provides snippets of code to make developing your state-machine tasks easier.
 
 ![Manage a Batch Job Snippet](images/sfn-batch-job-snippet.png)
 
@@ -202,7 +224,15 @@ would look like the following:
         "JobDefinition": "arn:aws:batch:<region>:<account>:job-definition/bwa-mem:1",
         "JobName": "bwa-mem",
         "JobQueue": "<queue-arn>",
-        "Parameters.$": "$.bwa-mem.parameters"
+        "Parameters.$": "$.bwa-mem.parameters",
+        "Environment": [
+            {"Name": "REFERENCE_URI",
+             "Value.$": "$.bwa-mem.environment.REFERENCE_URI"},
+            {"Name": "INPUT_DATA_URI",
+             "Value.$": "$.bwa-mem.environment.INPUT_DATA_URI"},
+            {"Name": "OUTPUT_DATA_URI",
+             "Value.$": "$.bwa-mem.environment.OUTPUT_DATA_URI"}
+        ]
     },
     "Next": "NEXT_TASK_NAME"
 }
@@ -214,21 +244,23 @@ Inputs to a state machine that uses the above `BwaMemTask` would look like this:
 {
     "bwa-mem": {
         "parameters": {
-            "InputReferenceS3Prefix": "s3://<bucket-name/><sample-name>/reference",
-            "InputFastqS3Path1": "s3://<bucket-name/><sample-name>/fastq/read1.fastq.gz",
-            "InputFastqS3Path2": "s3://<bucket-name/><sample-name>/fastq/read2.fastq.gz",
-            "OutputS3Prefix": "s3://<bucket-name/><sample-name>/aligned"
+            "threads": 16
+        },
+        "environment": {
+            "REFERENCE_URI": "s3://<bucket-name/><sample-name>/reference/*",
+            "INPUT_DATA_URI": "s3://<bucket-name/><sample-name>/fastq/*.fastq.gz",
+            "OUTPUT_DATA_URI": "s3://<bucket-name/><sample-name>/aligned"
         }
     },
     ...
- }
+}
 ```
 
 When the Task state completes Step Functions will add information to a new `status` key under `bwa-mem` in the JSON object.  The complete object will be passed on to the next state in the workflow.
 
 ## Example state machine
 
-All of the above is created by the following CloudFormation template.
+The following CloudFormation template creates container images, AWS Batch Job Definitions, and an AWS Step Functions State Machine for a simple workflow using bwa, samtools, and bcftools to process raw FASTQ files into variant calls (VCF files).
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
@@ -260,4 +292,4 @@ You will then be taken to the execution tracking page where you can monitor the 
 
 ![execution tracking](./images/sfn-console-execution-inprogress.png)
 
-The workflow takes approximately 5-6hrs to complete on `r4.2xlarge` SPOT instances.
+The workflow takes approximately 10 min to complete on `r4.4xlarge` SPOT instances.
