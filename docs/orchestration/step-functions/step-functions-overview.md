@@ -41,6 +41,7 @@ State machines that use AWS Batch for job execution and send events to CloudWatc
     "Version": "2012-10-17",
     "Statement": [
         {
+            "Sid": "enable submitting batch jobs",
             "Effect": "Allow",
             "Action": [
                 "batch:SubmitJob",
@@ -63,6 +64,36 @@ State machines that use AWS Batch for job execution and send events to CloudWatc
     ]
 }
 ```
+
+For more complex workflows that use nested workflows or require more complex input parsing, you need to add additional permissions for executing Step Functions State Machines and invoking Lambda functions:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "enable calling lambda functions",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:InvokeFunction"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "enable calling other step functions",
+            "Effect": "Allow",
+            "Action": [
+                "states:StartExecution"
+            ],
+            "Resource": "*"
+        },
+        ...
+    ]
+}
+```
+
+!!! note
+    All `Resource` values in the policy statements above can be scoped to be more specific if needed.
 
 ## Step Functions State Machine
 
@@ -132,7 +163,7 @@ An example Job Definition for the `bwa-mem` sequence aligner is shown below:
     "jobDefinitionName": "bwa-mem",
     "type": "container",
     "parameters": {
-        "threads": "16"
+        "threads": "8"
     },
     "containerProperties": {
         "image": "<dockerhub-user>/bwa-mem:latest",
@@ -194,15 +225,18 @@ There are three key parts of the above definition to take note of.
 
     The **command** is a list of strings that will be sent to the container.  This is the same as the `...` arguments that you would provide to a `docker run mycontainer ...` command.
 
-    **Parameters** are placeholders that you define whose values are substituted when a job is submitted.  In the case above a `threads` parameter is defined with a default value of `16`.  The job definition's `command` references this parameter with `Ref::threads`.
+    **Parameters** are placeholders that you define whose values are substituted when a job is submitted.  In the case above a `threads` parameter is defined with a default value of `8`.  The job definition's `command` references this parameter with `Ref::threads`.
+
+    !!! note
+        Parameter references in the command list must be separate strings - concatenation with other parameter references or static values is not allowed.
 
 * Environment
 
-    **Environment** defines a set of environment variables that will be available for the container. For example, you can define environment variables used by the  container entrypoint script to identify data it needs to stage in.
+    **Environment** defines a set of environment variables that will be available for the container. For example, you can define environment variables used by the container entrypoint script to identify data it needs to stage in.
 
 * Volumes and Mount Points
 
-    Together, **volumes** and **mountPoints** define what you would provide as using a `-v hostpath:containerpath` option to a `docker run` command.  These can be used to map host directories with resources (e.g. data or tools) used by all containers.  In the example above, there a `scratch` volume is mapped to the host so that the container can utilize a larger disk on the host.  Also, a version of the AWS CLI installed with `conda` is mapped into the container - enabling the container to have access to it (e.g. so it can transfer data from S3 and back) with out explicitly building in.
+    Together, **volumes** and **mountPoints** define what you would provide as using a `-v hostpath:containerpath` option to a `docker run` command.  These can be used to map host directories with resources (e.g. data or tools) used by all containers.  In the example above, a `scratch` volume is mapped so that the container can utilize a larger disk on the host.  Also, a version of the AWS CLI installed with `conda` is mapped into the container - enabling the container to have access to it (e.g. so it can transfer data from S3 and back) with out explicitly building in.
 
 
 ### State Machine Batch Job Tasks
@@ -244,7 +278,7 @@ Inputs to a state machine that uses the above `BwaMemTask` would look like this:
 {
     "bwa-mem": {
         "parameters": {
-            "threads": 16
+            "threads": 8
         },
         "environment": {
             "REFERENCE_URI": "s3://<bucket-name/><sample-name>/reference/*",
@@ -260,14 +294,26 @@ When the Task state completes Step Functions will add information to a new `stat
 
 ## Example state machine
 
-The following CloudFormation template creates container images, AWS Batch Job Definitions, and an AWS Step Functions State Machine for a simple workflow using bwa, samtools, and bcftools to process raw FASTQ files into variant calls (VCF files).
+The following CloudFormation template creates container images, AWS Batch Job Definitions, and an AWS Step Functions State Machine for a simple genomics workflow using bwa, samtools, and bcftools.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("AWS Step Functions Example", "SfnExample", "step-functions/sfn-example.template.yaml", "Create a Step Functions State Machine, Batch Job Definitions, and container images to run an example genomics workflow") }}
+{{ cfn_stack_row("AWS Step Functions Example", "SfnExample", "step-functions/sfn-workflow.template.yaml", "Create a Step Functions State Machine, Batch Job Definitions, and container images to run an example genomics workflow") }}
 
 !!! note
     The stack above needs to create several IAM Roles.  You must have administrative privileges in your AWS Account for this to succeed.
+
+The example workflow is a simple secondary analysis pipeline that converts raw FASTQ files into VCFs with variants called for a list of chromosomes.  It uses the following open source based tools:
+
+* `bwa-mem`: Burrows-Wheeler Aligner for aligning short sequence reads to a reference genome
+* `samtools`: **S**equence **A**lignment **M**apping library for indexing and sorting aligned reads
+* `bcftools`: **B**inary (V)ariant **C**all **F**ormat library for determining variants in sample reads relative to a reference genome
+
+Read alignment, sorting, and indexing occur sequentially by Step Functions Task States.  Variant calls for chromosomes occur in parallel using a Step Functions Map State and sub-Task States therein.  All tasks submit AWS Batch Jobs to perform computational work using containerized versions of the tools listed above.
+
+![example genomics workflow state machine](./images/sfn-example-mapping-state-machine.png)
+
+The tooling containers used by the workflow use a [generic entrypoint script]({{ repo_url + "tree/master/src/containers" }}) that wraps the underlying tool and handles S3 data staging.  It uses the AWS CLI to transfer objects and environment variables to identify data inputs and outputs to stage.
 
 ### Running the workflow
 
@@ -275,6 +321,35 @@ When the stack above completes, go to the outputs tab and copy the JSON string p
 
 ![cloud formation output tab](./images/cfn-stack-outputs-tab.png)
 ![example state-machine input](./images/cfn-stack-outputs-statemachineinput.png)
+
+The input JSON will like the following, but with the values for `queue` and `JOB_OUTPUT_PREFIX` prepopulated with resource names specific to the stack created by the CloudFormation template above:
+
+```json
+{
+    "params": {
+        "__comment__": {
+            "replace values for `queue` and `environment.JOB_OUTPUT_PREFIX` with values that match your resources": {
+                "queue": "Name or ARN of the AWS Batch Job Queue the workflow will use by default.",
+                "environment.JOB_OUTPUT_PREFIX": "S3 URI (e.g. s3://bucket/prefix) you are using for workflow inputs and outputs."
+            },
+        },
+        "queue": "default",
+        "environment": {
+            "REFERENCE_NAME": "Homo_sapiens_assembly38",
+            "SAMPLE_ID": "NIST7035",
+            "SOURCE_DATA_PREFIX": "s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq",
+            "JOB_OUTPUT_PREFIX": "s3://YOUR-BUCKET-NAME/PREFIX",
+            "JOB_AWS_CLI_PATH": "/opt/miniconda/bin"
+        },
+        "chromosomes": [
+            "chr19",
+            "chr20",
+            "chr21",
+            "chr22"
+        ]
+    }
+}
+```
 
 Next head to the AWS Step Functions console and select the state-machine that was created.
 
@@ -292,4 +367,4 @@ You will then be taken to the execution tracking page where you can monitor the 
 
 ![execution tracking](./images/sfn-console-execution-inprogress.png)
 
-The workflow takes approximately 10 min to complete on `r4.4xlarge` SPOT instances.
+The example workflow references a small demo dataset and takes approximately 10 min to complete.
