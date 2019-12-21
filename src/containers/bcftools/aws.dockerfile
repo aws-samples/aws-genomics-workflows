@@ -1,14 +1,14 @@
 FROM bcftools:latest
 
 RUN apt-get update
-RUN apt-get install -y awscli
+RUN apt-get install -y gettext-base
 RUN apt-get clean
 
 ENV PATH=/opt/bin:$PATH
 
-COPY bcftools.aws.sh /opt/bin/bcftools.aws.sh
-RUN chmod +x /opt/bin/bcftools.aws.sh
+COPY _common/entrypoint.aws.sh /opt/bin/entrypoint.aws.sh
+RUN chmod +x /opt/bin/entrypoint.aws.sh
 
 WORKDIR /scratch
 
-ENTRYPOINT ["bcftools.aws.sh"]
+ENTRYPOINT ["entrypoint.aws.sh"]

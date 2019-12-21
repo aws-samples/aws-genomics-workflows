@@ -1,0 +1,151 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  (WWPS-GLS-WF-SFN-WORKFLOW) Creates container images, AWS Batch Job Definitions, 
+  and an AWS Step Functions State Machine for a genomics workflow.
+
+Mappings:
+  TagMap:
+    default:
+      architecture: "genomics-workflows"
+      solution: "step-functions"
+      tags:
+        - Key: "architecture"
+          Value: "genomics-workflows"
+        - Key: "solution"
+          Value: "step-functions"
+
+Parameters:
+  S3BucketName:
+    Description: >-
+      A S3 bucket name for storing analysis results.
+      The bucket name must respect the S3 bucket naming conventions 
+      (can contain lowercase letters, numbers, periods and hyphens).
+      If left blank a unique bucket name will be generated.
+    Type: String
+    AllowedPattern: "((?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)|(^.{0}$))"
+    ConstraintDescription: "Must respect S3 bucket naming conventions"
+  
+  BatchJobQueue:
+    Description: Name or ARN of the AWS Batch Job Queue the workflow will use by default
+    Type: String
+  
+  TemplateRootUrl:
+    Type: String
+    Description: >-
+      Root URL for where nested templates are stored
+    Default: https://s3.amazonaws.com/aws-genomics-workflows/templates
+    ConstraintDescription: >-
+      Must be a valid S3 URL
+    AllowedPattern: "https://s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
+
+Resources:
+  ContainerBuildBwa:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub ${TemplateRootUrl}/step-functions/container-build.template.yaml
+      Parameters:
+        ContainerName: bwa
+        GithubHttpUrl: https://github.com/aws-samples/aws-genomics-workflows.git
+        ProjectPath: ./src/containers/bwa
+      Tags: !FindInMap ["TagMap", "default", "tags"]
+  
+  ContainerBuildSamtools:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub ${TemplateRootUrl}/step-functions/container-build.template.yaml
+      Parameters:
+        ContainerName: samtools
+        GithubHttpUrl: https://github.com/aws-samples/aws-genomics-workflows.git
+        ProjectPath: ./src/containers/samtools
+      Tags: !FindInMap ["TagMap", "default", "tags"]
+  
+  ContainerBuildBcftools:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub ${TemplateRootUrl}/step-functions/container-build.template.yaml
+      Parameters:
+        ContainerName: bcftools
+        GithubHttpUrl: https://github.com/aws-samples/aws-genomics-workflows.git
+        ProjectPath: ./src/containers/bcftools
+      Tags: !FindInMap ["TagMap", "default", "tags"]
+  
+  IAMStepFunctionsExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: !Sub stepfunctions-service-role-${AWS::StackName}-${AWS::Region} 
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: !Sub states-access-policy-${AWS::Region}
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # Service integration permissions.  For more details see:
+              # https://docs.aws.amazon.com/step-functions/latest/dg/service-integration-iam-templates.html
+              
+              # enable calling lambda functions
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: "*"  # this can be scope to specific functions if needed
+
+              # enable calling other step functions
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                Resource: "*"  # this can be scoped to specific state machines if needed
+              
+              # enable submitting batch jobs (synchronous)
+              - Effect: Allow
+                Action:
+                  - "batch:SubmitJob"
+                  - "batch:DescribeJobs"
+                  - "batch:TerminateJob"
+                Resource: "*"  # this can be scoped to specific job queues if needed
+              - Effect: Allow
+                Action:
+                  - "events:PutTargets"
+                  - "events:PutRule"
+                  - "events:DescribeRule"
+                Resource:
+                  - !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/StepFunctionsGetEventsForBatchJobsRule"
+  
+  StateMachine:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub ${TemplateRootUrl}/step-functions/sfn-workflow-example-mapping.template.yaml
+      Parameters:
+        S3BucketName: !Ref S3BucketName
+        IAMStepFunctionsExecutionRole: !GetAtt IAMStepFunctionsExecutionRole.Arn
+        BatchJobQueue: !Ref BatchJobQueue
+        BatchJobDefinitionBwa: !GetAtt ContainerBuildBwa.Outputs.JobDefinition
+        BatchJobDefinitionSamtools: !GetAtt ContainerBuildSamtools.Outputs.JobDefinition
+        BatchJobDefinitionBcftools: !GetAtt ContainerBuildBcftools.Outputs.JobDefinition
+      Tags: !FindInMap ["TagMap", "default", "tags"]
+
+Outputs:
+  StateMachine:
+    Value: !GetAtt StateMachine.Outputs.StateMachine
+    Description: >
+      AWS Step Functions State Machine that demonstrates a simple genomics workflow
+    Export:
+      Name: !Sub ${AWS::StackName}-StateMachine
+  
+  StateMachineInput:
+    Value: !GetAtt StateMachine.Outputs.StateMachineInput
+    Description: >
+      Example input for the state machine.  Use this when executing your workflow.
+  
+  StepFunctionsExecutionRole:
+    Value: !GetAtt IAMStepFunctionsExecutionRole.Arn
+    Description: IAM role used by AWS Step Functions to execute the state machine
+    Export:
+      Name: !Sub ${AWS::StackName}-StepFunctionsExecutionRole
+
+...

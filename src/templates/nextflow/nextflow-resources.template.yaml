@@ -112,6 +112,7 @@ Resources:
     Type: AWS::S3::Bucket
     Condition: NextflowBucketDoesNotExist
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       BucketName: !Ref S3NextflowBucketName
       BucketEncryption:
