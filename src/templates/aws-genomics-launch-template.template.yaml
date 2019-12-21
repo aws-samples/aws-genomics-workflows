@@ -31,6 +31,8 @@ Mappings:
         - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh $scratchPath /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
         - sed -i 's+OPTIONS=.*+OPTIONS="--storage-driver btrfs"+g' /etc/sysconfig/docker-storage
         - cp -au /var/lib/docker.bk/* /var/lib/docker
+        - cd /opt && wget $artifactRootUrl/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
+        - sh /opt/ecs-additions/ecs-additions-step-functions.sh 
         - service docker start
         - start ecs
 
