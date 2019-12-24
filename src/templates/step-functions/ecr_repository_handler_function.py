@@ -31,23 +31,23 @@ def wait(repo, until):
             except ecr.exceptions.RepositoryNotFoundException:
                 exists = False
 
+def put_lifecycle_policy(repo, props):
+    if props.get("LifecyclePolicy"):
+        ecr.put_lifecycle_policy(
+            repositoryName=repo,
+            lifecyclePolicyText=props["LifecyclePolicy"]["LifecyclePolicyText"]
+        )
+
 def create(repo, props, event, context):
     # use existing repository if available, otherwise create
     try:
-        ecr.create_repository(
-            repositoryName=repo
-        )
-
+        ecr.create_repository(repositoryName=repo)
         wait(repo, "exists")
-
-        if repo.get("LifecyclePolicy"):
-            ecr.put_lifecycle_policy(
-                repositoryName=repo,
-                lifecyclePolicyText=repo["LifecyclePolicy"]["LifecyclePolicyText"]
-            )
+        put_lifecycle_policy(repo, props)
         
     except ecr.exceptions.RepositoryAlreadyExistsException:
-        print(f"Repository '{repo}' already exists - CREATE ignored")
+        print(f"Repository '{repo}' already exists - CREATE ECR repository ignored")
+        put_lifecycle_policy(repo, props)
 
     except Exception as e:
         send(event, context, FAILED, None)
@@ -58,11 +58,8 @@ def update(repo, props, event, context):
     update_policy = props.get("UpdateReplacePolicy")
     try:
         if update_policy and update_policy.lower() == "retain":
-            if repo.get("LifecyclePolicy"):
-                ecr.put_lifecycle_policy(
-                    repositoryName=repo,
-                    lifecyclePolicyText=repo["LifecyclePolicy"]["LifecyclePolicyText"]
-                )
+            put_lifecycle_policy(repo, props)
+
         else:
             # replace the repo
             delete(repo, props, event, context)
@@ -78,11 +75,7 @@ def delete(repo, props, event, context):
     delete_policy = props.get("DetetePolicy")
     try:
         if delete_policy and not delete_policy.lower() == "retain":
-            ecr.delete_repository(
-                repositoryName=repo,
-                force=True
-            )
-
+            ecr.delete_repository(repositoryName=repo, force=True)
             wait(repo, "deleted")
     
     except Exception as e:
