@@ -47,8 +47,8 @@ RG=$(echo ${AZ} | sed -e 's/[a-z]$//')
 IN=$(curl -s  http://169.254.169.254/latest/meta-data/instance-id)
 BASEDIR=$(dirname $0)
 
-# copy the binaries to /usr/local/bin
-cp ${BASEDIR}/{create-ebs-volume.py,ebs-autoscale} /usr/local/bin/
+# copy the binaries to /usr/bin
+cp ${BASEDIR}/{create-ebs-volume.py,ebs-autoscale} /usr/bin
 
 # If a device is not given, or if the device is not valid
 # create a new 20GB volume
