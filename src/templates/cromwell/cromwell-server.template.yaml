@@ -142,7 +142,7 @@ Resources:
                 Action:
                   - "s3:ListBucket"
                   - "s3:ListAllMyBuckets"
-
+                  - "s3:GetObject"
         
         - PolicyName: !Sub CromwellServer-CloudWatch-Access-${AWS::Region}
           PolicyDocument:
