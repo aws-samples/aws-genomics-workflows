@@ -3,6 +3,7 @@
 # - PROJECT_BRANCH: git branch / tag / commit-id to build
 # - PROJECT_PATH: path in the source to navigate to prior to build
 # - REGISTRY: docker image registry (e.g. ECR) to push the container image to
+# - CONTAINER_NAME: name of the container
 # - AWS_REGION: (Provided by CodeBuild) region to use for ECR
 version: 0.2
 phases:
@@ -13,12 +14,12 @@ phases:
   build:
     commands:
       - echo "Building container"
-      - docker build -t nextflow .
+      - docker build -t ${CONTAINER_NAME} .
   post_build:
     commands:
       - echo "Tagging container image for ECR"
-      - docker tag nextflow:latest ${REGISTRY}/nextflow:latest
+      - docker tag ${CONTAINER_NAME} ${REGISTRY}/${CONTAINER_NAME}
       - echo "Docker Login to ECR"
       - $(aws ecr get-login --no-include-email --region ${AWS_REGION})
-      - echo "Pushing container image to ECR"
-      - docker push ${REGISTRY}/nextflow:latest
+      - echo "Pushing container images to ECR"
+      - docker push ${REGISTRY}/${CONTAINER_NAME}
