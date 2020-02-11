@@ -208,6 +208,7 @@ Resources:
             - !Ref ExistingNextflowBucket
         NextflowContainerImage: !Ref NextflowContainerImage
         BatchDefaultJobQueue: !GetAtt GenomicsWorkflowStack.Outputs.GenomicsEnvDefaultJobQueueArn
+        TemplateRootUrl: !Ref TemplateRootUrl
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
 
