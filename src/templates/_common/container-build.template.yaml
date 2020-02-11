@@ -2,8 +2,8 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
   (WWPS-GLS-WF-CONTAINER-BUILD) Creates resources for building a Docker container
-  image using CodeBuild, storing the imaage in ECR, and creating a corresponding 
-  Batch Job Definition.
+  image using CodeBuild, storing the image in ECR, and optionally creating a 
+  corresponding Batch Job Definition.
   It is recommended to name this stack "container-{ContainerName}".
 
 Mappings:
@@ -51,12 +51,23 @@ Parameters:
     Description: >
       Relative path to the project buildspec.yml file or equivalent.
       Leave blank to use the template defined buildspec script.
-    Default: ""
+    Default: "buildspec.yml"
     Type: String
+  
+  CreateBatchJobDefinition:
+    Description: >
+      Create an AWS Batch Job Definition for the container
+    Type: String
+    Default: "No"
+    AllowedValues:
+      - "Yes"
+      - "No"
 
 Conditions:
-  UseProjectBuildSpecFile:
-    !Not [ !Equals [ !Ref ProjectBuildSpecFile, "" ] ]
+  CreateBatchJobDefinitionTrue:
+    Fn::Equals:
+    - !Ref CreateBatchJobDefinition
+    - "Yes"
 
 Resources:
   IAMCodeBuildRole:
@@ -123,38 +134,27 @@ Resources:
         Image: aws/codebuild/standard:1.0
         ComputeType: BUILD_GENERAL1_LARGE
         PrivilegedMode: True
+        EnvironmentVariables:
+          - Name: AWS_ACCOUNT_ID
+            Value: !Ref AWS::AccountId
+            
+          - Name: REGISTRY
+            Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com"
+          
+          - Name: CONTAINER_NAME
+            Value: !Ref ContainerName
+          
+          - Name: PROJECT_BRANCH
+            Value: !Ref ProjectBranch
+          
+          - Name: PROJECT_PATH
+            Value: !Ref ProjectPath
 
       ServiceRole: !GetAtt IAMCodeBuildRole.Arn
       Source:
         Type: !Ref GitRepoType
         Location: !Ref GitCloneUrlHttp
-        BuildSpec:
-          Fn::If:
-            - UseProjectBuildSpecFile
-            - !Ref ProjectBuildSpecFile
-            - !Sub |-
-                version: 0.2
-                phases:
-                  pre_build:
-                    commands:
-                      - export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --output text --query Account)
-                      - export REGISTRY=${!AWS_ACCOUNT_ID}.dkr.ecr.${!AWS_REGION}.amazonaws.com
-                      - git checkout ${ProjectBranch}
-                      - cd ${ProjectPath}
-                      - cp -R ../_common .
-                  build:
-                    commands:
-                      - echo "Building container"
-                      - chmod +x _common/build.sh
-                      - _common/build.sh ${ContainerName}
-                  post_build:
-                    commands:
-                      - echo "Tagging container image for ECR"
-                      - docker tag ${ContainerName} ${!REGISTRY}/${ContainerName}
-                      - echo "Docker Login to ECR"
-                      - $(aws ecr get-login --no-include-email --region ${!AWS_REGION})
-                      - echo "Pushing container images to ECR"
-                      - docker push ${!REGISTRY}/${ContainerName}
+        BuildSpec: !Ref ProjectBuildSpecFile
 
       Tags: !FindInMap ["TagMap", "default", "tags"]
   
@@ -218,7 +218,7 @@ Resources:
       Handler: index.handler
       Role: !GetAtt IAMLambdaExecutionRole.Arn
       Runtime: python3.7
-      Timeout: 900
+      Timeout: 900  # if containers take more than 15m to build, consider using a WaitCondition
       Code:
         ZipFile: |
           from time import sleep
@@ -420,6 +420,7 @@ Resources:
    
   BatchJobDef:
     Type: AWS::Batch::JobDefinition
+    Condition: CreateBatchJobDefinitionTrue
     Properties:
       JobDefinitionName: !Ref ContainerName
       Type: container
@@ -452,7 +453,11 @@ Outputs:
       Name: !Sub ${AWS::StackName}-ECRImageRepository
   
   JobDefinition:
-    Value: !Ref BatchJobDef
+    Value:
+      Fn::If:
+      - CreateBatchJobDefinitionTrue
+      - !Ref BatchJobDef
+      - ""
     Export:
       Name: !Sub ${AWS::StackName}-BatchJobDefinition
   
