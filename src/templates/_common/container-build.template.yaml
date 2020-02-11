@@ -450,7 +450,7 @@ Outputs:
       Fn::If:
       - CreateBatchJobDefinitionTrue
       - !Ref BatchJobDef
-      - ""
+      - "-"
     Export:
       Name: !Sub ${AWS::StackName}-BatchJobDefinition
   
