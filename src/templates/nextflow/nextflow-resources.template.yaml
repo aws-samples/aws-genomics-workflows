@@ -88,7 +88,12 @@ Parameters:
   BatchDefaultJobQueue:
     Type: String
     Description: >-
-      Name or ARN of the Batch Job Queue to use by default for workflow tasks.
+      ARN of the Batch Job Queue to use by default for workflow tasks.
+  
+  BatchHighPriorityJobQueue:
+    Type: String
+    Description: >-
+      ARN of the Batch Job Queue to use for high priority workflow tasks.
   
   TemplateRootUrl:
     Type: String
@@ -152,10 +157,33 @@ Resources:
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              - Effect: Allow
+              # Nextflow requires full read access to gather the state of jobs being executed
+              - Sid: "AWS Batch Read Access - All"
+                Effect: Allow
                 Resource: "*"
                 Action:
-                  - "batch:*"
+                  - "batch:List*"
+                  - "batch:Describe*"
+              
+              # only permit access (job submission) to the queues and compute environments
+              # configured to run nextflow    
+              - Sid: "AWS Batch Write Access - Job Submission"
+                Effect: Allow
+                Resource:
+                  - !Ref BatchDefaultJobQueue
+                  - !Ref BatchHighPriorityJobQueue
+                Action:
+                  - "batch:*Job"
+              
+              # nextflow needs to be able to create job definitions
+              # these are prefixed with "nf-"
+              - Sid: "AWS Batch Write Access - Job Definitions"
+                Effect: Allow
+                Resource:
+                  - arn:aws:batch:*:*:job-definition/nf-*:*
+                Action:
+                  - "batch:*JobDefinition"
+
         - PolicyName: !Sub Nextflow-S3Bucket-Access-${AWS::Region}
           PolicyDocument:
             Version: 2012-10-17
