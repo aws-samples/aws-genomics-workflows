@@ -219,13 +219,6 @@ Resources:
     Properties:
       Type: container
       ContainerProperties: 
-        MountPoints: 
-          - ContainerPath: /opt/work
-            SourceVolume: scratch
-        Volumes: 
-          - Host:
-              SourcePath: /scratch
-            Name: scratch
         Memory: 1024
         JobRoleArn: !GetAtt IAMNextflowJobRole.Arn
         Vcpus: 2
