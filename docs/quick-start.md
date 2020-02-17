@@ -60,7 +60,7 @@ Below are the stand-alone CloudFormation templates for each of the sub-stacks. T
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("AWS Step Functions Example", "SfnExample", "step-functions/sfn-example.template.yaml", "Create a Step Functions State Machine, Batch Job Definitions, and container images to run an example genomics workflow") }}
+{{ cfn_stack_row("AWS Step Functions Example", "SfnExample", "step-functions/sfn-workflow.template.yaml", "Create a Step Functions State Machine, Batch Job Definitions, and container images to run an example genomics workflow") }}
 {{ cfn_stack_row("Cromwell Server", "CromwellServer", "cromwell/cromwell-server.template.yaml", "Create an EC2 instance and an IAM instance profile to run Cromwell") }}
 {{ cfn_stack_row("Nextflow Resources", "NextflowResources", "nextflow/nextflow-resources.template.yaml", "Create Nextflow specific resources needed to run on AWS: an S3 Bucket for nextflow config and workflows, AWS Batch Job Definition for a Nextflow head node, and an IAM role for the nextflow head node job") }}
 
