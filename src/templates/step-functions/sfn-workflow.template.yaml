@@ -43,31 +43,40 @@ Resources:
   ContainerBuildBwa:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub ${TemplateRootUrl}/step-functions/container-build.template.yaml
+      TemplateURL: !Sub ${TemplateRootUrl}/_common/container-build.template.yaml
       Parameters:
         ContainerName: bwa
-        GithubHttpUrl: https://github.com/aws-samples/aws-genomics-workflows.git
+        GitRepoType: GITHUB
+        GitCloneUrlHttp: https://github.com/aws-samples/aws-genomics-workflows.git
         ProjectPath: ./src/containers/bwa
+        ProjectBuildSpecFile: ./src/containers/buildspec-workflow-tool.yml
+        CreateBatchJobDefinition: "Yes"
       Tags: !FindInMap ["TagMap", "default", "tags"]
   
   ContainerBuildSamtools:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub ${TemplateRootUrl}/step-functions/container-build.template.yaml
+      TemplateURL: !Sub ${TemplateRootUrl}/_common/container-build.template.yaml
       Parameters:
         ContainerName: samtools
-        GithubHttpUrl: https://github.com/aws-samples/aws-genomics-workflows.git
+        GitRepoType: GITHUB
+        GitCloneUrlHttp: https://github.com/aws-samples/aws-genomics-workflows.git
         ProjectPath: ./src/containers/samtools
+        ProjectBuildSpecFile: ./src/containers/buildspec-workflow-tool.yml
+        CreateBatchJobDefinition: "Yes"
       Tags: !FindInMap ["TagMap", "default", "tags"]
   
   ContainerBuildBcftools:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub ${TemplateRootUrl}/step-functions/container-build.template.yaml
+      TemplateURL: !Sub ${TemplateRootUrl}/_common/container-build.template.yaml
       Parameters:
         ContainerName: bcftools
-        GithubHttpUrl: https://github.com/aws-samples/aws-genomics-workflows.git
+        GitRepoType: GITHUB
+        GitCloneUrlHttp: https://github.com/aws-samples/aws-genomics-workflows.git
         ProjectPath: ./src/containers/bcftools
+        ProjectBuildSpecFile: ./src/containers/buildspec-workflow-tool.yml
+        CreateBatchJobDefinition: "Yes"
       Tags: !FindInMap ["TagMap", "default", "tags"]
   
   IAMStepFunctionsExecutionRole:
