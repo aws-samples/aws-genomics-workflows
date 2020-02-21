@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 CWD=`pwd`
 ARTIFACT_PATH=${CWD}/artifacts
 SOURCE_PATH=${CWD}/src
