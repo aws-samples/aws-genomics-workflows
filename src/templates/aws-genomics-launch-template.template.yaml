@@ -27,9 +27,8 @@ Mappings:
         - service docker stop
         - cp -au /var/lib/docker /var/lib/docker.bk
         - rm -rf /var/lib/docker/*
-        - EBS_AUTOSCALE_VERSION=$(curl --silent "https://api.github.com/repos/awslabs/amazon-ebs-autoscale/releases/latest" | jq -r .tag_name)
-        - cd /opt && git clone https://github.com/awslabs/amazon-ebs-autoscale.git
-        - cd /opt/amazon-ebs-autoscale && git checkout $EBS_AUTOSCALE_VERSION
+        - cd /opt && wget $artifactRootUrl/get-amazon-ebs-autoscale.sh
+        - sh /opt/get-amazon-ebs-autoscale.sh
         - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc 2>&1 > /var/log/ebs-autoscale-install.log
         - sed -i 's+OPTIONS=.*+OPTIONS="--storage-driver btrfs"+g' /etc/sysconfig/docker-storage
         - cp -au /var/lib/docker.bk/* /var/lib/docker
@@ -40,9 +39,8 @@ Mappings:
 
     cromwell:
       additions: |-
-        - EBS_AUTOSCALE_VERSION=$(curl --silent "https://api.github.com/repos/awslabs/amazon-ebs-autoscale/releases/latest" | jq -r .tag_name)
-        - cd /opt && git clone https://github.com/awslabs/amazon-ebs-autoscale.git
-        - cd /opt/amazon-ebs-autoscale && git checkout $EBS_AUTOSCALE_VERSION
+        - cd /opt && wget $artifactRootUrl/get-amazon-ebs-autoscale.sh
+        - sh /opt/get-amazon-ebs-autoscale.sh
         - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc 2>&1 > /var/log/ebs-autoscale-install.log
         - cd /opt && wget $artifactRootUrl/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
         - sh /opt/ecs-additions/ecs-additions-cromwell.sh
@@ -53,9 +51,8 @@ Mappings:
         - service docker stop
         - cp -au /var/lib/docker /var/lib/docker.bk
         - rm -rf /var/lib/docker/*
-        - EBS_AUTOSCALE_VERSION=$(curl --silent "https://api.github.com/repos/awslabs/amazon-ebs-autoscale/releases/latest" | jq -r .tag_name)
-        - cd /opt && git clone https://github.com/awslabs/amazon-ebs-autoscale.git
-        - cd /opt/amazon-ebs-autoscale && git checkout $EBS_AUTOSCALE_VERSION
+        - cd /opt && wget $artifactRootUrl/get-amazon-ebs-autoscale.sh
+        - sh /opt/get-amazon-ebs-autoscale.sh
         - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc 2>&1 > /var/log/ebs-autoscale-install.log
         - sed -i 's+OPTIONS=.*+OPTIONS="--storage-driver btrfs"+g' /etc/sysconfig/docker-storage
         - cp -au /var/lib/docker.bk/* /var/lib/docker
