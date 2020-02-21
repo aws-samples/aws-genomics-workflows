@@ -11,6 +11,7 @@ before_install:
   - export PATH=$HOME/miniconda3/bin:$PATH
   - which conda
   - conda update --yes conda
+  - apt-get install -y jq
 
 install:
 
