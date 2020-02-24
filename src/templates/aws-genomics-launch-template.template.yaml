@@ -153,8 +153,8 @@ Resources:
 
               runcmd:
               - pip install -U awscli boto3
-              - scratchPath="${ScratchMountPoint}"
-              - artifactRootUrl="${ArtifactRootUrl}"
+              - export scratchPath="${ScratchMountPoint}"
+              - export artifactRootUrl="${ArtifactRootUrl}"
               - start amazon-ssm-agent
 
               ${ECSAdditions}
