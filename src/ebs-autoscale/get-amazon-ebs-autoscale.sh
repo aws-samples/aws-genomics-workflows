@@ -32,4 +32,4 @@ function release() {
 }
 
 cd /opt
-VERSION
+$VERSION
