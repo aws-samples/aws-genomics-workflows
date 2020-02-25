@@ -141,7 +141,8 @@ Resources:
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/_common/container-build.template.yaml
       Parameters:
-        ContainerName: nextflow
+        ImageName: nextflow
+        ImageTag: latest
         GitRepoType: GITHUB
         GitCloneUrlHttp: https://github.com/aws-samples/aws-genomics-workflows.git
         ProjectPath: ./src/containers/nextflow

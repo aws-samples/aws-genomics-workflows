@@ -10,7 +10,7 @@
 set -e  # fail on any error
 
 echo "=== ENVIRONMENT ==="
-echo `env`
+printenv
 
 echo "=== RUN COMMAND ==="
 echo "$@"
