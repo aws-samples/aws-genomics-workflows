@@ -45,7 +45,8 @@ Resources:
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/_common/container-build.template.yaml
       Parameters:
-        ContainerName: bwa
+        ImageName: bwa
+        ImageTag: "0.7.17"
         GitRepoType: GITHUB
         GitCloneUrlHttp: https://github.com/aws-samples/aws-genomics-workflows.git
         ProjectPath: ./src/containers/bwa
@@ -58,7 +59,8 @@ Resources:
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/_common/container-build.template.yaml
       Parameters:
-        ContainerName: samtools
+        ImageName: samtools
+        ImageTag: "1.9"
         GitRepoType: GITHUB
         GitCloneUrlHttp: https://github.com/aws-samples/aws-genomics-workflows.git
         ProjectPath: ./src/containers/samtools
@@ -71,7 +73,8 @@ Resources:
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/_common/container-build.template.yaml
       Parameters:
-        ContainerName: bcftools
+        ImageName: bcftools
+        ImageTag: "1.9"
         GitRepoType: GITHUB
         GitCloneUrlHttp: https://github.com/aws-samples/aws-genomics-workflows.git
         ProjectPath: ./src/containers/bcftools
