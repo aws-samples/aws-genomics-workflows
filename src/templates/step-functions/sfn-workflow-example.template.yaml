@@ -172,7 +172,7 @@ Resources:
                         "JobQueue.$": "$.params.queue",
                         "ContainerOverrides": {
                             "Vcpus": 2,
-                            "Memory": 1024,
+                            "Memory": 2048,
                             "Environment": [
                                 {"Name": "JOB_WORKFLOW_NAME", "Value.$": "$.workflow.name"},
                                 {"Name": "JOB_WORKFLOW_EXECUTION", "Value.$": "$.workflow.execution"},
