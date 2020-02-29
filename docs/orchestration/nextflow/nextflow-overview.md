@@ -8,7 +8,8 @@ Nextflow can be run either locally or on a dedicated EC2 instance.  The latter i
 
 ## Full Stack Deployment
 
-The following CloudFormation template will launch an EC2 instance pre-configured for using Nextflow.
+_For the impatient:_
+The following CloudFormation template will create all the resources you need to runs Nextflow using the architecture shown above.  It combines the CloudFormation stacks referenced below in the [Requirements](#requirements) section.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | -- |
@@ -20,14 +21,24 @@ When the above stack is complete, you will have a preconfigured Batch Job Defini
 
 To get started using Nextflow on AWS you'll need the following setup in your AWS account:
 
-* The core set of resources (S3 Bucket, IAM Roles, AWS Batch) described in the [Getting Started](../../../core-env/introduction) section.
-* A containerized `nextflow` executable that pulls configuration and workflow definitions from S3
+* The core set of resources (S3 Bucket, IAM Roles, AWS Batch) described in the [Core Environment](../../../core-env/introduction) section.
+
+If you are in a hurry, you can create the complete Core Environment using the following CloudFormation template:
+
+| Name | Description | Source | Launch Stack |
+| -- | -- | :--: | :--: |
+{{ cfn_stack_row("GWFCore (Existing VPC)", "GWFCore-Full", "aws-genomics-root-novpc.template.yaml", "Create EC2 Launch Templates, AWS Batch Job Queues and Compute Environments, a secure Amazon S3 bucket, and IAM policies and roles within an **existing** VPC. _NOTE: You must provide VPC ID, and subnet IDs_.") }}
+
+!!! note
+    The CloudFormation above does **not** create a new VPC, and instead will create associated resources in an existing VPC of your choosing, or your default VPC.  To automate creating a new VPC to isolate your resources, you can use the [AWS VPC QuickStart](https://aws.amazon.com/quickstart/architecture/vpc/).
+
+* A containerized `nextflow` executable with a custom entrypoint script that draws configuration information from AWS Batch supplied environment variables
 * The AWS CLI installed in job instances using `conda`
 * A Batch Job Definition that runs a Nextflow head node
-* An IAM Role for the Nextflow head node job that allows it access to AWS Batch
-* (optional) An S3 Bucket to store your Nextflow workflow definitions
+* An IAM Role for the Nextflow head node job that allows it to submit AWS Batch jobs
+* (optional) An S3 Bucket to store your Nextflow session cache
 
-The last five items above are created by the following CloudFormation template:
+The five items above are created by the following CloudFormation template:
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | -- |
@@ -68,6 +79,10 @@ ENTRYPOINT ["/opt/bin/nextflow.aws.sh"]
 The script used for the entrypoint is shown below. The first parameter should be a Nextflow "project".  Nextflow supports pulling projects directly from Git repositories.  This script also allows for projects to be specified as an S3 URI - a bucket and folder therein where you have staged your Nextflow scripts and supporting files (like additional config files). Any additional parameters are passed along to the Nextflow executable.  Also, the script automatically configures some Nextflow values based on environment variables set by AWS Batch.
 
 ```bash
+#!/bin/bash
+
+set -e  # fail on any error
+
 echo "=== ENVIRONMENT ==="
 echo `env`
 
@@ -89,6 +104,9 @@ process.queue = "$NF_JOB_QUEUE"
 aws.batch.cliPath = "/home/ec2-user/miniconda/bin/aws"
 EOF
 
+echo "=== CONFIGURATION ==="
+cat ~/.nextflow/config
+
 # AWS Batch places multiple jobs on an instance
 # To avoid file path clobbering use the JobID and JobAttempt
 # to create a unique path
@@ -105,10 +123,32 @@ cd /opt/work/$GUID
 # .nextflow directory holds all session information for the current and past runs.
 # it should be `sync`'d with an s3 uri, so that runs from previous sessions can be 
 # resumed
+echo "== Restoring Session Cache =="
 aws s3 sync --only-show-errors $NF_LOGSDIR/.nextflow .nextflow
 
+function preserve_session() {
+    # stage out session cache
+    if [ -d .nextflow ]; then
+        echo "== Preserving Session Cache =="
+        aws s3 sync --only-show-errors .nextflow $NF_LOGSDIR/.nextflow
+    fi
+
+    # .nextflow.log file has more detailed logging from the workflow run and is
+    # nominally unique per run.
+    #
+    # when run locally, .nextflow.logs are automatically rotated
+    # when syncing to S3 uniquely identify logs by the batch GUID
+    if [ -f .nextflow.log ]; then
+        echo "== Preserving Session Log =="
+        aws s3 cp --only-show-errors .nextflow.log $NF_LOGSDIR/.nextflow.log.${GUID/\//.}
+    fi
+}
+
+trap preserve_session EXIT
+
 # stage workflow definition
-if [[ "$NEXTFLOW_PROJECT" =~ "^s3://.*" ]]; then
+if [[ "$NEXTFLOW_PROJECT" =~ ^s3://.* ]]; then
+    echo "== Staging S3 Project =="
     aws s3 sync --only-show-errors --exclude 'runs/*' --exclude '.*' $NEXTFLOW_PROJECT ./project
     NEXTFLOW_PROJECT=./project
 fi
@@ -116,16 +156,6 @@ fi
 echo "== Running Workflow =="
 echo "nextflow run $NEXTFLOW_PROJECT $NEXTFLOW_PARAMS"
 nextflow run $NEXTFLOW_PROJECT $NEXTFLOW_PARAMS
-
-# stage out session cache
-aws s3 sync --only-show-errors .nextflow $NF_LOGSDIR/.nextflow
-
-# .nextflow.log file has more detailed logging from the workflow run and is
-# nominally unique per run.
-#
-# when run locally, .nextflow.logs are automatically rotated
-# when syncing to S3 uniquely identify logs by the batch GUID
-aws s3 cp --only-show-errors .nextflow.log $NF_LOGSDIR/.nextflow.log.${GUID/\//.}
 ```
 
 The `AWS_BATCH_JOB_ID` and `AWS_BATCH_JOB_ATTEMPT` are [environment variables that are automatically provided](https://docs.aws.amazon.com/batch/latest/userguide/job_env_vars.html) to all AWS Batch jobs.  The `NF_WORKDIR`, `NF_LOGSDIR`, and `NF_JOB_QUEUE` variables are ones set by the Batch Job Definition ([see below](#batch-job-definition)).
@@ -161,6 +191,9 @@ chown -R ec2-user:ec2-user $USER/miniconda
 
 rm Miniconda3-latest-Linux-x86_64.sh
 ```
+
+!!! note
+    The actual Launch Template used in the [Core Environment](../../core-env/introduction.md) does a couple more things, like installing additional resources for [managing space for the job](../../core-env/create-custom-compute-resources.md)
 
 ### Batch job definition
 
@@ -355,7 +388,7 @@ You can customize these job definitions to incorporate additional environment va
 !!! important
     Instances provisioned using the Nextflow specific EC2 Launch Template configure `/var/lib/docker` in the host instance to use automatically [expandable scratch space](../../../core-env/create-custom-compute-resources/), allowing containerized jobs to stage as much data as needed without running into disk space limits.
 
-### Running the workflow
+### Running workflows
 
 To run a workflow you submit a `nextflow` Batch job to the appropriate Batch Job Queue via:
 

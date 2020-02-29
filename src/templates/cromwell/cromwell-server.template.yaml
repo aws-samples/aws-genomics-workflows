@@ -90,6 +90,11 @@ Parameters:
   S3BucketName:
     Description: S3 bucket you are using for workflow inputs and outputs
     Type: String
+
+  S3OpenDataBucketARNs:
+    Description: Open datasets on AWS S3 for workflow inputs
+    Type: String
+    Default: "arn:aws:s3:::gatk-test-data/*,arn:aws:s3:::broad-references/*"
   
   BatchQueue:
     Description: ARN of the AWS Batch Job Queue this server will use by default
@@ -142,7 +147,10 @@ Resources:
                 Action:
                   - "s3:ListBucket"
                   - "s3:ListAllMyBuckets"
-
+              - Effect: Allow
+                Resource: !Split [",", !Ref S3OpenDataBucketARNs]
+                Action:
+                  - "s3:GetObject"
         
         - PolicyName: !Sub CromwellServer-CloudWatch-Access-${AWS::Region}
           PolicyDocument:
@@ -523,6 +531,7 @@ Metadata:
           - CromwellVersion
           - CromwellVersionSpecified
           - S3BucketName
+          - S3OpenDataBucketARNs
           - BatchQueue
       
     ParameterLabels:
@@ -542,6 +551,8 @@ Metadata:
         default: "Key Pair Name"
       S3BucketName:
         default: "S3 Bucket Name"
+      S3OpenDataBucketARNs:
+        default: "S3 Open Data Bucket ARNs"
       BatchQueue:
         default: "Default Batch Queue"
       CromwellVersion:
@@ -561,4 +572,3 @@ Outputs:
   HostName:
     Value: !GetAtt EC2Instance.PublicDnsName
     Description: Cromwell server public DNS name
-

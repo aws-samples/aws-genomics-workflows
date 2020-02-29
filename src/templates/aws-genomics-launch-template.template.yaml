@@ -23,32 +23,43 @@ Mappings:
   ECSAdditionsMap:
     step-functions:
       additions: |-
+        - stop ecs
         - service docker stop
-        - cp -au /var/lib/docker /var/lib/docker.bk  
-        - cd /opt && wget $artifactRootUrl/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
-        - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh $scratchPath /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
+        - cp -au /var/lib/docker /var/lib/docker.bk
+        - rm -rf /var/lib/docker/*
+        - cd /opt && wget $artifactRootUrl/get-amazon-ebs-autoscale.sh
+        - sh /opt/get-amazon-ebs-autoscale.sh
+        - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc 2>&1 > /var/log/ebs-autoscale-install.log
         - sed -i 's+OPTIONS=.*+OPTIONS="--storage-driver btrfs"+g' /etc/sysconfig/docker-storage
+        - cp -au /var/lib/docker.bk/* /var/lib/docker
+        - cd /opt && wget $artifactRootUrl/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
+        - sh /opt/ecs-additions/ecs-additions-step-functions.sh 
         - service docker start
         - start ecs
 
     cromwell:
       additions: |-
-        - cd /opt && wget $artifactRootUrl/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
-        - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh $scratchPath /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
+        - cd /opt && wget $artifactRootUrl/get-amazon-ebs-autoscale.sh
+        - sh /opt/get-amazon-ebs-autoscale.sh
+        - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc 2>&1 > /var/log/ebs-autoscale-install.log
         - cd /opt && wget $artifactRootUrl/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
         - sh /opt/ecs-additions/ecs-additions-cromwell.sh
 
     nextflow:
       additions: |-
+        - stop ecs
         - service docker stop
-        - cp -au /var/lib/docker /var/lib/docker.bk  
-        - cd /opt && wget $artifactRootUrl/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
-        - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh $scratchPath /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
+        - cp -au /var/lib/docker /var/lib/docker.bk
+        - rm -rf /var/lib/docker/*
+        - cd /opt && wget $artifactRootUrl/get-amazon-ebs-autoscale.sh
+        - sh /opt/get-amazon-ebs-autoscale.sh
+        - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc 2>&1 > /var/log/ebs-autoscale-install.log
         - sed -i 's+OPTIONS=.*+OPTIONS="--storage-driver btrfs"+g' /etc/sysconfig/docker-storage
-        - service docker start
-        - start ecs
+        - cp -au /var/lib/docker.bk/* /var/lib/docker
         - cd /opt && wget $artifactRootUrl/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
         - sh /opt/ecs-additions/ecs-additions-nextflow.sh 
+        - service docker start
+        - start ecs
         
 Parameters:
   LaunchTemplateNamePrefix:
@@ -71,18 +82,12 @@ Parameters:
       - step-functions
       - cromwell
       - nextflow
-  ScratchMountPoint:
-    Type: String
-    Default: /scratch
-    Description: >-
-      Path for the scratch mount point in the instance. If your workflow 
-      orchestrator is "Cromwell" the value here is overridden with "/cromwell_root".
-      If your workflow orcheistrator is "Nextflow" the value here is overriden with "/var/lib/docker".
   ArtifactRootUrl:
     Type: String
     Default: https://s3.amazonaws.com/aws-genomics-workflows/artifacts
     Description: >-
       Root URL for where artifacts / additions scripts are stored
+
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -94,13 +99,9 @@ Metadata:
       - Label:
           default: "Optional"
         Parameters:
-          - ScratchMountPoint
           - ScratchVolumeSize
           - DockerImageAndMetadataVolumeSize
-Conditions:
-  UseCromwell: !Equals [!Ref WorkflowOrchestrator, cromwell]
-  UseNextflow: !Equals [!Ref WorkflowOrchestrator, nextflow]
-  ScratchOverride: !Or [Condition: UseCromwell, Condition: UseNextflow]
+
 Resources:
   EC2LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
@@ -147,11 +148,15 @@ Resources:
               - python27-pip
               - sed
               - wget
+              - git
+              - amazon-ssm-agent
 
               runcmd:
               - pip install -U awscli boto3
-              - scratchPath="${ScratchMountPoint}"
-              - artifactRootUrl="${ArtifactRootUrl}"
+              - export scratchPath="${ScratchMountPoint}"
+              - export artifactRootUrl="${ArtifactRootUrl}"
+              - start amazon-ssm-agent
+
               ${ECSAdditions}
 
               --==BOUNDARY==--
@@ -160,11 +165,11 @@ Resources:
                   - ECSAdditionsMap
                   - !Ref WorkflowOrchestrator
                   - additions
-              ScratchMountPoint: 
-                Fn::If:
-                  - ScratchOverride
-                  - !FindInMap [ ScratchMountPointMap, !Ref WorkflowOrchestrator, mountpoint ]
-                  - !Ref ScratchMountPoint
+              ScratchMountPoint:
+                Fn::FindInMap:
+                  - ScratchMountPointMap
+                  - !Ref WorkflowOrchestrator
+                  - mountpoint
 
 Outputs:
   LaunchTemplateId:

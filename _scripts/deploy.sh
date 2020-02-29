@@ -23,6 +23,7 @@ function s3_uri() {
 
 
 function artifacts() {
+    # root level is always "latest"
     S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH "artifacts")
 
     echo "publishing artifacts: $S3_URI"
@@ -32,9 +33,22 @@ function artifacts() {
         --delete \
         ./artifacts \
         $S3_URI
+    
+    if [[ $USE_RELEASE_TAG && ! -z "$TRAVIS_TAG" ]]; then
+        S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH $TRAVIS_TAG "artifacts")
+
+        echo "publishing artifacts: $S3_URI"
+        aws s3 sync \
+            --profile asset-publisher \
+            --acl public-read \
+            --delete \
+            ./artifacts \
+            $S3_URI
+    fi
 }
 
 function templates() {
+    # root level is always "latest"
     S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH "templates")
 
     echo "publishing templates: $S3_URI"
@@ -45,6 +59,19 @@ function templates() {
         --metadata commit=$(git rev-parse HEAD) \
         ./src/templates \
         $S3_URI
+    
+    if [[ $USE_RELEASE_TAG && ! -z "$TRAVIS_TAG" ]]; then
+        S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH $TRAVIS_TAG "templates")
+
+        echo "publishing templates: $S3_URI"
+        aws s3 sync \
+            --profile asset-publisher \
+            --acl public-read \
+            --delete \
+            --metadata commit=$(git rev-parse HEAD) \
+            ./src/templates \
+            $S3_URI
+    fi
 }
 
 function site() {
@@ -66,6 +93,7 @@ echo "DEPLOYMENT STAGE: $ASSET_STAGE"
 case $ASSET_STAGE in
     production)
         ASSET_STAGE_PATH=""
+        USE_RELEASE_TAG=1
         all
         ;;
     test)
