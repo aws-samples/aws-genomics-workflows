@@ -33,6 +33,7 @@ deploy:
     on:
       repo: aws-samples/aws-genomics-workflows
       branch: release
+      tags: true
   - provider: script
     script: bash _scripts/deploy.sh test
     skip_cleanup: true
