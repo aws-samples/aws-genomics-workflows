@@ -158,7 +158,7 @@ Resources:
             Version: 2012-10-17
             Statement:
               # Nextflow requires full read access to gather the state of jobs being executed
-              - Sid: "AWS Batch Read Access - All"
+              - Sid: "batch-read-access-all"
                 Effect: Allow
                 Resource: "*"
                 Action:
@@ -167,7 +167,7 @@ Resources:
               
               # only permit access (job submission) to the queues and compute environments
               # configured to run nextflow    
-              - Sid: "AWS Batch Write Access - Job Submission"
+              - Sid: "batch-write-access-job-submissions"
                 Effect: Allow
                 Resource:
                   - !Ref BatchDefaultJobQueue
@@ -177,7 +177,7 @@ Resources:
               
               # nextflow needs to be able to create job definitions
               # these are prefixed with "nf-"
-              - Sid: "AWS Batch Write Access - Job Definitions"
+              - Sid: "batch-write-access-job-definitions"
                 Effect: Allow
                 Resource:
                   - arn:aws:batch:*:*:job-definition/nf-*:*
