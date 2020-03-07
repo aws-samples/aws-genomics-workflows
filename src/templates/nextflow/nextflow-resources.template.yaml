@@ -172,6 +172,7 @@ Resources:
                 Resource:
                   - !Ref BatchDefaultJobQueue
                   - !Ref BatchHighPriorityJobQueue
+                  - arn:aws:batch:*:*:job-definition/nf-*:*
                 Action:
                   - "batch:*Job"
               
