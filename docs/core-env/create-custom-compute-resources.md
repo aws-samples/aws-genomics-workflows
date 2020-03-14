@@ -45,7 +45,7 @@ packages:
 runcmd:
 - curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
 - unzip -q /tmp/awscliv2.zip -d /tmp
-- sudo /tmp/aws/install
+- /tmp/aws/install
 - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
 - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh /scratch /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
 # you can add more commands here if you have additional provisioning steps
