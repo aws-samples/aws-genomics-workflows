@@ -23,7 +23,7 @@ The longer these scripts / customizations take to complete, the longer it will
 be before your instance is ready for work.
 
 Launch Templates are capable of pre-configuring a lot of EC2 instance options.
-Since this will be working with AWS Batch, which already does a lot of automatic 
+Since this will be working with AWS Batch, which already does a lot of automatic
 instance configuration on its own, you only need to supply the `UserData`
 script below:
 
@@ -37,13 +37,15 @@ Content-Type: text/cloud-config; charset="us-ascii"
 packages:
 - jq
 - btrfs-progs
-- python27-pip
 - sed
 - wget
+- unzip
 # add more package names here if you need them
 
 runcmd:
-- pip install -U awscli boto3
+- curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+- unzip -q /tmp/awscliv2.zip -d /tmp
+- /tmp/aws/install
 - cd /opt && wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/aws-ebs-autoscale.tgz && tar -xzf aws-ebs-autoscale.tgz
 - sh /opt/ebs-autoscale/bin/init-ebs-autoscale.sh /scratch /dev/sdc  2>&1 > /var/log/init-ebs-autoscale.log
 # you can add more commands here if you have additional provisioning steps
@@ -51,9 +53,9 @@ runcmd:
 --==BOUNDARY==--
 ```
 
-The above will add an `ebs-autoscale` daemon to an instance.  By default it will 
-add a 20GB EBS volume to the logical volume mounted at `/scratch`.  
-If you want this volume to be larger initially, you can specify a bigger one 
+The above will add an `ebs-autoscale` daemon to an instance.  By default it will
+add a 20GB EBS volume to the logical volume mounted at `/scratch`.
+If you want this volume to be larger initially, you can specify a bigger one
 mapped to `/dev/sdc`  the Launch Template.
 
 !!! note
@@ -153,11 +155,11 @@ You should get something like the following as a response:
 ```json
 {
     "LaunchTemplate": {
-        "LatestVersionNumber": 1, 
-        "LaunchTemplateId": "lt-0123456789abcdef0", 
-        "LaunchTemplateName": "genomics-workflow-template", 
-        "DefaultVersionNumber": 1, 
-        "CreatedBy": "arn:aws:iam::123456789012:user/alice", 
+        "LatestVersionNumber": 1,
+        "LaunchTemplateId": "lt-0123456789abcdef0",
+        "LaunchTemplateName": "genomics-workflow-template",
+        "DefaultVersionNumber": 1,
+        "CreatedBy": "arn:aws:iam::123456789012:user/alice",
         "CreateTime": "2019-01-01T00:00:00.000Z"
     }
 }
@@ -166,8 +168,8 @@ You should get something like the following as a response:
 ## Custom AMIs
 
 A slightly more involved method for customizing an instance is
-to create a new AMI based on the ECS Optimized AMI.  This is good if you have 
-a lot of customization to do - lots of software to install and/or need large 
+to create a new AMI based on the ECS Optimized AMI.  This is good if you have
+a lot of customization to do - lots of software to install and/or need large
 datasets preloaded that will be needed by all your jobs.
 
 You can learn more about how to [create your own AMIs in the EC2 userguide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html).
