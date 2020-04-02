@@ -7,8 +7,10 @@ Mappings:
   ScratchMountPointMap:
     step-functions:
       mountpoint: "/var/lib/docker"
+#   cromwell:
+#     mountpoint: "/cromwell_root"
     cromwell:
-      mountpoint: "/cromwell_root"
+      mountpoint: "/var/lib/docker"
     nextflow:
       mountpoint: "/var/lib/docker"
   TagMap:
@@ -37,13 +39,18 @@ Mappings:
         - service docker start
         - start ecs
 
+#    cromwell:
+#      additions: |-
+#        - cd /opt && wget $artifactRootUrl/get-amazon-ebs-autoscale.sh
+#        - sh /opt/get-amazon-ebs-autoscale.sh
+#        - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc 2>&1 > /var/log/ebs-autoscale-install.log
+#        - cd /opt && wget $artifactRootUrl/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
+#        - sh /opt/ecs-additions/ecs-additions-cromwell.sh
     cromwell:
       additions: |-
-        - cd /opt && wget $artifactRootUrl/get-amazon-ebs-autoscale.sh
-        - sh /opt/get-amazon-ebs-autoscale.sh
-        - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc 2>&1 > /var/log/ebs-autoscale-install.log
-        - cd /opt && wget $artifactRootUrl/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
-        - sh /opt/ecs-additions/ecs-additions-cromwell.sh
+        - curl --silent --retry 5 --retry-connrefused "https://d52iwap9aqlil.cloudfront.net/configure-cromwell-worker.sh" -o "configure-cromwell-worker.sh"
+        - chmod a+x configure-cromwell-worker.sh
+        - ./configure-cromwell-worker.sh
 
     nextflow:
       additions: |-
