@@ -31,7 +31,7 @@ Mappings:
         - rm -rf /var/lib/docker/*
         - cd /opt && wget $artifactRootUrl/get-amazon-ebs-autoscale.sh
         - sh /opt/get-amazon-ebs-autoscale.sh
-        - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc 2>&1 > /var/log/ebs-autoscale-install.log
+        - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc > /var/log/ebs-autoscale-install.log 2>&1
         - sed -i 's+OPTIONS=.*+OPTIONS="--storage-driver btrfs"+g' /etc/sysconfig/docker-storage
         - cp -au /var/lib/docker.bk/* /var/lib/docker
         - cd /opt && wget $artifactRootUrl/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
@@ -47,7 +47,7 @@ Mappings:
         - rm -rf /var/lib/docker/*
         - cd /opt && wget $artifactRootUrl/get-amazon-ebs-autoscale.sh
         - sh /opt/get-amazon-ebs-autoscale.sh
-        - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc 2>&1 > /var/log/ebs-autoscale-install.log
+        - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc > /var/log/ebs-autoscale-install.log 2>&1
         - sed -i 's+OPTIONS=.*+OPTIONS="--storage-driver btrfs"+g' /etc/sysconfig/docker-storage
         - cp -au /var/lib/docker.bk/* /var/lib/docker
         - cd /usr/local/bin && curl --retry 5 --retry-connrefused "https://d52iwap9aqlil.cloudfront.net/fetch_and_run.sh" -o "fetch_and_run.sh" && chmod a+x ./fetch_and_run.sh
@@ -62,7 +62,7 @@ Mappings:
         - rm -rf /var/lib/docker/*
         - cd /opt && wget $artifactRootUrl/get-amazon-ebs-autoscale.sh
         - sh /opt/get-amazon-ebs-autoscale.sh
-        - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc 2>&1 > /var/log/ebs-autoscale-install.log
+        - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc > /var/log/ebs-autoscale-install.log 2>&1
         - sed -i 's+OPTIONS=.*+OPTIONS="--storage-driver btrfs"+g' /etc/sysconfig/docker-storage
         - cp -au /var/lib/docker.bk/* /var/lib/docker
         - cd /opt && wget $artifactRootUrl/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
