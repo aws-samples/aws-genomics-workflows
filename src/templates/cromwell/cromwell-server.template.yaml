@@ -75,8 +75,8 @@ Parameters:
   
   SSHLocation:
     Description: >-
-    The IP address range that can be used to SSH to the EC2 instances. In a production environment we
-    recommend limiting this to a trusted range.
+      The IP address range that can be used to SSH to the EC2 instances. In a production environment we
+      recommend limiting this to a trusted range.
     Type: String
     MinLength: '9'
     MaxLength: '18'
@@ -86,8 +86,8 @@ Parameters:
   
   HTTPLocation:
     Description: >-
-    The IP address range that has HTTP access to the EC2 instances. In a production environment we
-    recommend limiting this to a trusted range.
+      The IP address range that has HTTP access to the EC2 instances. In a production environment we
+      recommend limiting this to a trusted range.
     Type: String
     MinLength: '9'
     MaxLength: '18'
@@ -139,6 +139,7 @@ Resources:
                 - "batch:DescribeJobDefinitions"
                 - "batch:ListJobs"
                 - "batch:DescribeComputeEnvironments"
+                - "ecs:DescribeContainerInstances"
 
         - PolicyName: !Sub CromwellServer-S3-Access-${AWS::Region}
           PolicyDocument:
@@ -268,7 +269,7 @@ Resources:
               - |
                 #!/bin/bash
                 url=$(curl --silent --retry 5 --retry-connrefused "https://api.github.com/repos/broadinstitute/cromwell/releases/${CromwellVersionPath}" | jq -r .assets[0].browser_download_url)
-                curl -LO $url
+                curl --retry 5 --retry-connrefused -LO $url
                 ln -s $(find . | grep "cromwell.*\.jar") cromwell.jar
               - CromwellVersionPath:
                   Fn::If:

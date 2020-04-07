@@ -39,18 +39,20 @@ Mappings:
         - service docker start
         - start ecs
 
-#    cromwell:
-#      additions: |-
-#        - cd /opt && wget $artifactRootUrl/get-amazon-ebs-autoscale.sh
-#        - sh /opt/get-amazon-ebs-autoscale.sh
-#        - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc 2>&1 > /var/log/ebs-autoscale-install.log
-#        - cd /opt && wget $artifactRootUrl/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
-#        - sh /opt/ecs-additions/ecs-additions-cromwell.sh
     cromwell:
       additions: |-
-        - curl --silent --retry 5 --retry-connrefused "https://d52iwap9aqlil.cloudfront.net/configure-cromwell-worker.sh" -o "configure-cromwell-worker.sh"
-        - chmod a+x configure-cromwell-worker.sh
-        - ./configure-cromwell-worker.sh
+        - stop ecs
+        - service docker stop
+        - cp -au /var/lib/docker /var/lib/docker.bk
+        - rm -rf /var/lib/docker/*
+        - cd /opt && wget $artifactRootUrl/get-amazon-ebs-autoscale.sh
+        - sh /opt/get-amazon-ebs-autoscale.sh
+        - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc 2>&1 > /var/log/ebs-autoscale-install.log
+        - sed -i 's+OPTIONS=.*+OPTIONS="--storage-driver btrfs"+g' /etc/sysconfig/docker-storage
+        - cp -au /var/lib/docker.bk/* /var/lib/docker
+        - cd /usr/local/bin && curl --retry 5 --retry-connrefused "https://d52iwap9aqlil.cloudfront.net/fetch_and_run.sh" -o "fetch_and_run.sh" && chmod a+x ./fetch_and_run.sh
+        - service docker start
+        - start ecs
 
     nextflow:
       additions: |-

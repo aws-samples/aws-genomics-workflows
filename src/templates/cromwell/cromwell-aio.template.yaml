@@ -145,8 +145,8 @@ Parameters:
       For example, 36, 36.1, 41, 42, etc.  Ignored if "Cromwell Version" is set to "latest".
   SSHLocation:
     Description: >-
-    The IP address range that has SSH access to the EC2 instances. In a production setup you should restrict this
-    to a trusted range
+      The IP address range that has SSH access to the EC2 instances. In a production setup you should restrict this
+      to a trusted range
     Type: String
     MinLength: '9'
     MaxLength: '18'
@@ -155,8 +155,8 @@ Parameters:
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   HTTPLocation:
     Description: >-
-    The IP address range that has HTTP access to the EC2 instances. In a production setup you should restrict this
-    to a trusted range
+      The IP address range that has HTTP access to the EC2 instances. In a production setup you should restrict this
+      to a trusted range
     Type: String
     MinLength: '9'
     MaxLength: '18'
