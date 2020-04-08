@@ -1,5 +1,13 @@
 #! /bin/bash
-set -ev
+
+###
+#
+# This script is not currently in use as Amazon Linux2 is not yet the default for AWS batch. When it is then this
+# configuration should be used for Cromwell. Similar changes will probably be needed for Nextflow and Step-Functions
+#
+###
+
+set -e
 
 function install_ebs_autoscale(){
   # install ebs-autoscale
