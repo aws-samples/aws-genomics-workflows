@@ -166,7 +166,7 @@ Parameters:
   
   ArtifactRootUrl:
     Type: String
-    Default: https://s3.amazonaws.com/aws-genomics-workflows/artifacts
+    Default: https://d3mhka25m6n3zh.cloudfront.net/artifacts
     Description: >-
       Root URL for where artifacts / additions scripts are stored
   
@@ -174,7 +174,7 @@ Parameters:
     Type: String
     Description: >-
       Root URL for where nested templates are stored
-    Default: https://s3.amazonaws.com/aws-genomics-workflows/templates
+    Default: https://d3mhka25m6n3zh.cloudfront.net/artifacts/templates
     ConstraintDescription: >-
       Must be a valid S3 URL
     AllowedPattern: "https://s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"

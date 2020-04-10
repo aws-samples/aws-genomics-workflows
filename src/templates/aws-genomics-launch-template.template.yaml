@@ -7,8 +7,6 @@ Mappings:
   ScratchMountPointMap:
     step-functions:
       mountpoint: "/var/lib/docker"
-#   cromwell:
-#     mountpoint: "/cromwell_root"
     cromwell:
       mountpoint: "/var/lib/docker"
     nextflow:
@@ -50,7 +48,7 @@ Mappings:
         - sh /opt/amazon-ebs-autoscale/install.sh $scratchPath /dev/sdc > /var/log/ebs-autoscale-install.log 2>&1
         - sed -i 's+OPTIONS=.*+OPTIONS="--storage-driver btrfs"+g' /etc/sysconfig/docker-storage
         - cp -au /var/lib/docker.bk/* /var/lib/docker
-        - cd /usr/local/bin && curl --retry 5 --retry-connrefused "https://d52iwap9aqlil.cloudfront.net/fetch_and_run.sh" -o "fetch_and_run.sh" && chmod a+x ./fetch_and_run.sh
+        - cd /usr/local/bin && curl --retry 5 --retry-connrefused $artifactRootUrl/fetch_and_run.sh" -o "fetch_and_run.sh" && chmod a+x ./fetch_and_run.sh
         - service docker start
         - start ecs
 
