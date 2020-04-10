@@ -61,7 +61,7 @@ Parameters:
     Type: String
     Description: >-
       Specific version of Cromwell to install.  Must match a released version number.
-      For example, 36, 36.1, 41, 42, etc.  Ignored if "Cromwell Version" is set to "latest".
+      For example, 51, 51.1, etc. The minimum supported version is 51. Ignored if "Cromwell Version" is set to "latest".
 
   InstanceName:
     Type: String

@@ -80,7 +80,7 @@ Parameters:
   DefaultCEMaxvCpus:
     Type: Number
     Description: Maximum number of CPUs in the default compute environment. Should be >= than MinCpus
-    Default: 256
+    Default: 100
     MinValue: 0
   BatchServiceRoleArn:
     Type: String
