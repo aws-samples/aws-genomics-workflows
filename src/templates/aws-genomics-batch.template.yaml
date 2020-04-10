@@ -70,7 +70,7 @@ Parameters:
   HighPriorityCEMaxvCpus:
     Type: Number
     Description: Maximum number of CPUs in the high-priority compute environment. Should be >= than MinCpus
-    Default: 256
+    Default: 100
     MinValue: 0
   DefaultCEMinvCpus:
     Type: Number
