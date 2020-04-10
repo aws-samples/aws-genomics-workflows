@@ -19,7 +19,7 @@ This will create a `conda` environment called `mkdocs`
 Build the docs:
 
 ```bash
-$ source activate mkdocs
+$ conda activate mkdocs
 $ mkdocs build
 ```
 

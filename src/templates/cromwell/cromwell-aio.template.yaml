@@ -114,14 +114,17 @@ Parameters:
       
       Cromwell itself does not require much compute power. 
       A t2.medium should be sufficient.  If you want to run this server on the 
-      free tier, use a t2.micro.
+      free tier, use a t2.micro or t3.micro.
     Type: String
     Default: t2.medium
     AllowedValues:
     - t2.micro
     - t2.medium
     - t2.large
-    ConstraintDescription: "Must be 't2.micro', 't2.medium', or 't2.large'."
+    - t3.micro
+    - t3.medium
+    - t3.large
+    ConstraintDescription: "Must be 't2.micro', 't2.medium', 't2.large', t3.micro, t3.medium, or t3.large."
   InstanceName:
     Type: String
     Default: cromwell-server
@@ -141,7 +144,9 @@ Parameters:
       Specific version of Cromwell to install.  Must match a released version number.
       For example, 36, 36.1, 41, 42, etc.  Ignored if "Cromwell Version" is set to "latest".
   SSHLocation:
-    Description: "The IP address range that has SSH access to the EC2 instances"
+    Description: >-
+      The IP address range that has SSH access to the EC2 instances. In a production setup you should restrict this
+      to a trusted range
     Type: String
     MinLength: '9'
     MaxLength: '18'
@@ -149,7 +154,9 @@ Parameters:
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   HTTPLocation:
-    Description: "The IP address range that has HTTP access to the EC2 instances"
+    Description: >-
+      The IP address range that has HTTP access to the EC2 instances. In a production setup you should restrict this
+      to a trusted range
     Type: String
     MinLength: '9'
     MaxLength: '18'
@@ -159,7 +166,7 @@ Parameters:
   
   ArtifactRootUrl:
     Type: String
-    Default: https://s3.amazonaws.com/aws-genomics-workflows/artifacts
+    Default: https://d3mhka25m6n3zh.cloudfront.net/artifacts
     Description: >-
       Root URL for where artifacts / additions scripts are stored
   

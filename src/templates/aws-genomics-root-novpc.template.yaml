@@ -104,7 +104,7 @@ Parameters:
     Default: 100
   ArtifactRootUrl:
     Type: String
-    Default: https://s3.amazonaws.com/aws-genomics-workflows/artifacts
+    Default: https://d3mhka25m6n3zh.cloudfront.net/artifacts
     Description: >-
       Root URL for where artifacts / additions scripts are stored
   TemplateRootUrl:

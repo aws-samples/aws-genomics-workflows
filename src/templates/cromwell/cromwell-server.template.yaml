@@ -19,14 +19,17 @@ Parameters:
     Description: >-
       EC2 instance type.  Cromwell itself does not require much compute power. 
       A t2.medium should be sufficient.  If you want to run this server on the 
-      free tier, use a t2.micro.
+      free tier, use a t2.micro or t3.micro.
     Type: String
     Default: t2.medium
     AllowedValues:
     - t2.micro
     - t2.medium
     - t2.large
-    ConstraintDescription: "Must be 't2.micro', 't2.medium', or 't2.large'."
+    - t3.micro
+    - t3.medium
+    - t3.large
+    ConstraintDescription: "Must be 't2.micro', 't2.medium', 't2.large' 't3.micro', 't3.medium', or 't3.large'."
   
   VpcId:
     Type: AWS::EC2::VPC::Id
@@ -42,6 +45,7 @@ Parameters:
     Default: /aws/service/ami-amazon-linux-latest/amzn-ami-hvm-x86_64-gp2
     AllowedValues:
       - /aws/service/ami-amazon-linux-latest/amzn-ami-hvm-x86_64-gp2
+      - /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
   
   CromwellVersion:
     Type: String
@@ -57,7 +61,7 @@ Parameters:
     Type: String
     Description: >-
       Specific version of Cromwell to install.  Must match a released version number.
-      For example, 36, 36.1, 41, 42, etc.  Ignored if "Cromwell Version" is set to "latest".
+      For example, 51, 51.1, etc. The minimum supported version is 51. Ignored if "Cromwell Version" is set to "latest".
 
   InstanceName:
     Type: String
@@ -70,7 +74,9 @@ Parameters:
     ConstraintDescription: Must be the name of an existing EC2 KeyPair that is on your local machine.
   
   SSHLocation:
-    Description: "The IP address range that can be used to SSH to the EC2 instances"
+    Description: >-
+      The IP address range that can be used to SSH to the EC2 instances. In a production environment we
+      recommend limiting this to a trusted range.
     Type: String
     MinLength: '9'
     MaxLength: '18'
@@ -79,7 +85,9 @@ Parameters:
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   
   HTTPLocation:
-    Description: "The IP address range that has HTTP access to the EC2 instances"
+    Description: >-
+      The IP address range that has HTTP access to the EC2 instances. In a production environment we
+      recommend limiting this to a trusted range.
     Type: String
     MinLength: '9'
     MaxLength: '18'
@@ -131,6 +139,7 @@ Resources:
                 - "batch:DescribeJobDefinitions"
                 - "batch:ListJobs"
                 - "batch:DescribeComputeEnvironments"
+                - "ecs:DescribeContainerInstances"
 
         - PolicyName: !Sub CromwellServer-S3-Access-${AWS::Region}
           PolicyDocument:
@@ -259,8 +268,8 @@ Resources:
               content: !Sub
               - |
                 #!/bin/bash
-                url=$(curl --silent "https://api.github.com/repos/broadinstitute/cromwell/releases/${CromwellVersionPath}" | jq -r .assets[0].browser_download_url)
-                curl -LO $url
+                url=$(curl --silent --retry 5 --retry-connrefused "https://api.github.com/repos/broadinstitute/cromwell/releases/${CromwellVersionPath}" | jq -r .assets[0].browser_download_url)
+                curl --retry 5 --retry-connrefused -LO $url
                 ln -s $(find . | grep "cromwell.*\.jar") cromwell.jar
               - CromwellVersionPath:
                   Fn::If:
@@ -309,7 +318,7 @@ Resources:
                         numCreateDefinitionAttempts = 10
                         root = "s3://${S3BucketName}/cromwell-execution"
                         auth = "default"
-                        default-runtime-attributes { queueArn = "${BatchQueue}" }
+                        default-runtime-attributes { queueArn = "${BatchQueue}" , scriptBucketName = "${S3BucketName}" }
                         filesystems { s3 { auth = "default" } }
                       }
                     }
@@ -449,9 +458,11 @@ Resources:
         config2:
           commands:
             00_enable_awslogs:
+              #chkconfig should still work on amzn-linux2 by using systemctl under the hood. it may go away at some point
               command: "chkconfig awslogs on"
             
             01_start_awslogs:
+              #service should still work on amzn-linux2 by using systemctl under the hood. it may go away at some point
               command: "service awslogs start"
             
             02_enable_nginx:
