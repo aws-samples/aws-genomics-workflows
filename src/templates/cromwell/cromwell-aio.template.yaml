@@ -99,7 +99,7 @@ Parameters:
   DefaultCEMaxvCpus:
     Description: The maximum number of CPUs for the default Batch Compute Environment
     Type: Number
-    Default: 256
+    Default: 100
   HighPriorityCEMinvCpus:
     Description: The minimum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
@@ -107,7 +107,7 @@ Parameters:
   HighPriorityCEMaxvCpus:
     Description: The maximum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
-    Default: 256
+    Default: 100
   InstanceType:
     Description: >-
       EC2 instance type.
