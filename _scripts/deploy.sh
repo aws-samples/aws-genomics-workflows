@@ -29,6 +29,7 @@ function artifacts() {
     echo "publishing artifacts: $S3_URI"
     aws s3 sync \
         --profile asset-publisher \
+        --region us-east-1 \
         --acl public-read \
         --delete \
         ./artifacts \
@@ -40,6 +41,7 @@ function artifacts() {
         echo "publishing artifacts: $S3_URI"
         aws s3 sync \
             --profile asset-publisher \
+            --region us-east-1 \
             --acl public-read \
             --delete \
             ./artifacts \
@@ -54,6 +56,7 @@ function templates() {
     echo "publishing templates: $S3_URI"
     aws s3 sync \
         --profile asset-publisher \
+        --region us-east-1 \
         --acl public-read \
         --delete \
         --metadata commit=$(git rev-parse HEAD) \
@@ -66,6 +69,7 @@ function templates() {
         echo "publishing templates: $S3_URI"
         aws s3 sync \
             --profile asset-publisher \
+            --region us-east-1 \
             --acl public-read \
             --delete \
             --metadata commit=$(git rev-parse HEAD) \
@@ -77,6 +81,7 @@ function templates() {
 function site() {
     echo "publishing site"
     aws s3 sync \
+        --region us-east-1 \
         --acl public-read \
         --delete \
         ./site \

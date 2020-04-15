@@ -8,9 +8,11 @@ set -e
 mkdir -p $HOME/.aws
 cat << EOF > $HOME/.aws/config
 [default]
+region = us-east-1
 output = json
 
 [profile asset-publisher]
+region = us-east-1
 role_arn = ${ASSET_ROLE_ARN}
 credential_source = Environment
 EOF
