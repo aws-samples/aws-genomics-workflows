@@ -50,13 +50,13 @@ cd /opt/work/$GUID
 # it should be `sync`'d with an s3 uri, so that runs from previous sessions can be 
 # resumed
 echo "== Restoring Session Cache =="
-aws s3 sync --only-show-errors $NF_LOGSDIR/.nextflow .nextflow
+aws s3 sync --no-progress $NF_LOGSDIR/.nextflow .nextflow
 
 function preserve_session() {
     # stage out session cache
     if [ -d .nextflow ]; then
         echo "== Preserving Session Cache =="
-        aws s3 sync --only-show-errors .nextflow $NF_LOGSDIR/.nextflow
+        aws s3 sync --no-progress .nextflow $NF_LOGSDIR/.nextflow
     fi
 
     # .nextflow.log file has more detailed logging from the workflow run and is
@@ -66,16 +66,21 @@ function preserve_session() {
     # when syncing to S3 uniquely identify logs by the batch GUID
     if [ -f .nextflow.log ]; then
         echo "== Preserving Session Log =="
-        aws s3 cp --only-show-errors .nextflow.log $NF_LOGSDIR/.nextflow.log.${GUID/\//.}
+        aws s3 cp --no-progress .nextflow.log $NF_LOGSDIR/.nextflow.log.${GUID/\//.}
     fi
 }
 
-trap preserve_session EXIT
+function show_log() {
+    echo "=== Nextflow Log ==="
+    cat ./.nextflow.log
+}
+
+trap "show_log; preserve_session" EXIT
 
 # stage workflow definition
 if [[ "$NEXTFLOW_PROJECT" =~ ^s3://.* ]]; then
     echo "== Staging S3 Project =="
-    aws s3 sync --only-show-errors --exclude 'runs/*' --exclude '.*' $NEXTFLOW_PROJECT ./project
+    aws s3 sync --no-progress --exclude 'runs/*' --exclude '.*' $NEXTFLOW_PROJECT ./project
     NEXTFLOW_PROJECT=./project
 fi
 
