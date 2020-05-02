@@ -22,36 +22,12 @@ function s3_uri() {
 }
 
 
-function artifacts() {
+function publish() {
+    local source=$1
+    local destination=$2
+
     # root level is always "latest"
-    S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH "artifacts")
-
-    echo "publishing artifacts: $S3_URI"
-    aws s3 sync \
-        --profile asset-publisher \
-        --region us-east-1 \
-        --acl public-read \
-        --delete \
-        ./artifacts \
-        $S3_URI
-    
-    if [[ $USE_RELEASE_TAG && ! -z "$TRAVIS_TAG" ]]; then
-        S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH $TRAVIS_TAG "artifacts")
-
-        echo "publishing artifacts: $S3_URI"
-        aws s3 sync \
-            --profile asset-publisher \
-            --region us-east-1 \
-            --acl public-read \
-            --delete \
-            ./artifacts \
-            $S3_URI
-    fi
-}
-
-function templates() {
-    # root level is always "latest"
-    S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH "templates")
+    S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH $destination)
 
     echo "publishing templates: $S3_URI"
     aws s3 sync \
@@ -60,23 +36,61 @@ function templates() {
         --acl public-read \
         --delete \
         --metadata commit=$(git rev-parse HEAD) \
-        ./src/templates \
+        $source \
         $S3_URI
     
     if [[ $USE_RELEASE_TAG && ! -z "$TRAVIS_TAG" ]]; then
-        S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH $TRAVIS_TAG "templates")
+        # create explicit pinned versions "latest" and TRAVIS_TAG
+        for version in latest $TRAVIS_TAG; do
+            S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH $version $destination)
 
-        echo "publishing templates: $S3_URI"
-        aws s3 sync \
-            --profile asset-publisher \
-            --region us-east-1 \
-            --acl public-read \
-            --delete \
-            --metadata commit=$(git rev-parse HEAD) \
-            ./src/templates \
-            $S3_URI
+            case $destination in
+                templates)
+                    local parameter=TemplateRootUrl
+                    ;;
+                artifacts)
+                    local parameter=ArtiractRootUrl
+                    ;;
+                *)
+                    echo "unknown destination $destination"
+                    exit 1
+                    ;;
+            esac
+
+            # pin version
+            for file in `grep -irl $parameter $source`; do
+                local replace="s#/$destination#/$version/$destination#g"
+                sed -i '' -e $replace $file
+            done
+
+            echo "publishing templates: $S3_URI"
+            aws s3 sync \
+                --profile asset-publisher \
+                --region us-east-1 \
+                --acl public-read \
+                --delete \
+                --metadata commit=$(git rev-parse HEAD) \
+                $source \
+                $S3_URI
+        done
     fi
+
 }
+
+
+function artifacts() {
+
+    publish ./artifacts artifacts
+
+}
+
+
+function templates() {
+
+    publish ./src/templates templates
+
+}
+
 
 function site() {
     echo "publishing site"
@@ -84,15 +98,18 @@ function site() {
         --region us-east-1 \
         --acl public-read \
         --delete \
+        --metadata commit=$(git rev-parse HEAD) \
         ./site \
         s3://docs.opendata.aws/genomics-workflows
 }
+
 
 function all() {
     artifacts
     templates
     site
 }
+
 
 echo "DEPLOYMENT STAGE: $ASSET_STAGE"
 case $ASSET_STAGE in
