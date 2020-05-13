@@ -139,6 +139,7 @@ Resources:
         # Ec2KeyPair: !Ref Ec2KeyPairName
         LaunchTemplate:
           LaunchTemplateId: !Ref LaunchTemplateId
+          Version: $Latest
         InstanceRole: !Ref Ec2InstanceProfileArn
         InstanceTypes:
           - optimal
@@ -166,6 +167,7 @@ Resources:
       ComputeResources:
         LaunchTemplate:
           LaunchTemplateId: !Ref LaunchTemplateId
+          Version: $Latest
         InstanceRole:  !Ref Ec2InstanceProfileArn
         InstanceTypes:
           - optimal
