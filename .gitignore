@@ -60,3 +60,4 @@ LICENSE-*
 src/templates/tests
 /aws-genomics-workflows.iml
 _ignore
+dist/

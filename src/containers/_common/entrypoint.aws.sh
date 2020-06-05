@@ -54,7 +54,7 @@ if [[ $JOB_VERBOSE ]]; then
     set -x  # enable echo
 fi
 
-DEFAULT_AWS_CLI_PATH=/opt/miniconda/bin
+DEFAULT_AWS_CLI_PATH=/opt/aws-cli/bin
 AWS_CLI_PATH=${JOB_AWS_CLI_PATH:-$DEFAULT_AWS_CLI_PATH}
 PATH=$PATH:$AWS_CLI_PATH
 

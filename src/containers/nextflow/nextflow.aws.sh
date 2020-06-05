@@ -9,6 +9,9 @@
 
 set -e  # fail on any error
 
+DEFAULT_AWS_CLI_PATH=/opt/aws-cli/bin/aws
+AWS_CLI_PATH=${JOB_AWS_CLI_PATH:-$DEFAULT_AWS_CLI_PATH}
+
 echo "=== ENVIRONMENT ==="
 printenv
 
@@ -27,7 +30,8 @@ cat << EOF > $NF_CONFIG
 workDir = "$NF_WORKDIR"
 process.executor = "awsbatch"
 process.queue = "$NF_JOB_QUEUE"
-aws.batch.cliPath = "/home/ec2-user/miniconda/bin/aws"
+tower.enabled = true
+aws.batch.cliPath = "$AWS_CLI_PATH"
 EOF
 
 echo "=== CONFIGURATION ==="
