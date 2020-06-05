@@ -2,6 +2,7 @@
 set -e
 
 VERSION=${1:-release}
+ARTIFACT_ROOT_URL=$2
 
 function develop() {
     # retrieve the current development version of amazon-ebs-autoscale
@@ -28,11 +29,13 @@ function release() {
     # retrieve the version of amazon-ebs-autoscale concordant with the latest 
     # release of aws-genomics-workflows
     # recommended if you have no other way to get the amazon-ebs-autoscale code
-    wget $artifactRootUrl/amazon-ebs-autoscale.tgz
+    wget $ARTIFACT_ROOT_URL/amazon-ebs-autoscale.tgz
     tar -xzf amazon-ebs-autoscale.tgz
 }
 
 function dist-release() {
+    # alias for release() for now
+    # eventually, these may do different things
     release
 }
 

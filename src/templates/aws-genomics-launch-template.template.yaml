@@ -134,7 +134,7 @@ Resources:
               - service docker stop
               - export EBS_AUTOSCALE_FILESYSTEM="${EbsAutoscaleFilesystem}"
               - cd /opt && wget ${ArtifactRootUrl}/get-amazon-ebs-autoscale.sh
-              - sh /opt/get-amazon-ebs-autoscale.sh ${EbsAutoscaleVersion}
+              - sh /opt/get-amazon-ebs-autoscale.sh ${EbsAutoscaleVersion} ${ArtifactRootUrl}
               - cd /opt && wget ${ArtifactRootUrl}/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
               - sh /opt/ecs-additions/ecs-additions-common.sh
               - sh /opt/ecs-additions/ecs-additions-${WorkflowOrchestrator}.sh
