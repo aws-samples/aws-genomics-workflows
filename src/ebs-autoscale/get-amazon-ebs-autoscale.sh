@@ -29,11 +29,20 @@ function release() {
     # retrieve the version of amazon-ebs-autoscale concordant with the latest 
     # release of aws-genomics-workflows
     # recommended if you have no other way to get the amazon-ebs-autoscale code
-    wget $ARTIFACT_ROOT_URL/amazon-ebs-autoscale.tgz
+
+    if [[ "$ARTIFACT_ROOT_URL" =~ ^http.* ]]; then
+        wget $ARTIFACT_ROOT_URL/amazon-ebs-autoscale.tgz
+    elif [[ "$ARTIFACT_ROOT_URL" =~ ^s3.* ]]; then
+        aws s3 cp --no-progress $ARTIFACT_ROOT_URL/amazon-ebs-autoscale.tgz .
+    else
+        echo "unrecognized protocol in $ARTIFACT_ROOT_URL"
+        exit 1
+    fi
+
     tar -xzf amazon-ebs-autoscale.tgz
 }
 
-function dist-release() {
+function dist_release() {
     # alias for release() for now
     # eventually, these may do different things
     release
@@ -52,6 +61,7 @@ function install() {
             ;;
         lvm.ext4)
             docker_storage_driver=overlay2
+            ;;
         *)
             echo "Unsupported filesystem - $filesystem"
             exit 1
