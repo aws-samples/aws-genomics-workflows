@@ -37,9 +37,9 @@ Parameters:
       The version of Amazon EBS Autoscale to use. Options are "dist-release" - the version distributed with this release
       of the reference implementation, "latest" - the latest available tagged version from GitHub, "develop" - the current
       master source (recommended for development and advanced use only).
-    Default: dist-release
+    Default: dist_release
     AllowedValues:
-      - dist-release
+      - dist_release
       - latest
       - develop
   EbsAutoscaleFilesystem:
@@ -115,7 +115,6 @@ Resources:
               - jq
               - btrfs-progs
               - sed
-              - wget
               - git
               - amazon-ssm-agent
               - unzip
@@ -130,17 +129,17 @@ Resources:
 
               - start amazon-ssm-agent
 
-              - stop ecs
-              - service docker stop
+              # set environment variables for provisioning
+              - export EBS_AUTOSCALE_VERSION=${EbsAutoscaleVersion}
               - export EBS_AUTOSCALE_FILESYSTEM="${EbsAutoscaleFilesystem}"
               - export ARTIFACT_ROOT_URL="${ArtifactRootUrl}"
-              - cd /opt && wget ${ArtifactRootUrl}/get-amazon-ebs-autoscale.sh
-              - sh /opt/get-amazon-ebs-autoscale.sh ${EbsAutoscaleVersion} ${ArtifactRootUrl}
-              - cd /opt && wget ${ArtifactRootUrl}/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz
-              - sh /opt/ecs-additions/ecs-additions-common.sh
-              - sh /opt/ecs-additions/ecs-additions-${WorkflowOrchestrator}.sh
-              - service docker start
-              - start ecs
+              - export ARTIFACT_HTTP_ROOT_URL=$ARTIFACT_ROOT_URL
+              - export ARTIFACT_S3_ROOT_URL=`echo $ARTIFACT_HTTP_ROOT_URL | sed 's|https://s3.*com/|s3://|'`
+              - export WORKFLOW_ORCHESTRATOR=${WorkflowOrchestrator}
+              
+              - aws s3 cp $ARTIFACT_S3_ROOT_URL/provision.sh /opt
+              - chmod a+x /opt/provision.sh
+              - /opt/provision.sh
 
               --==BOUNDARY==--
 

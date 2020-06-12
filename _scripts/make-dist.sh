@@ -59,6 +59,9 @@ echo "packaging ecs-additions"
 cd ${SOURCE_PATH}
 tar -czvf ${ARTIFACT_PATH}/aws-ecs-additions.tgz ./ecs-additions/
 
+# add provision script to artifact root
+cp -vf ${SOURCE_PATH}/ecs-additions/provision.sh ${ARTIFACT_PATH}
+
 
 # package container code
 echo "packaging container definitions"
