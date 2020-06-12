@@ -133,6 +133,7 @@ Resources:
               - stop ecs
               - service docker stop
               - export EBS_AUTOSCALE_FILESYSTEM="${EbsAutoscaleFilesystem}"
+              - export ARTIFACT_ROOT_URL="${ArtifactRootUrl}"
               - cd /opt && wget ${ArtifactRootUrl}/get-amazon-ebs-autoscale.sh
               - sh /opt/get-amazon-ebs-autoscale.sh ${EbsAutoscaleVersion} ${ArtifactRootUrl}
               - cd /opt && wget ${ArtifactRootUrl}/aws-ecs-additions.tgz && tar -xzf aws-ecs-additions.tgz

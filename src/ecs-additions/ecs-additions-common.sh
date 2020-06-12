@@ -1,3 +1,6 @@
 #!/bin/bash
 
-cd /usr/local/bin && curl --retry 5 --retry-connrefused $artifactRootUrl/fetch_and_run.sh -o "fetch_and_run.sh" && chmod a+x ./fetch_and_run.sh
+# add fetch and run batch helper script
+cd /opt/ecs-additions
+chmod a+x fetch_and_run.sh
+cp ./fetch_and_run.sh /usr/local/bin
