@@ -2,12 +2,35 @@
 
 set -e
 
-bash _scripts/make-artifacts.sh
+bash _scripts/make-dist.sh
 mkdocs build
 
 ASSET_BUCKET=s3://aws-genomics-workflows
 ASSET_STAGE=${1:-production}
 
+PARAMS=""
+while (( "$#" )); do
+    case "$1" in
+        --bucket)
+            ASSET_BUCKET=$2
+            shift 2
+            ;;
+        --) # end optional argument parsing
+            shift
+            break
+            ;;
+        -*|--*=)
+            echo "Error: unsupported argument $1" >&2
+            exit 1
+            ;;
+        *) # positional agruments
+            PARAMS="$PARAMS $1"
+            shift
+            ;;
+    esac
+done
+
+eval set -- "$PARAMS"
 
 function s3_uri() {
     BUCKET=$1
@@ -80,14 +103,14 @@ function publish() {
 
 function artifacts() {
 
-    publish ./artifacts artifacts
+    publish ./dist/artifacts artifacts
 
 }
 
 
 function templates() {
 
-    publish ./src/templates templates
+    publish ./dist/templates templates
 
 }
 
