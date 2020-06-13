@@ -85,6 +85,7 @@ Resources:
             Statement:
               Effect: Allow
               Action:
+                - "ec2:createTags"
                 - "ec2:createVolume"
                 - "ec2:attachVolume"
                 - "ec2:deleteVolume"
