@@ -62,6 +62,12 @@ Parameters:
     Description: >-
       Specific version of Cromwell to install.  Must match a released version number.
       For example, 51, 51.1, etc. The minimum supported version is 51. Ignored if "Cromwell Version" is set to "latest".
+  
+  CromwellJarUrl:
+    Type: String
+    Description: >-
+      URL to a pre-built cromwell-*.jar file.  Example: https://mycicdserver.com/build/cromwell-XX-SNAP.jar.
+      If this is specifed, CromwellVersion is ignored.
 
   InstanceName:
     Type: String
@@ -114,6 +120,15 @@ Conditions:
     Fn::Equals:
       - !Ref CromwellVersion
       - latest
+
+  NoCromwellJar:
+    Fn::Equals:
+      - !Ref CromwellJarUrl
+      - ""
+
+  UseCromwellJar:
+    Fn::Not:
+      - Condition: NoCromwellJar
 
 
 # Resources
@@ -268,14 +283,20 @@ Resources:
               content: !Sub
               - |
                 #!/bin/bash
-                url=$(curl --silent --retry 5 --retry-connrefused "https://api.github.com/repos/broadinstitute/cromwell/releases/${CromwellVersionPath}" | jq -r .assets[0].browser_download_url)
+                url=${DownloadUrl}
                 curl --retry 5 --retry-connrefused -LO $url
                 ln -s $(find . | grep "cromwell.*\.jar") cromwell.jar
-              - CromwellVersionPath:
+              - DownloadUrl:
                   Fn::If:
-                  - GetLatestCromwellVersion
-                  - !Ref CromwellVersion
-                  - !Join ["/", ["tags", !Ref CromwellVersionSpecified]]
+                    - UseCromwellJar
+                    - !Ref CromwellJarUrl
+                    - !Sub
+                      - $(curl --silent --retry 5 --retry-connrefused https://api.github.com/repos/broadinstitute/cromwell/releases/${CromwellVersionPath} | jq -r .assets[0].browser_download_url)
+                      - CromwellVersionPath:
+                          Fn::If:
+                          - GetLatestCromwellVersion
+                          - !Ref CromwellVersion
+                          - !Join ["/", ["tags", !Ref CromwellVersionSpecified]]
 
               mode: "000755"
               owner: "ec2-user"
@@ -328,15 +349,6 @@ Resources:
               owner: "ec2-user"
               group: "ec2-user"
 
-            "/home/ec2-user/run_cromwell_server.sh":
-              content: |
-                #!/bin/bash
-                java -Dconfig.file=cromwell.conf -jar cromwell.jar server
-
-              mode: "000755"
-              owner: "ec2-user"
-              group: "ec2-user"
-            
             "/home/ec2-user/supervisord.conf":
               mode: "000644"
               owner: "ec2-user"
@@ -362,7 +374,7 @@ Resources:
                 serverurl=unix:///tmp/supervisor.sock ; use a unix:// URL  for a unix socket
 
                 [program:cromwell-server]
-                command=/home/ec2-user/run_cromwell_server.sh  ; the program (relative uses PATH, can take args)
+                command=java -Dconfig.file=cromwell.conf -jar cromwell.jar server  ; the program (relative uses PATH, can take args)
                 directory=/home/ec2-user                       ; directory to cwd to before exec (def no cwd)
                 user=ec2-user                                  ; setuid to this UNIX account to run the program
                 redirect_stderr=true                           ; redirect proc stderr to stdout (default false)
@@ -541,6 +553,7 @@ Metadata:
         Parameters:
           - CromwellVersion
           - CromwellVersionSpecified
+          - CromwellJarUrl
           - S3BucketName
           - S3OpenDataBucketARNs
           - BatchQueue
