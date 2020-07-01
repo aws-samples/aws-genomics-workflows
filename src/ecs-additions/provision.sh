@@ -28,7 +28,9 @@ function ecs() {
 # zombie instances
 trap "ecs enable" INT ERR EXIT
 
+set +e
 ecs disable
+set -e
 
 aws s3 cp --no-progress $ARTIFACT_S3_ROOT_URL/get-amazon-ebs-autoscale.sh /opt
 aws s3 cp --no-progress $ARTIFACT_S3_ROOT_URL/aws-ecs-additions.tgz /opt
