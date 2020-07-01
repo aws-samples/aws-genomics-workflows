@@ -73,4 +73,7 @@ cd /opt
 tar -xzf aws-ecs-additions.tgz
 sh /opt/get-amazon-ebs-autoscale.sh $EBS_AUTOSCALE_VERSION $ARTIFACT_S3_ROOT_URL
 sh /opt/ecs-additions/ecs-additions-common.sh
-sh /opt/ecs-additions/ecs-additions-$WORKFLOW_ORCHESTRATOR.sh
+
+if [[ $WORKFLOW_ORCHESTRATOR ]]; then
+    sh /opt/ecs-additions/ecs-additions-$WORKFLOW_ORCHESTRATOR.sh
+fi
