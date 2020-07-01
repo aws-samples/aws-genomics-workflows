@@ -12,7 +12,6 @@ Metadata:
         Parameters:
           - S3BucketName
           - ExistingBucket
-          - WorkflowOrchestrator
           - VpcId
           - SubnetIds
       - Label:
@@ -30,8 +29,6 @@ Metadata:
         default: S3 Bucket Name
       ExistingBucket:
         default: Existing Bucket?
-      WorkflowOrchestrator:
-        default: Workflow Orchestrator
       VpcId:
         default: VPC ID
       SubnetIds:
@@ -74,14 +71,6 @@ Parameters:
       - Yes
       - No
     Default: No
-  WorkflowOrchestrator:
-    Description: The workflow orchestration engine you will use
-    Type: String
-    AllowedValues:
-      - step-functions
-      - cromwell
-      - nextflow
-    Default: step-functions
   SpotBidPercentage:
     Description: The percent of on-demand pricing for max bid for Spot intances
     Type: Number
@@ -141,7 +130,6 @@ Resources:
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-launch-template.template.yaml
       Parameters:
-        WorkflowOrchestrator: !Ref WorkflowOrchestrator
         ArtifactRootUrl: !Ref ArtifactRootUrl
   
   BatchStack:

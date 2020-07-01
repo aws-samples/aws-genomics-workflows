@@ -23,14 +23,6 @@ Parameters:
     Type: Number
     Default: 100
     Description: The initial size of the volume Docker will use for image and metadata storage (GB)
-  WorkflowOrchestrator:
-    Type: String
-    Description: The workflow orchestration engine you will use
-    Default: step-functions
-    AllowedValues:
-      - step-functions
-      - cromwell
-      - nextflow
   EbsAutoscaleVersion:
     Type: String
     Description: >
@@ -62,7 +54,6 @@ Metadata:
       - Label:
           default: "Required"
         Parameters:
-          - WorkflowOrchestrator
           - LaunchTemplateNamePrefix
       - Label:
           default: "Optional"
@@ -82,8 +73,6 @@ Resources:
             Tags:
             - Key: architecture
               Value: !FindInMap ["TagMap", "default", "architecture"]
-            - Key: solution
-              Value: !Ref WorkflowOrchestrator
         BlockDeviceMappings:
           - Ebs:
               DeleteOnTermination: True
@@ -123,11 +112,9 @@ Resources:
               # install aws-cli v2 and copy the static binary in an easy to find location for bind-mounts into containers
               - curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
               - unzip -q /tmp/awscliv2.zip -d /tmp
-              - /tmp/aws/install
+              - /tmp/aws/install -b /usr/bin
               - mkdir -p /opt/aws-cli/bin
-              - cp -R $(dirname $(find /usr/local/aws-cli -name 'aws' -type f)) /opt/aws-cli/bin
-
-              - start amazon-ssm-agent
+              - cp -av $(dirname $(find /usr/local/aws-cli -name 'aws' -type f))/. /opt/aws-cli/bin/
 
               # set environment variables for provisioning
               - export EBS_AUTOSCALE_VERSION=${EbsAutoscaleVersion}
@@ -135,9 +122,8 @@ Resources:
               - export ARTIFACT_ROOT_URL="${ArtifactRootUrl}"
               - export ARTIFACT_HTTP_ROOT_URL=$ARTIFACT_ROOT_URL
               - export ARTIFACT_S3_ROOT_URL=`echo $ARTIFACT_HTTP_ROOT_URL | sed 's|https://s3.*com/|s3://|'`
-              - export WORKFLOW_ORCHESTRATOR=${WorkflowOrchestrator}
               
-              - aws s3 cp $ARTIFACT_S3_ROOT_URL/provision.sh /opt
+              - aws s3 cp --no-progress $ARTIFACT_S3_ROOT_URL/provision.sh /opt
               - chmod a+x /opt/provision.sh
               - /opt/provision.sh
 
