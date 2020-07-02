@@ -1,3 +1,4 @@
+---
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   (WWPS-GLS-WF-S3) A S3 bucket for storing results from genomics analysis
@@ -77,3 +78,4 @@ Outputs:
         - BucketDoesNotExist
         - !GetAtt GenomicsEnvS3Bucket.Arn
         - !Join [":::", ["arn:aws:s3", !Ref S3BucketName]]
+...
