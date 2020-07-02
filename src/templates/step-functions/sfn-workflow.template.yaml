@@ -30,6 +30,17 @@ Parameters:
     Description: Name or ARN of the AWS Batch Job Queue the workflow will use by default
     Type: String
   
+  ArtifactBucketName:
+    Type: String
+    Default: aws-genomics-workflows
+    Description: >-
+      S3 Bucket where artifacts and additions scripts are stored
+  ArtifactBucketPrefix:
+    Type: String
+    Default: artifacts
+    Description: >-
+      Prefix in ArtifactBucketName where artifacts and additions scripts are stored
+  
   TemplateRootUrl:
     Type: String
     Description: >-
@@ -40,6 +51,20 @@ Parameters:
     AllowedPattern: "https://s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
 
 Resources:
+  ContainerSource:
+    Type: "AWS::CodeCommit::Repository"
+    Properties:
+      RepositoryName: !Sub containers-${AWS::StackName}
+      RepositoryDescription: >-
+        Source code for workflow tooling containers
+      Code:
+        S3:
+          Bucket: !Ref ArtifactBucketName
+          Key: !Sub ${ArtifactBucketPrefix}/containers.zip
+      Tags:
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+  
   ContainerBuildBwa:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -47,10 +72,10 @@ Resources:
       Parameters:
         ImageName: bwa
         ImageTag: "0.7.17"
-        GitRepoType: GITHUB
-        GitCloneUrlHttp: https://github.com/aws-samples/aws-genomics-workflows.git
-        ProjectPath: ./src/containers/bwa
-        ProjectBuildSpecFile: ./src/containers/buildspec-workflow-tool.yml
+        GitRepoType: CODECOMMIT
+        GitCloneUrlHttp: !GetAtt ContainerSource.CloneUrlHttp
+        ProjectPath: ./bwa
+        ProjectBuildSpecFile: ./buildspec-workflow-tool.yml
         CreateBatchJobDefinition: "Yes"
         BatchJobDefinitionName: !Sub "bwa-${AWS::StackName}"
       Tags: !FindInMap ["TagMap", "default", "tags"]
@@ -62,10 +87,10 @@ Resources:
       Parameters:
         ImageName: samtools
         ImageTag: "1.9"
-        GitRepoType: GITHUB
-        GitCloneUrlHttp: https://github.com/aws-samples/aws-genomics-workflows.git
-        ProjectPath: ./src/containers/samtools
-        ProjectBuildSpecFile: ./src/containers/buildspec-workflow-tool.yml
+        GitRepoType: CODECOMMIT
+        GitCloneUrlHttp: !GetAtt ContainerSource.CloneUrlHttp
+        ProjectPath: ./samtools
+        ProjectBuildSpecFile: ./buildspec-workflow-tool.yml
         CreateBatchJobDefinition: "Yes"
         BatchJobDefinitionName: !Sub "samtools-${AWS::StackName}"
       Tags: !FindInMap ["TagMap", "default", "tags"]
@@ -77,10 +102,10 @@ Resources:
       Parameters:
         ImageName: bcftools
         ImageTag: "1.9"
-        GitRepoType: GITHUB
-        GitCloneUrlHttp: https://github.com/aws-samples/aws-genomics-workflows.git
-        ProjectPath: ./src/containers/bcftools
-        ProjectBuildSpecFile: ./src/containers/buildspec-workflow-tool.yml
+        GitRepoType: CODECOMMIT
+        GitCloneUrlHttp: !GetAtt ContainerSource.CloneUrlHttp
+        ProjectPath: ./bcftools
+        ProjectBuildSpecFile: ./buildspec-workflow-tool.yml
         CreateBatchJobDefinition: "Yes"
         BatchJobDefinitionName: !Sub "bcftools-${AWS::StackName}"
       Tags: !FindInMap ["TagMap", "default", "tags"]

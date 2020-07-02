@@ -94,6 +94,17 @@ Parameters:
     Type: String
     Description: >-
       ARN of the Batch Job Queue to use for high priority workflow tasks.
+  
+  ArtifactBucketName:
+    Type: String
+    Default: aws-genomics-workflows
+    Description: >-
+      S3 Bucket where artifacts and additions scripts are stored
+  ArtifactBucketPrefix:
+    Type: String
+    Default: artifacts
+    Description: >-
+      Prefix in ArtifactBucketName where artifacts and additions scripts are stored
 
   TemplateRootUrl:
     Type: String
@@ -134,6 +145,21 @@ Resources:
           - ServerSideEncryptionByDefault:
              SSEAlgorithm: AES256
       Tags: !FindInMap ["TagMap", "default", "tags"]
+  
+  ContainerSource:
+    Type: "AWS::CodeCommit::Repository"
+    Properties:
+      RepositoryName: !Sub containers-${AWS::StackName}
+      RepositoryDescription: >-
+        Source code for workflow tooling containers
+      Code:
+        S3:
+          Bucket: !Ref ArtifactBucketName
+          Key: !Sub ${ArtifactBucketPrefix}/containers.zip
+      Tags:
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+
 
   ContainerBuildNextflow:
     Type: AWS::CloudFormation::Stack
@@ -143,10 +169,10 @@ Resources:
       Parameters:
         ImageName: nextflow
         ImageTag: latest
-        GitRepoType: GITHUB
-        GitCloneUrlHttp: https://github.com/aws-samples/aws-genomics-workflows.git
-        ProjectPath: ./src/containers/nextflow
-        ProjectBuildSpecFile: ./src/containers/buildspec-nextflow.yml
+        GitRepoType: CODECOMMIT
+        GitCloneUrlHttp: !GetAtt ContainerSource.CloneUrlHttp
+        ProjectPath: ./nextflow
+        ProjectBuildSpecFile: ./buildspec-nextflow.yml
         CreateBatchJobDefinition: "No"
       Tags: !FindInMap ["TagMap", "default", "tags"]
 

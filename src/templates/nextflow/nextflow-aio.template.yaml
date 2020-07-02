@@ -206,6 +206,8 @@ Resources:
         NextflowContainerImage: !Ref NextflowContainerImage
         BatchDefaultJobQueue: !GetAtt GWFCoreStack.Outputs.GenomicsEnvDefaultJobQueueArn
         BatchHighPriorityJobQueue: !GetAtt GWFCoreStack.Outputs.GenomicsEnvHighPriorityJobQueueArn
+        ArtifactBucketName: !Ref ArtifactBucketName
+        ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
         TemplateRootUrl: !Ref TemplateRootUrl
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
