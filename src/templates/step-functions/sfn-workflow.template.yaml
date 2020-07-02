@@ -15,6 +15,15 @@ Mappings:
         - Key: "solution"
           Value: "step-functions"
 
+Metadata:
+  AWS::Cloudformation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Required"
+        Paramters:
+          - S3BucketName
+          - BatchJobQueue
+
 Parameters:
   S3BucketName:
     Description: >-

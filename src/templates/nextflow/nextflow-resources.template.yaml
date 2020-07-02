@@ -26,6 +26,7 @@ Metadata:
           - S3NextflowBucketName
           - ExistingBucket
           - BatchDefaultJobQueue
+          - BatchHighPriorityJobQueue
       - Label:
           default: "Optional"
         Parameters:
