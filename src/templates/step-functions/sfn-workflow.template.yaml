@@ -52,6 +52,7 @@ Resources:
         ProjectPath: ./src/containers/bwa
         ProjectBuildSpecFile: ./src/containers/buildspec-workflow-tool.yml
         CreateBatchJobDefinition: "Yes"
+        BatchJobDefinitionName: !Sub "bwa-${AWS::StackName}"
       Tags: !FindInMap ["TagMap", "default", "tags"]
   
   ContainerBuildSamtools:
@@ -66,6 +67,7 @@ Resources:
         ProjectPath: ./src/containers/samtools
         ProjectBuildSpecFile: ./src/containers/buildspec-workflow-tool.yml
         CreateBatchJobDefinition: "Yes"
+        BatchJobDefinitionName: !Sub "samtools-${AWS::StackName}"
       Tags: !FindInMap ["TagMap", "default", "tags"]
   
   ContainerBuildBcftools:
@@ -80,6 +82,7 @@ Resources:
         ProjectPath: ./src/containers/bcftools
         ProjectBuildSpecFile: ./src/containers/buildspec-workflow-tool.yml
         CreateBatchJobDefinition: "Yes"
+        BatchJobDefinitionName: !Sub "bcftools-${AWS::StackName}"
       Tags: !FindInMap ["TagMap", "default", "tags"]
   
   IAMStepFunctionsExecutionRole:

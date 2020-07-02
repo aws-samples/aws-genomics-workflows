@@ -66,12 +66,21 @@ Parameters:
     AllowedValues:
       - "Yes"
       - "No"
+  
+  BatchJobDefinitionName:
+    Description: >
+      AWS Batch Job Definition name for the container. Defaults to ImageName
+      if not specified.
+    Type: String
+    Default: ""
 
 Conditions:
   CreateBatchJobDefinitionTrue:
     Fn::Equals:
     - !Ref CreateBatchJobDefinition
     - "Yes"
+  
+  NoBatchJobDefinitionName: !Equals [ !Ref BatchJobDefinitionName, "" ]
 
 Resources:
   IAMCodeBuildRole:
@@ -422,7 +431,11 @@ Resources:
     Type: AWS::Batch::JobDefinition
     Condition: CreateBatchJobDefinitionTrue
     Properties:
-      JobDefinitionName: !Sub ${ImageName}-${ImageTag}
+      JobDefinitionName:
+        Fn::If:
+          - NoBatchJobDefinitionName
+          - !Ref ImageName
+          - !Ref BatchJobDefinitionName
       Type: container
       ContainerProperties:
         Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ImageName}:${ImageTag}
