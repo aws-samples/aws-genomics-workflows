@@ -31,7 +31,6 @@ Metadata:
       - Label:
           default: "AWS Batch"
         Parameters:
-          - SpotBidPercentage
           - DefaultCEMinvCpus
           - DefaultCEMaxvCpus
           - HighPriorityCEMinvCpus
@@ -54,8 +53,6 @@ Metadata:
         default: Existing Bucket?
       KeyPairName:
         default: EC2 Key Pair Name
-      SpotBidPercentage:
-        default: Spot Bid %
       DefaultCEMinvCpus:
         default: Default Min vCPU
       DefaultCEMaxvCpus:
@@ -89,10 +86,6 @@ Parameters:
   KeyPairName:
     Description: Key Pair name used for SSH access to the Cromwell Server.
     Type: AWS::EC2::KeyPair::KeyName
-  SpotBidPercentage:
-    Description: The percent of on-demand pricing for max bid for Spot intances
-    Type: Number
-    Default: 100
   DefaultCEMinvCpus:
     Description: The minimum number of CPUs for the default Batch Compute Environment
     Type: Number
@@ -220,7 +213,6 @@ Resources:
         SubnetIds: !Sub "${VpcStack.Outputs.PrivateSubnet1AID}, ${VpcStack.Outputs.PrivateSubnet2AID}"
         S3BucketName: !Ref S3BucketName
         ExistingBucket: !Ref ExistingBucket
-        SpotBidPercentage: !Ref 'SpotBidPercentage'
         DefaultCEMinvCpus: !Ref 'DefaultCEMinvCpus'
         DefaultCEMaxvCpus: !Ref 'DefaultCEMaxvCpus'
         HighPriorityCEMinvCpus: !Ref 'HighPriorityCEMinvCpus'

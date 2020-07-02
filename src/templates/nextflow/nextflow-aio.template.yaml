@@ -28,7 +28,6 @@ Metadata:
       - Label:
           default: "AWS Batch"
         Parameters:
-          - SpotBidPercentage
           - DefaultCEMinvCpus
           - DefaultCEMaxvCpus
           - HighPriorityCEMinvCpus
@@ -49,8 +48,6 @@ Metadata:
         default: S3 Nextflow Bucket Name
       ExistingNextflowBucket:
         default: Existing Nextflow Bucket?
-      SpotBidPercentage:
-        default: Spot Bid %
       DefaultCEMinvCpus:
         default: Default Min vCPU
       DefaultCEMaxvCpus:
@@ -83,10 +80,6 @@ Parameters:
       - Yes
       - No
     Default: No
-  SpotBidPercentage:
-    Description: The percent of on-demand pricing for max bid for Spot intances
-    Type: Number
-    Default: 100
   DefaultCEMinvCpus:
     Description: The minimum number of CPUs for the default Batch Compute Environment
     Type: Number
@@ -183,7 +176,6 @@ Resources:
         SubnetIds: !Sub "${VpcStack.Outputs.PrivateSubnet1AID}, ${VpcStack.Outputs.PrivateSubnet2AID}"
         S3BucketName: !Ref S3DataBucketName
         ExistingBucket: !Ref ExistingDataBucket
-        SpotBidPercentage: !Ref 'SpotBidPercentage'
         DefaultCEMinvCpus: !Ref 'DefaultCEMinvCpus'
         DefaultCEMaxvCpus: !Ref 'DefaultCEMaxvCpus'
         HighPriorityCEMinvCpus: !Ref 'HighPriorityCEMinvCpus'

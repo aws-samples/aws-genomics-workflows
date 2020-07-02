@@ -17,7 +17,6 @@ Metadata:
       - Label:
           default: Optional
         Parameters:
-          - SpotBidPercentage
           - DefaultCEMinvCpus
           - DefaultCEMaxvCpus
           - HighPriorityCEMinvCpus
@@ -35,8 +34,6 @@ Metadata:
         default: VPC ID
       SubnetIds:
         default: VPC Subnet IDs
-      SpotBidPercentage:
-        default: Spot Bid %
       DefaultCEMinvCpus:
         default: Default Min vCPU
       DefaultCEMaxvCpus:
@@ -75,10 +72,6 @@ Parameters:
       - Yes
       - No
     Default: No
-  SpotBidPercentage:
-    Description: The percent of on-demand pricing for max bid for Spot intances
-    Type: Number
-    Default: 100
   DefaultCEMinvCpus:
     Description: The minimum number of CPUs for the default Batch Compute Environment
     Type: Number
@@ -154,7 +147,6 @@ Resources:
         LaunchTemplateId: !Sub ${LaunchTplStack.Outputs.LaunchTemplateId}
         VpcId: !Ref VpcId
         SubnetIds: !Join [",", !Ref SubnetIds ]
-        SpotBidPercentage: !Ref SpotBidPercentage
         DefaultCEMinvCpus: !Ref DefaultCEMinvCpus
         DefaultCEMaxvCpus: !Ref DefaultCEMaxvCpus
         HighPriorityCEMinvCpus: !Ref HighPriorityCEMinvCpus

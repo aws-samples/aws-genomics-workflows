@@ -13,7 +13,6 @@ Metadata:
         - LaunchTemplateId
         - VpcId
         - SubnetIds
-        - SpotBidPercentage
         - DefaultCEMinvCpus
         - DefaultCEMaxvCpus
         - HighPriorityCEMinvCpus
@@ -28,8 +27,6 @@ Metadata:
         default: VPC ID
       SubnetIds:
         default: VPC Subnet IDs
-      SpotBidPercentage:
-        default: Spot market bid percentage (default = 100)
       DefaultCEMinvCpus:
         default: Default Queue Min vCPU count
       DefaultCEMaxvCpus:
@@ -53,12 +50,6 @@ Parameters:
   SubnetIds:
     Type: List<AWS::EC2::Subnet::Id>
     Description: 'Subnets you want your batch compute environment to launch in. We recommend private subnets. NOTE: Must be from the VPC provided.'
-  SpotBidPercentage:
-    Type: Number
-    Description: Maximum Spot bid percentage from on-demand instance price.
-    MaxValue: 100
-    MinValue: 5
-    Default: 100
   LaunchTemplateId:
     Type: String
     Description: Launch Template you want your AWS Batch Compute Environments to use
@@ -135,7 +126,11 @@ Resources:
       Type: MANAGED
       State: ENABLED
       ComputeResources:
-        BidPercentage: !Ref SpotBidPercentage
+        # Set the Spot price to 100% of on-demand price
+        # This is the maximum price for spot instances that Batch will launch.
+        # Lowering this puts a limit on the spot capacity that Batch has available.
+        # Spot instances are terminated when on-demand capacity is needed, regardless of the price set.
+        BidPercentage: 100 
         # Ec2KeyPair: !Ref Ec2KeyPairName
         LaunchTemplate:
           LaunchTemplateId: !Ref LaunchTemplateId
