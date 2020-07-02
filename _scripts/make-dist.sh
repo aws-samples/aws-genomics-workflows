@@ -71,7 +71,7 @@ zip -r -v $ARTIFACT_PATH/containers.zip ./containers/
 
 # add templates to dist
 echo "copying cloudformation templates"
-cp -Rv $SOURCE_PATH/templates/ $TEMPLATES_PATH
+cp -Rv $SOURCE_PATH/templates/. $TEMPLATES_PATH
 
 
 # cleanup
