@@ -170,11 +170,16 @@ Parameters:
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   
-  ArtifactRootUrl:
+  ArtifactBucketName:
     Type: String
-    Default: https://s3.amazonaws.com/pwyming-aws-genomics-workflows/artifacts  # https://d3mhka25m6n3zh.cloudfront.net/artifacts
+    Default: aws-genomics-workflows
     Description: >-
-      Root URL for where artifacts / additions scripts are stored
+      S3 Bucket where artifacts and additions scripts are stored
+  ArtifactBucketPrefix:
+    Type: String
+    Default: artifacts
+    Description: >-
+      Prefix in ArtifactBucketName where artifacts and additions scripts are stored
   
   TemplateRootUrl:
     Type: String
@@ -220,7 +225,8 @@ Resources:
         DefaultCEMaxvCpus: !Ref 'DefaultCEMaxvCpus'
         HighPriorityCEMinvCpus: !Ref 'HighPriorityCEMinvCpus'
         HighPriorityCEMaxvCpus: !Ref 'HighPriorityCEMaxvCpus'
-        ArtifactRootUrl: !Ref ArtifactRootUrl
+        ArtifactBucketName: !Ref ArtifactBucketName
+        ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
         TemplateRootUrl: !Ref TemplateRootUrl
       Tags: !FindInMap ["TagMap", "default", "tags"]
 

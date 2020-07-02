@@ -42,11 +42,16 @@ Parameters:
     AllowedValues:
       - btrfs
       - lvm.ext4
-  ArtifactRootUrl:
+  ArtifactBucketName:
     Type: String
-    Default: https://s3.amazonaws.com/aws-genomics-workflows/artifacts
+    Default: aws-genomics-workflows
     Description: >-
-      Root URL for where artifacts / additions scripts are stored
+      S3 Bucket where artifacts and additions scripts are stored
+  ArtifactBucketPrefix:
+    Type: String
+    Default: artifacts
+    Description: >-
+      Prefix in ArtifactBucketName where artifacts and additions scripts are stored
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -61,6 +66,9 @@ Metadata:
           - DockerStorageVolumeSize
           - EbsAutoscaleVersion
           - EbsAutoscaleFilesystem
+
+Conditions:
+  NoArtifactBucketPrefix: !Equals [ !Ref ArtifactBucketPrefix, "" ]
 
 Resources:
   EC2LaunchTemplate:
@@ -93,41 +101,45 @@ Resources:
             DeviceName: /dev/xvdba
         UserData:
           Fn::Base64:
-            Fn::Sub: |
-              MIME-Version: 1.0
-              Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+            Fn::Sub:
+              - |
+                MIME-Version: 1.0
+                Content-Type: multipart/mixed; boundary="==BOUNDARY=="
 
-              --==BOUNDARY==
-              Content-Type: text/cloud-config; charset="us-ascii"
+                --==BOUNDARY==
+                Content-Type: text/cloud-config; charset="us-ascii"
 
-              packages:
-              - jq
-              - btrfs-progs
-              - sed
-              - git
-              - amazon-ssm-agent
-              - unzip
+                packages:
+                - jq
+                - btrfs-progs
+                - sed
+                - git
+                - amazon-ssm-agent
+                - unzip
 
-              runcmd:
-              # install aws-cli v2 and copy the static binary in an easy to find location for bind-mounts into containers
-              - curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
-              - unzip -q /tmp/awscliv2.zip -d /tmp
-              - /tmp/aws/install -b /usr/bin
-              - mkdir -p /opt/aws-cli/bin
-              - cp -av $(dirname $(find /usr/local/aws-cli -name 'aws' -type f))/. /opt/aws-cli/bin/
+                runcmd:
+                # install aws-cli v2 and copy the static binary in an easy to find location for bind-mounts into containers
+                - curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+                - unzip -q /tmp/awscliv2.zip -d /tmp
+                - /tmp/aws/install -b /usr/bin
+                - mkdir -p /opt/aws-cli/bin
+                - cp -av $(dirname $(find /usr/local/aws-cli -name 'aws' -type f))/. /opt/aws-cli/bin/
 
-              # set environment variables for provisioning
-              - export EBS_AUTOSCALE_VERSION=${EbsAutoscaleVersion}
-              - export EBS_AUTOSCALE_FILESYSTEM="${EbsAutoscaleFilesystem}"
-              - export ARTIFACT_ROOT_URL="${ArtifactRootUrl}"
-              - export ARTIFACT_HTTP_ROOT_URL=$ARTIFACT_ROOT_URL
-              - export ARTIFACT_S3_ROOT_URL=`echo $ARTIFACT_HTTP_ROOT_URL | sed 's|https://s3.*com/|s3://|'`
-              
-              - aws s3 cp --no-progress $ARTIFACT_S3_ROOT_URL/provision.sh /opt
-              - chmod a+x /opt/provision.sh
-              - /opt/provision.sh
+                # set environment variables for provisioning
+                - export EBS_AUTOSCALE_VERSION=${EbsAutoscaleVersion}
+                - export EBS_AUTOSCALE_FILESYSTEM="${EbsAutoscaleFilesystem}"
+                - export ARTIFACT_S3_ROOT_URL=${ArtifactS3RootUrl}
+                
+                - aws s3 cp --no-progress $ARTIFACT_S3_ROOT_URL/provision.sh /opt
+                - chmod a+x /opt/provision.sh
+                - /opt/provision.sh
 
-              --==BOUNDARY==--
+                --==BOUNDARY==--
+              - ArtifactS3RootUrl:
+                  Fn::If:
+                    - NoArtifactBucketPrefix
+                    - !Sub "s3://${ArtifactBucketName}"
+                    - !Sub "s3://${ArtifactBucketName}/${ArtifactBucketPrefix}"
 
 Outputs:
   LaunchTemplateId:

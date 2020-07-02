@@ -3,6 +3,7 @@ set -e
 
 VERSION=${1:-release}
 ARTIFACT_ROOT_URL=$2
+FILESYSTEM=${3:-btrfs}
 
 function develop() {
     # retrieve the current development version of amazon-ebs-autoscale
@@ -52,7 +53,7 @@ function install() {
     # this function expects the following environment variables
     #   EBS_AUTOSCALE_FILESYSTEM
 
-    local filesystem=${EBS_AUTOSCALE_FILESYSTEM:-btrfs}
+    local filesystem=${1:-btrfs}
     local docker_storage_driver=btrfs
 
     case $filesystem in
@@ -86,4 +87,4 @@ function install() {
 cd /opt
 $VERSION
 
-install
+install $FILESYSTEM

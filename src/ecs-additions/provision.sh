@@ -66,14 +66,20 @@ set +e
 ecs disable
 set -e
 
-aws s3 cp --no-progress $ARTIFACT_S3_ROOT_URL/get-amazon-ebs-autoscale.sh /opt
-aws s3 cp --no-progress $ARTIFACT_S3_ROOT_URL/aws-ecs-additions.tgz /opt
-
+# install amazon-ebs-autoscale
 cd /opt
+aws s3 cp --no-progress $ARTIFACT_S3_ROOT_URL/get-amazon-ebs-autoscale.sh /opt
+sh /opt/get-amazon-ebs-autoscale.sh $EBS_AUTOSCALE_VERSION $ARTIFACT_S3_ROOT_URL $EBS_AUTOSCALE_FILESYSTEM
+
+# common provisioning for all workflow orchestrators
+cd /opt
+aws s3 cp --no-progress $ARTIFACT_S3_ROOT_URL/aws-ecs-additions.tgz /opt
 tar -xzf aws-ecs-additions.tgz
-sh /opt/get-amazon-ebs-autoscale.sh $EBS_AUTOSCALE_VERSION $ARTIFACT_S3_ROOT_URL
 sh /opt/ecs-additions/ecs-additions-common.sh
 
+# workflow specific provisioning if needed
 if [[ $WORKFLOW_ORCHESTRATOR ]]; then
-    sh /opt/ecs-additions/ecs-additions-$WORKFLOW_ORCHESTRATOR.sh
+    if [ -f "/opt/ecs-additions/ecs-additions-$WORKFLOW_ORCHESTRATOR.sh" ]; then
+        sh /opt/ecs-additions/ecs-additions-$WORKFLOW_ORCHESTRATOR.sh
+    fi
 fi

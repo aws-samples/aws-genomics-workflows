@@ -22,6 +22,8 @@ Metadata:
           - DefaultCEMaxvCpus
           - HighPriorityCEMinvCpus
           - HighPriorityCEMaxvCpus
+          - ArtifactBucketName
+          - ArtifactBucketPrefix
           - TemplateRootUrl
 
     ParameterLabels:
@@ -43,8 +45,10 @@ Metadata:
         default: High Priority Min vCPU
       HighPriorityCEMaxvCpus:
         default: High Priority Max vCPU
-      ArtifactRootUrl:
-        default: Artifact Root URL
+      ArtifactBucketName:
+        default: Artifact S3 Bucket Name
+      ArtifactBucketPrefix:
+        default: Artifact S3 Prefix
       TemplateRootUrl:
         default: Template Root URL
 
@@ -91,11 +95,16 @@ Parameters:
     Description: The maximum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
     Default: 100
-  ArtifactRootUrl:
+  ArtifactBucketName:
     Type: String
-    Default: https://d3mhka25m6n3zh.cloudfront.net/artifacts
+    Default: aws-genomics-workflows
     Description: >-
-      Root URL for where artifacts / additions scripts are stored
+      S3 Bucket where artifacts and additions scripts are stored
+  ArtifactBucketPrefix:
+    Type: String
+    Default: artifacts
+    Description: >-
+      Prefix in ArtifactBucketName where artifacts and additions scripts are stored
   TemplateRootUrl:
     Type: String
     Description: >-
@@ -130,7 +139,8 @@ Resources:
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-launch-template.template.yaml
       Parameters:
-        ArtifactRootUrl: !Ref ArtifactRootUrl
+        ArtifactBucketName: !Ref ArtifactBucketName
+        ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
   
   BatchStack:
     Type: AWS::CloudFormation::Stack

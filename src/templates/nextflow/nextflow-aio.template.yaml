@@ -131,11 +131,16 @@ Parameters:
       Provide this if you have a specific version of nextflow you want to use, otherwise a 
       container will be built using the latest version. 
   
-  ArtifactRootUrl:
+  ArtifactBucketName:
     Type: String
-    Default: https://s3.amazonaws.com/aws-genomics-workflows/artifacts
+    Default: aws-genomics-workflows
     Description: >-
-      Root URL for where artifacts / additions scripts are stored
+      S3 Bucket where artifacts and additions scripts are stored
+  ArtifactBucketPrefix:
+    Type: String
+    Default: artifacts
+    Description: >-
+      Prefix in ArtifactBucketName where artifacts and additions scripts are stored
 
   TemplateRootUrl:
     Type: String
@@ -183,7 +188,8 @@ Resources:
         DefaultCEMaxvCpus: !Ref 'DefaultCEMaxvCpus'
         HighPriorityCEMinvCpus: !Ref 'HighPriorityCEMinvCpus'
         HighPriorityCEMaxvCpus: !Ref 'HighPriorityCEMaxvCpus'
-        ArtifactRootUrl: !Ref ArtifactRootUrl
+        ArtifactBucketName: !Ref ArtifactBucketName
+        ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
         TemplateRootUrl: !Ref TemplateRootUrl
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
