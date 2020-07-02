@@ -240,7 +240,7 @@ Outputs:
                     "SAMPLE_ID": "NIST7035",
                     "SOURCE_DATA_PREFIX": "s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq",
                     "JOB_OUTPUT_PREFIX": "s3://${S3BucketName}",
-                    "JOB_AWS_CLI_PATH": "/home/ec2-user/miniconda/bin"
+                    "JOB_AWS_CLI_PATH": "/opt/aws-cli/bin"
                 },
                 "chromosome": "chr21"
             }
