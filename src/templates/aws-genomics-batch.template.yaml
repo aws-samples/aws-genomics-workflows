@@ -85,7 +85,7 @@ Parameters:
 
 
 Resources:
-  GenomicsBatchSecurityGroup:
+  SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: SG for genomics workflows on Batch
@@ -94,7 +94,7 @@ Resources:
   SGSSHIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      GroupId: !Ref GenomicsBatchSecurityGroup
+      GroupId: !Ref SecurityGroup
       IpProtocol: tcp
       FromPort: 22
       ToPort: 22
@@ -102,7 +102,7 @@ Resources:
   SGAllTcpEgress:
     Type: AWS::EC2::SecurityGroupEgress
     Properties:
-      GroupId: !Ref GenomicsBatchSecurityGroup
+      GroupId: !Ref SecurityGroup
       IpProtocol: tcp
       FromPort: 0
       ToPort: 65535
@@ -110,13 +110,13 @@ Resources:
   SGAllTcpSelfIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      GroupId: !Ref GenomicsBatchSecurityGroup
+      GroupId: !Ref SecurityGroup
       IpProtocol: tcp
       FromPort: 0
       ToPort: 65535
-      SourceSecurityGroupId: !Ref GenomicsBatchSecurityGroup
+      SourceSecurityGroupId: !Ref SecurityGroup
 
-  GenomicsDefaultComputeEnv:
+  SpotComputeEnv:
     Type: AWS::Batch::ComputeEnvironment
     Properties:
       ComputeEnvironmentName: !Sub 
@@ -126,6 +126,7 @@ Resources:
       Type: MANAGED
       State: ENABLED
       ComputeResources:
+        AllocationStrategy: SPOT_CAPACITY_OPTIMIZED
         # Set the Spot price to 100% of on-demand price
         # This is the maximum price for spot instances that Batch will launch.
         # Lowering this puts a limit on the spot capacity that Batch has available.
@@ -141,7 +142,7 @@ Resources:
         MinvCpus: !Ref DefaultCEMinvCpus
         MaxvCpus: !Ref DefaultCEMaxvCpus
         SecurityGroupIds:
-          - !Ref GenomicsBatchSecurityGroup
+          - !Ref SecurityGroup
         SpotIamFleetRole: !Ref SpotFleetRoleArn
         Subnets: !Ref SubnetIds
         Type: SPOT
@@ -150,7 +151,7 @@ Resources:
             - batch-spot-worker-${StackGuid}
             - StackGuid: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
 
-  GenomicsHighPriorityComputeEnv:
+  OnDemandComputeEnv:
     Type: AWS::Batch::ComputeEnvironment
     Properties:
       ComputeEnvironmentName: !Sub 
@@ -169,7 +170,7 @@ Resources:
         MinvCpus: !Ref HighPriorityCEMinvCpus
         MaxvCpus: !Ref HighPriorityCEMaxvCpus
         SecurityGroupIds:
-          - !Ref GenomicsBatchSecurityGroup
+          - !Ref SecurityGroup
         Subnets: !Ref SubnetIds
         Type: EC2
         Tags:
@@ -177,7 +178,7 @@ Resources:
             - batch-ondemand-worker-${StackGuid}
             - StackGuid: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
 
-  GenomicsHighPriorityQueue:
+  PriorityQueue:
     Type: AWS::Batch::JobQueue
     Properties:
       JobQueueName: !Sub
@@ -187,11 +188,11 @@ Resources:
       State: ENABLED
       ComputeEnvironmentOrder:
         - Order: 1
-          ComputeEnvironment: !Ref GenomicsHighPriorityComputeEnv
+          ComputeEnvironment: !Ref OnDemandComputeEnv
         - Order: 2
-          ComputeEnvironment: !Ref GenomicsDefaultComputeEnv
+          ComputeEnvironment: !Ref SpotComputeEnv
 
-  GenomicsDefaultQueue:
+  DefaultQueue:
     Type: AWS::Batch::JobQueue
     Properties:
       JobQueueName: !Sub
@@ -201,12 +202,12 @@ Resources:
       State: ENABLED
       ComputeEnvironmentOrder:
         - Order: 1
-          ComputeEnvironment: !Ref GenomicsDefaultComputeEnv
+          ComputeEnvironment: !Ref SpotComputeEnv
         - Order: 2
-          ComputeEnvironment: !Ref GenomicsHighPriorityComputeEnv
+          ComputeEnvironment: !Ref OnDemandComputeEnv
 
 Outputs:
   DefaultJobQueueArn:
-    Value: !Ref GenomicsDefaultQueue
+    Value: !Ref DefaultQueue
   HighPriorityJobQueueArn:
-    Value: !Ref GenomicsHighPriorityQueue
+    Value: !Ref PriorityQueue
