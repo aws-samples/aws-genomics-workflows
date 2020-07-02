@@ -1,0 +1,197 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  (WWPS-GLS-WF-CODE) Creates AWS CodeCommit repos and CodeBuild projects for Genomics Workflows Core assets and artifacts
+
+Parameters:
+  S3BucketName:
+    Type: String
+    Description: >-
+      Bucket where artifacts will be placed
+    
+  ArtifactBucketName:
+    Type: String
+    Default: aws-genomics-workflows
+    Description: >-
+      S3 Bucket where artifacts and additions scripts are stored
+  ArtifactBucketPrefix:
+    Type: String
+    Default: artifacts
+    Description: >-
+      Prefix in ArtifactBucketName where artifacts and additions scripts are stored
+
+Mappings:
+  TagMap:
+    default:
+      architecture: "genomics-workflows"
+      solution: "default"
+      tags:
+        - Key: "architecture"
+          Value: "genomics-workflows"
+        - Key: "solution"
+          Value: "default"
+
+# Conditions:
+  
+Resources:
+
+  IAMCodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: !Sub codebuild-service-role-${AWS::StackName}-${AWS::Region}
+      Path: /service-role/
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub codebuild-basepolicy-${AWS::StackName}-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Resource:
+                  - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/*"
+                Action:
+                  - codebuild:CreateReportGroup
+                  - codebuild:CreateReport
+                  - codebuild:UpdateReport
+                  - codebuild:BatchPutTestCases
+
+              - Effect: Allow
+                Resource:
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*"
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*:*"
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+
+              - Effect: Allow
+                Resource:
+                  - !Sub arn:aws:s3:::${S3BucketName}
+                  - !Sub arn:aws:s3:::${S3BucketName}/*
+                Action:
+                  - s3:*
+  
+  IAMLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+      Policies:
+        - PolicyName: !Sub codebuild-access-${AWS::Region}
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "codebuild:StartBuild"
+                  - "codebuild:BatchGetBuilds"
+                Resource: "*"
+  
+  RepoEcsAdditions:
+    Type: "AWS::CodeCommit::Repository"
+    Properties:
+      RepositoryName: !Sub ecs-additions-${AWS::StackName}
+      RepositoryDescription: |
+        Provisioning scripts for Batch instances
+      
+      Code:
+        S3:
+          Bucket: !Ref ArtifactBucketName
+          Key: !Sub ${ArtifactBucketPrefix}/ecs-additions.zip
+      Tags:
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+  
+  BuildEbsAutoscale:
+    Type: "AWS::CodeBuild::Project"
+    Properties:
+      Name: String
+      Description: |
+        Build project for amazon-ebs-autoscale artifact
+      Environment: #required
+        Type: LINUX_CONTAINER
+        Image: aws/codebuild/standard:1.0
+        ComputeType: BUILD_GENERAL1_LARGE
+        EnvironmentVariables:
+          - Name: SOURCE_ARTIFACT_URL
+            Value: !Sub ${ArtifactBucketName}/${ArtifactBucketPrefix}
+          - Name: ARTIFACT
+            Value: amazon-ebs-autoscale.tgz
+          - Name: TARGET_ARTIFACT_URL
+            Value: !Sub ${S3BucketName}/_artifacts
+      Source: #required
+        Type: NO_SOURCE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - aws s3 cp ${SOURCE_ARTIFACT_URL}/${ARTIFACT} ${TARGET_ARTIFACT_URL}
+      Artifacts:
+        Type: NO_ARTIFACTS
+      ServiceRole: !GetAtt IAMCodeBuildRole.Arn
+      Tags:
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+  
+  CodeBuildInvocation:
+    Type: Custom::CodeBuildInvocation
+    Properties:
+      ServiceToken: !GetAtt CodeBuildInvocationFunction.Arn
+      BuildProject: !Ref BuildEbsAutoscale
+    
+  CodeBuildInvocationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt IAMLambdaExecutionRole.Arn
+      Runtime: python3.7
+      Timeout: 300
+      Code:
+        ZipFile: |
+          from time import sleep
+
+          import boto3
+          import cfnresponse
+
+          def handler(event, context):
+              if event['RequestType'] in ("Create", "Update"):
+                  codebuild = boto3.client('codebuild')
+                  build = codebuild.start_build(
+                      projectName=event["ResourceProperties"]["BuildProject"]
+                  )['build']
+                          
+                  id = build['id']
+                  status = build['buildStatus']
+                  while status == 'IN_PROGRESS':
+                      sleep(10)
+                      build = codebuild.batch_get_builds(ids=[id])['builds'][0]
+                      status = build['buildStatus']
+                  
+                  if status != "SUCCEEDED":
+                      cfnresponse.send(event, context, cfnresponse.FAILED, None)
+              
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, None)
+      
+  
+Outputs:
+  EcsAdditionsRepo:
+    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/codesuite/codecommit/repositories/${RepoEcsAdditions}/browse?region=${AWS::Region}
+  EcsAdditionsRepoCloneUrlHttp:
+    Value: !GetAtt RepoEcsAdditions.CloneUrlHttp
+...
