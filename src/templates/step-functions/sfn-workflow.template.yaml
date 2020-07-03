@@ -20,7 +20,7 @@ Metadata:
     ParameterGroups:
       - Label:
           default: "Required"
-        Paramters:
+        Parameters:
           - S3BucketName
           - BatchJobQueue
 
