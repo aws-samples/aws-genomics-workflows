@@ -7,11 +7,11 @@ Parameters:
       Type: String
       Description: The name of the S3 bucket which will store the results of genomics analyses.
 Resources:
-  GenomicsEnvBatchJobRole:
+  BatchJobRole:
     Type: AWS::IAM::Role
     Properties:
       Policies:
-        - PolicyName: !Sub GenomicsEnv-S3Bucket-Access-${AWS::Region}
+        - PolicyName: !Sub S3Bucket-Access-${AWS::Region}
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -37,7 +37,7 @@ Resources:
                 - "ecs-tasks.amazonaws.com"
             Action:
               - "sts:AssumeRole"
-  GenomicsEnvBatchInstanceRole:
+  BatchInstanceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -50,7 +50,7 @@ Resources:
             Action:
               - "sts:AssumeRole"
       Policies:
-        - PolicyName: !Sub GenomicsEnv-S3Bucket-Access-${AWS::Region}
+        - PolicyName: !Sub S3Bucket-Access-${AWS::Region}
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -79,7 +79,7 @@ Resources:
                 Action:
                   - "s3:*"
  
-        - PolicyName: !Sub GenomicsEnv-Autoscale-EBS-${AWS::Region}
+        - PolicyName: !Sub Autoscale-EBS-${AWS::Region}
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -92,16 +92,27 @@ Resources:
                 - "ec2:modifyInstanceAttribute"
                 - "ec2:describeVolumes"
               Resource: "*"
+        
+        - PolicyName: !Sub CodeCommit-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              Effect: Allow
+              Action:
+                - codecommit:GitPull
+              Resource:
+                - !Sub arn:aws:codecommit:*:${AWS::AccountId}:*
+                
       ManagedPolicyArns:
       - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
       - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
       - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  GenomicsEnvBatchInstanceProfile:
+  BatchInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Roles:
-        - Ref: GenomicsEnvBatchInstanceRole
-  GenomicsEnvBatchSpotFleetRole:
+        - Ref: BatchInstanceRole
+  BatchSpotFleetRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -115,7 +126,7 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
       - "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole"
-  GenomicsEnvBatchServiceRole:
+  BatchServiceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -129,10 +140,10 @@ Resources:
       - arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole
 Outputs:
   BatchJobRoleArn:
-    Value: !GetAtt GenomicsEnvBatchJobRole.Arn
+    Value: !GetAtt BatchJobRole.Arn
   BatchServiceRoleArn:
-    Value: !GetAtt GenomicsEnvBatchServiceRole.Arn
+    Value: !GetAtt BatchServiceRole.Arn
   BatchSpotFleetRoleArn:
-    Value: !GetAtt GenomicsEnvBatchSpotFleetRole.Arn
+    Value: !GetAtt BatchSpotFleetRole.Arn
   BatchInstanceProfileArn:
-    Value: !GetAtt GenomicsEnvBatchInstanceProfile.Arn
+    Value: !GetAtt BatchInstanceProfile.Arn
