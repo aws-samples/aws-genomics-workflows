@@ -4,12 +4,10 @@ set -e
 set -x
 
 export OS=`uname -r`
+BASEDIR=`dirname $0`
 
 # Expected environment variables
-#   EBS_AUTOSCALE_VERSION
-#   EBS_AUTOSCALE_FILESYSTEM
-#   ARTIFACT_ROOT_URL
-#   ARTIFACT_HTTP_ROOT_URL
+#   GWFCORE_NAMESPACE
 #   ARTIFACT_S3_ROOT_URL
 #   WORKFLOW_ORCHESTRATOR (OPTIONAL)
 
@@ -66,20 +64,27 @@ set +e
 ecs disable
 set -e
 
-# install amazon-ebs-autoscale
+ARTIFACT_S3_ROOT_URL=$(\
+    aws ssm get-parameter \
+        --name /gwfcore/${GWFCORE_NAMESPACE}/installed-artifacts/s3-root-url \
+        --query 'Parameter.Value' \
+        --output text \
+)
+
+# retrieve and install amazon-ebs-autoscale
 cd /opt
-aws s3 cp --no-progress $ARTIFACT_S3_ROOT_URL/get-amazon-ebs-autoscale.sh /opt
-sh /opt/get-amazon-ebs-autoscale.sh $EBS_AUTOSCALE_VERSION $ARTIFACT_S3_ROOT_URL $EBS_AUTOSCALE_FILESYSTEM
+sh $BASEDIR/get-amazon-ebs-autoscale.sh \
+    --install-version dist_release \
+    --artifact-root-url $ARTIFACT_S3_ROOT_URL \
+    --file-system btrfs
 
 # common provisioning for all workflow orchestrators
 cd /opt
-aws s3 cp --no-progress $ARTIFACT_S3_ROOT_URL/aws-ecs-additions.tgz /opt
-tar -xzf aws-ecs-additions.tgz
-sh /opt/ecs-additions/ecs-additions-common.sh
+sh $BASEDIR/ecs-additions-common.sh
 
 # workflow specific provisioning if needed
 if [[ $WORKFLOW_ORCHESTRATOR ]]; then
-    if [ -f "/opt/ecs-additions/ecs-additions-$WORKFLOW_ORCHESTRATOR.sh" ]; then
-        sh /opt/ecs-additions/ecs-additions-$WORKFLOW_ORCHESTRATOR.sh
+    if [ -f "$BASEDIR/ecs-additions-$WORKFLOW_ORCHESTRATOR.sh" ]; then
+        sh $BASEDIR/ecs-additions-$WORKFLOW_ORCHESTRATOR.sh
     fi
 fi

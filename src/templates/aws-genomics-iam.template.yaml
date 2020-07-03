@@ -79,6 +79,7 @@ Resources:
                 Action:
                   - "s3:*"
  
+        # required for amazon-ebs-autoscale to resize filesystems
         - PolicyName: !Sub Autoscale-EBS-${AWS::Region}
           PolicyDocument:
             Version: 2012-10-17
@@ -93,6 +94,7 @@ Resources:
                 - "ec2:describeVolumes"
               Resource: "*"
         
+        # enable retrieving provisioning scripts from codecommit
         - PolicyName: !Sub CodeCommit-Access-${AWS::Region}
           PolicyDocument:
             Version: 2012-10-17
@@ -102,6 +104,21 @@ Resources:
                 - codecommit:GitPull
               Resource:
                 - !Sub arn:aws:codecommit:*:${AWS::AccountId}:*
+        
+        # enable reading SSM parameters by provisioning scripts
+        - PolicyName: !Sub SystemsManager-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter*
+                Resource:
+                  - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/*
+              - Effect: Allow
+                Action:
+                  - ssm:DescribeParameters
+                Resource: "*"
                 
       ManagedPolicyArns:
       - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"

@@ -1,9 +1,80 @@
 #!/bin/bash
 set -e
 
-VERSION=${1:-release}
-ARTIFACT_ROOT_URL=$2
-FILESYSTEM=${3:-btrfs}
+INSTALL_VERSION=dist_release
+FILESYSTEM=btrfs
+
+USAGE=$(cat <<EOF
+Retrive and install Amazon EBS Autoscale
+
+    $0 [options]
+
+Options
+
+    -i, --install-version       [dist_release] | release | latest | develop
+            Version of Amazon EBS Autoscale to install.
+            
+                "dist_release" uses `aws s3 cp` to retrieve a tarball from an S3 bucket.
+                    requires setting --artifact-root-url to an S3 URL.
+
+                "release" uses `curl` or `aws s3 cp` to retrieve a tarball from a publicly 
+                    accessible location - i.e. an upstream distribution.
+                    requires setting --artifact-root-url to either an S3 or HTTP URL.
+                
+                "latest" uses `curl` to retrieve the latest released version of 
+                    amazon-ebs-autoscale from GitHub
+                
+                "develop" uses `git` to clone the source code of amazon-ebs-autoscale
+                    from GitHub.
+    
+    -a, --artifact-root-url     s3://... | https:// ...
+            Root URL where amazon-ebs-autoscale tarballs can be retrieved.
+            Required if --install-version is "dist_release" or "release".
+    
+    -f, --file-system           [btrfs] | lvm.ext4
+            File system to use
+    
+    -h, --help
+            Print help and exit
+
+EOF
+)
+
+PARAMS=""
+while (( "$#" )); do
+    case "$1" in
+        -i|--install-version)
+            INSTALL_VERSION=$2
+            shift 2
+            ;;
+        -a|--artifact-root-url)
+            ARTIFACT_ROOT_URL=$2
+            shift 2
+            ;;
+        -f|--file-system)
+            FILE_SYSTEM=$2
+            shift 2
+            ;;
+        -h|--help)
+            echo "$USAGE"
+            exit
+            ;;
+        --) # end parsing
+            shift
+            break
+            ;;
+        -*|--*=)
+            error "unsupported argument $1"
+            ;;
+        *) # positional arguments
+            PARAMS="$PARAMS $1"
+            shift
+            ;;
+    esac
+done
+
+eval set -- "$PARAMS"
+
 
 function develop() {
     # retrieve the current development version of amazon-ebs-autoscale
@@ -27,26 +98,44 @@ function latest() {
 }
 
 function release() {
-    # retrieve the version of amazon-ebs-autoscale concordant with the latest 
+    # retrieve the version of amazon-ebs-autoscale from the latest upstream disbribution 
     # release of aws-genomics-workflows
-    # recommended if you have no other way to get the amazon-ebs-autoscale code
 
-    if [[ "$ARTIFACT_ROOT_URL" =~ ^http.* ]]; then
-        wget $ARTIFACT_ROOT_URL/amazon-ebs-autoscale.tgz
-    elif [[ "$ARTIFACT_ROOT_URL" =~ ^s3.* ]]; then
-        aws s3 cp --no-progress $ARTIFACT_ROOT_URL/amazon-ebs-autoscale.tgz .
-    else
-        echo "unrecognized protocol in $ARTIFACT_ROOT_URL"
+    if [[ ! $ARTIFACT_ROOT_URL ]]; then
+        echo "missing required argument: --artifact-root-url"
         exit 1
     fi
 
-    tar -xzf amazon-ebs-autoscale.tgz
+    if [[ "$ARTIFACT_ROOT_URL" =~ ^http.* ]]; then
+        curl -LO $ARTIFACT_ROOT_URL/amazon-ebs-autoscale.tgz
+    elif [[ "$ARTIFACT_ROOT_URL" =~ ^s3.* ]]; then
+        aws s3 cp --no-progress $ARTIFACT_ROOT_URL/amazon-ebs-autoscale.tgz .
+    else
+        echo "unrecognized protocol in $ARTIFACT_ROOT_URL for release()"
+        exit 1
+    fi
+
+    tar -xzvf amazon-ebs-autoscale.tgz
 }
 
 function dist_release() {
-    # alias for release() for now
-    # eventually, these may do different things
-    release
+    # retrieve the version of amazon-ebs-autoscale installed as an artifact with
+    # the GWF Core stack.
+    # recommended for a fully self-contained deployment
+
+    if [[ ! $ARTIFACT_ROOT_URL ]]; then
+        echo "missing required argument: --artifact-root-url"
+        exit 1
+    fi
+
+    if [[ "$ARTIFACT_ROOT_URL" =~ ^s3.* ]]; then
+        aws s3 cp --no-progress $ARTIFACT_ROOT_URL/amazon-ebs-autoscale.tgz .
+    else
+        echo "unrecognized protocol in $ARTIFACT_ROOT_URL for dist_release()"
+        exit 1
+    fi
+
+    tar -xzvf amazon-ebs-autoscale.tgz
 }
 
 function install() {
@@ -85,6 +174,6 @@ function install() {
 
 
 cd /opt
-$VERSION
+$INSTALL_VERSION
 
 install $FILESYSTEM

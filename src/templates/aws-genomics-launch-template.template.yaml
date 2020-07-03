@@ -26,35 +26,6 @@ Parameters:
     Type: Number
     Default: 100
     Description: The initial size of the volume Docker will use for image and metadata storage (GB)
-  EbsAutoscaleVersion:
-    Type: String
-    Description: >
-      The version of Amazon EBS Autoscale to use. Options are "dist-release" - the version distributed with this release
-      of the reference implementation, "latest" - the latest available tagged version from GitHub, "develop" - the current
-      master source (recommended for development and advanced use only).
-    Default: dist_release
-    AllowedValues:
-      - dist_release
-      - latest
-      - develop
-  EbsAutoscaleFilesystem:
-    Type: String
-    Description: >
-      The filesystem used by Amazon EBS Autoscale.
-    Default: btrfs
-    AllowedValues:
-      - btrfs
-      - lvm.ext4
-  ArtifactBucketName:
-    Type: String
-    Default: aws-genomics-workflows
-    Description: >-
-      S3 Bucket where artifacts and additions scripts are stored
-  ArtifactBucketPrefix:
-    Type: String
-    Default: artifacts
-    Description: >-
-      Prefix in ArtifactBucketName where artifacts and additions scripts are stored
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -62,16 +33,14 @@ Metadata:
       - Label:
           default: "Required"
         Parameters:
-          - LaunchTemplateNamePrefix
+          - Namespace
       - Label:
           default: "Optional"
         Parameters:
+          - LaunchTemplateNamePrefix
           - DockerStorageVolumeSize
-          - EbsAutoscaleVersion
-          - EbsAutoscaleFilesystem
 
 Conditions:
-  NoArtifactBucketPrefix: !Equals [ !Ref ArtifactBucketPrefix, "" ]
   NoNamespace: !Equals [ !Ref Namespace, "" ]
 
 Resources:
@@ -113,8 +82,7 @@ Resources:
             DeviceName: /dev/xvdba
         UserData:
           Fn::Base64:
-            Fn::Sub:
-              - |
+            Fn::Sub: |
                 MIME-Version: 1.0
                 Content-Type: multipart/mixed; boundary="==BOUNDARY=="
 
@@ -138,21 +106,14 @@ Resources:
                 - cp -av $(dirname $(find /usr/local/aws-cli -name 'aws' -type f))/. /opt/aws-cli/bin/
 
                 # set environment variables for provisioning
-                - export EBS_AUTOSCALE_VERSION=${EbsAutoscaleVersion}
-                - export EBS_AUTOSCALE_FILESYSTEM="${EbsAutoscaleFilesystem}"
-                - export ARTIFACT_S3_ROOT_URL=${ArtifactS3RootUrl}
+                - export GWFCORE_NAMESPACE=${Namespace}
                 - export GIT_CLONE_URL=$(aws ssm get-parameter --name /gwfcore/${Namespace}/additions-repository/clone-url-http --query 'Parameter.Value' --output text)
                 
-                - aws s3 cp --no-progress $ARTIFACT_S3_ROOT_URL/provision.sh /opt
-                - chmod a+x /opt/provision.sh
-                - /opt/provision.sh
+                - git clone $GIT_CLONE_URL ./ecs-additions
+                - chmod a+x /opt/ecs-additions/provision.sh
+                - /opt/ecs-additions/provision.sh
 
                 --==BOUNDARY==--
-              - ArtifactS3RootUrl:
-                  Fn::If:
-                    - NoArtifactBucketPrefix
-                    - !Sub "s3://${ArtifactBucketName}"
-                    - !Sub "s3://${ArtifactBucketName}/${ArtifactBucketPrefix}"
 
 Outputs:
   LaunchTemplateId:
