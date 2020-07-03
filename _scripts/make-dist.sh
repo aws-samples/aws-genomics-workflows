@@ -56,8 +56,14 @@ cp -vf ${SOURCE_PATH}/ebs-autoscale/get-amazon-ebs-autoscale.sh ${ARTIFACT_PATH}
 
 # package ecs-additions
 echo "packaging ecs-additions"
+
+# keep tarball for backwards compatibilty
 cd ${SOURCE_PATH}
 tar -czvf ${ARTIFACT_PATH}/aws-ecs-additions.tgz ./ecs-additions/
+
+# zip file for codecommit repo
+cd ${SOURCE_PATH}/ecs-additions/
+zip -r -v ${ARTIFACT_PATH}/aws-ecs-additions.zip ./*
 
 # add provision script to artifact root
 cp -vf ${SOURCE_PATH}/ecs-additions/provision.sh ${ARTIFACT_PATH}
