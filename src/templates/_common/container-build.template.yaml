@@ -217,6 +217,30 @@ Resources:
                   - "codebuild:BatchGetBuilds"
                 Resource: "*"
         
+        - PolicyName: !Sub events-access-${AWS::Region}
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - events:DeleteRule
+                  - events:PutRule
+                  - events:PutTargets
+                  - events:RemoveTargets
+                Resource:
+                  - !Sub arn:aws:events:*:${AWS::AccountId}:rule/*
+        
+        - PolicyName: !Sub lambda-access-${AWS::Region}
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:AddPermission
+                  - lambda:RemovePermission
+                Resource:
+                  - !Sub arn:aws:lambda:*:${AWS::AccountId}:function:*
+                  
         - PolicyName: !Sub ecr-access-${AWS::Region}
           PolicyDocument:
             Version: 2012-10-17
