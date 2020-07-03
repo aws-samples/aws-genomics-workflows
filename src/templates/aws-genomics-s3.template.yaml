@@ -17,8 +17,7 @@ Mappings:
 Parameters:
   Namespace:
     Type: String
-    Description: Optional namespace (e.g. project name) to use to label resources
-    Default: ""
+    Description: Namespace (e.g. project name) to use to label resources
   
   S3BucketName:
     Type: String
@@ -46,7 +45,6 @@ Conditions:
     Fn::Equals:
       - !Ref S3BucketName
       - ""
-  NoNamespace: !Equals [ !Ref Namespace, "" ]
 
 Resources:
   GenomicsEnvS3Bucket:
@@ -61,10 +59,7 @@ Resources:
           - Fn::Join: 
             - "-"
             - - "gwfcore"
-              - Fn::If:
-                - NoNamespace
-                - !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
-                - !Ref Namespace
+              - !Ref Namespace
           - !Ref S3BucketName
       BucketEncryption:
         ServerSideEncryptionConfiguration:

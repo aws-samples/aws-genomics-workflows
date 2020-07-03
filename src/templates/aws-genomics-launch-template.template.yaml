@@ -17,8 +17,7 @@ Mappings:
 Parameters:
   Namespace:
     Type: String
-    Description: Optional namespace (e.g. project name) to use to label resources
-    Default: ""
+    Description: Namespace (e.g. project name) to use to label resources
   LaunchTemplateNamePrefix:
     Type: String
     Default: gwfcore
@@ -142,6 +141,7 @@ Resources:
                 - export EBS_AUTOSCALE_VERSION=${EbsAutoscaleVersion}
                 - export EBS_AUTOSCALE_FILESYSTEM="${EbsAutoscaleFilesystem}"
                 - export ARTIFACT_S3_ROOT_URL=${ArtifactS3RootUrl}
+                - export GIT_CLONE_URL=$(aws ssm get-parameter --name /gwfcore/${Namespace}/additions-repository/clone-url-http --query 'Parameter.Value' --output text)
                 
                 - aws s3 cp --no-progress $ARTIFACT_S3_ROOT_URL/provision.sh /opt
                 - chmod a+x /opt/provision.sh
