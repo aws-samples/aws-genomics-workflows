@@ -56,9 +56,10 @@ cp -vf ${SOURCE_PATH}/ebs-autoscale/get-amazon-ebs-autoscale.sh ${ARTIFACT_PATH}
 # package crhelper lambda(s)
 cd ${SOURCE_PATH}/lambda
 for fn in `ls .`; do
+    echo "packaging crhelper lambda $fn"
     mkdir -p ${TEMP_PATH}/lambda/$fn
-    cp -Rv ${SOURCE_PATH}/lambda/$fn ${TEMP_PATH}/lambda/$fn
-    
+    cp -Rv ${SOURCE_PATH}/lambda/$fn/. ${TEMP_PATH}/lambda/$fn
+
     cd ${TEMP_PATH}/lambda/$fn
     pip install -t . -r requirements.txt
     zip -r -v $ARTIFACT_PATH/lambda-$fn.zip .
