@@ -70,14 +70,14 @@ def handler(event, context):
 
 def start_build_job(event, context, action='setup'):
     response = codebuild.start_build(
-        projectName=event['ResourceProperties']['CodeBuildProjectName']
+        projectName=event['ResourceProperties']['BuildProject']
     )
     logger.info(response)
     helper.Data.update({"JobID": response['build']['id']})
 
 
 def check_build_job_status(event, context):
-    code_build_project_name = event['ResourceProperties']['CodeBuildProjectName']
+    code_build_project_name = event['ResourceProperties']['BuildProject']
 
     if not helper.Data.get("JobID"):
         raise ValueError("Job ID missing in the polling event.")
