@@ -152,11 +152,11 @@ Resources:
         ComputeType: BUILD_GENERAL1_LARGE
         EnvironmentVariables:
           - Name: SOURCE_ARTIFACT_URL
-            Value: !Sub ${ArtifactBucketName}/${ArtifactBucketPrefix}
+            Value: !Sub s3://${ArtifactBucketName}/${ArtifactBucketPrefix}
           - Name: ARTIFACT
             Value: amazon-ebs-autoscale.tgz
           - Name: TARGET_ARTIFACT_URL
-            Value: !Sub ${S3BucketName}/_artifacts
+            Value: !Sub s3://${S3BucketName}/_artifacts
       Source: #required
         Type: NO_SOURCE
         BuildSpec: |
