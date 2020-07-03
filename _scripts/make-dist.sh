@@ -53,6 +53,16 @@ tar -czvf ${ARTIFACT_PATH}/amazon-ebs-autoscale.tgz ./amazon-ebs-autoscale
 # add a retrieval script
 cp -vf ${SOURCE_PATH}/ebs-autoscale/get-amazon-ebs-autoscale.sh ${ARTIFACT_PATH}
 
+# package crhelper lambda(s)
+cd ${SOURCE_PATH}/lambda
+for fn in `ls .`; do
+    mkdir -p ${TEMP_PATH}/lambda/$fn
+    cp -Rv ${SOURCE_PATH}/lambda/$fn ${TEMP_PATH}/lambda/$fn
+    
+    cd ${TEMP_PATH}/lambda/$fn
+    pip install -t . -r requirements.txt
+    zip -r -v $ARTIFACT_PATH/lambda-$fn.zip .
+done
 
 # package ecs-additions
 echo "packaging ecs-additions"
