@@ -149,6 +149,12 @@ Resources:
                   - ecr:UploadLayerPart
               
               - Effect: Allow
+                Resource:
+                  - !Sub arn:aws:ecr:*:${AWS::AccountId}:repository/*
+                Action:
+                  - ecr:DescribeRepositories
+              
+              - Effect: Allow
                 Resource: "*"
                 Action:
                   - ecr:GetAuthorizationToken
