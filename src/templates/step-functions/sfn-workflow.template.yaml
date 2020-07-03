@@ -87,6 +87,8 @@ Resources:
         ProjectBuildSpecFile: ./buildspec-workflow-tool.yml
         CreateBatchJobDefinition: "Yes"
         BatchJobDefinitionName: !Sub "bwa-${AWS::StackName}"
+        ArtifactBucketName: !Ref ArtifactBucketName
+        ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
       Tags: !FindInMap ["TagMap", "default", "tags"]
   
   ContainerBuildSamtools:
@@ -102,6 +104,8 @@ Resources:
         ProjectBuildSpecFile: ./buildspec-workflow-tool.yml
         CreateBatchJobDefinition: "Yes"
         BatchJobDefinitionName: !Sub "samtools-${AWS::StackName}"
+        ArtifactBucketName: !Ref ArtifactBucketName
+        ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
       Tags: !FindInMap ["TagMap", "default", "tags"]
   
   ContainerBuildBcftools:
@@ -117,6 +121,8 @@ Resources:
         ProjectBuildSpecFile: ./buildspec-workflow-tool.yml
         CreateBatchJobDefinition: "Yes"
         BatchJobDefinitionName: !Sub "bcftools-${AWS::StackName}"
+        ArtifactBucketName: !Ref ArtifactBucketName
+        ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
       Tags: !FindInMap ["TagMap", "default", "tags"]
   
   IAMStepFunctionsExecutionRole:

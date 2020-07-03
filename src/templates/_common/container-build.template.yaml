@@ -73,6 +73,18 @@ Parameters:
       if not specified.
     Type: String
     Default: ""
+  
+  ArtifactBucketName:
+    Type: String
+    Default: aws-genomics-workflows
+    Description: >-
+      S3 Bucket where artifacts and additions scripts are stored
+  ArtifactBucketPrefix:
+    Type: String
+    Default: artifacts
+    Description: >-
+      Prefix in ArtifactBucketName where artifacts and additions scripts are stored
+
 
 Conditions:
   CreateBatchJobDefinitionTrue:
@@ -237,35 +249,13 @@ Resources:
   CodeBuildInvocationFunction:
     Type: AWS::Lambda::Function
     Properties:
-      Handler: index.handler
+      Handler: lambda.handler
       Role: !GetAtt IAMLambdaExecutionRole.Arn
-      Runtime: python3.7
+      Runtime: python3.8
       Timeout: 900  # if containers take more than 15m to build, consider using a WaitCondition
       Code:
-        ZipFile: |
-          from time import sleep
-
-          import boto3
-          import cfnresponse
-
-          def handler(event, context):
-              if event['RequestType'] in ("Create", "Update"):
-                  codebuild = boto3.client('codebuild')
-                  build = codebuild.start_build(
-                      projectName=event["ResourceProperties"]["BuildProject"]
-                  )['build']
-                          
-                  id = build['id']
-                  status = build['buildStatus']
-                  while status == 'IN_PROGRESS':
-                      sleep(10)
-                      build = codebuild.batch_get_builds(ids=[id])['builds'][0]
-                      status = build['buildStatus']
-                  
-                  if status != "SUCCEEDED":
-                      cfnresponse.send(event, context, cfnresponse.FAILED, None)
-              
-              cfnresponse.send(event, context, cfnresponse.SUCCESS, None)
+        S3Bucket: !Ref ArtifactBucketName
+        S3Key: !Sub ${ArtifactBucketPrefix}/lambda-codebuild.zip
   
   # ECR Repositories defined by CloudFormation currently do not support Deletion
   # or UpdateReplace Policies.  This will cause failures when this stack or a 

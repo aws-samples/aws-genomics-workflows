@@ -175,6 +175,8 @@ Resources:
         ProjectPath: ./nextflow
         ProjectBuildSpecFile: ./buildspec-nextflow.yml
         CreateBatchJobDefinition: "No"
+        ArtifactBucketName: !Ref ArtifactBucketName
+        ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
   IAMNextflowJobRole:
