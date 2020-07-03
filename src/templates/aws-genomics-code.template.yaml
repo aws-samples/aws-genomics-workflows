@@ -7,18 +7,18 @@ Parameters:
   S3BucketName:
     Type: String
     Description: >-
-      Bucket where artifacts will be placed
+      Bucket where installed artifacts will be stored
     
   ArtifactBucketName:
     Type: String
     Default: aws-genomics-workflows
     Description: >-
-      S3 Bucket where artifacts and additions scripts are stored
+      S3 Bucket where distribution artifacts and additions scripts are stored
   ArtifactBucketPrefix:
     Type: String
     Default: artifacts
     Description: >-
-      Prefix in ArtifactBucketName where artifacts and additions scripts are stored
+      Prefix in ArtifactBucketName where distribution artifacts and additions scripts are stored
 
 Mappings:
   TagMap:
@@ -180,7 +180,7 @@ Resources:
           phases:
             build:
               commands:
-                - aws s3 cp ${SOURCE_ARTIFACT_URL}/${ARTIFACT} ${TARGET_ARTIFACT_URL}
+                - aws s3 cp ${SOURCE_ARTIFACT_URL}/${ARTIFACT} ${TARGET_ARTIFACT_URL}/${ARTIFACT}
       Artifacts:
         Type: NO_ARTIFACTS
       ServiceRole: !GetAtt IAMCodeBuildRole.Arn
