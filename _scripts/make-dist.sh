@@ -65,19 +65,24 @@ for fn in `ls .`; do
     zip -r -v $ARTIFACT_PATH/lambda-$fn.zip .
 done
 
+
 # package ecs-additions
 echo "packaging ecs-additions"
 
+cd ${TEMP_PATH}
+mkdir -p ${TEMP_PATH}/ecs-additions
+cp -Rv ${SOURCE_PATH}/ecs-additions/. ${TEMP_PATH}/ecs-additions
+
+# add the amazon-ebs-autoscale retrieval script to additions
+cp -v ${SOURCE_PATH}/ebs-autoscale/get-amazon-ebs-autoscale.sh ${TEMP_PATH}/ecs-additions
+
 # keep tarball for backwards compatibilty
-cd ${SOURCE_PATH}
+cd ${TEMP_PATH}
 tar -czvf ${ARTIFACT_PATH}/aws-ecs-additions.tgz ./ecs-additions/
 
 # zip file for codecommit repo
-cd ${SOURCE_PATH}/ecs-additions/
+cd ${TEMP_PATH}/ecs-additions/
 zip -r -v ${ARTIFACT_PATH}/aws-ecs-additions.zip ./*
-
-# add provision script to artifact root
-cp -vf ${SOURCE_PATH}/ecs-additions/provision.sh ${ARTIFACT_PATH}
 
 
 # package container code
