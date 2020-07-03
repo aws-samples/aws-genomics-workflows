@@ -15,9 +15,13 @@ Mappings:
           Value: "default"
 
 Parameters:
+  Namespace:
+    Type: String
+    Description: Optional namespace (e.g. project name) to use to label resources
+    Default: ""
   LaunchTemplateNamePrefix:
     Type: String
-    Default: genomics-workflow
+    Default: gwfcore
     Description: Name of the launch template. This will be made unique using the Stack ID.
   DockerStorageVolumeSize:
     Type: Number
@@ -69,12 +73,21 @@ Metadata:
 
 Conditions:
   NoArtifactBucketPrefix: !Equals [ !Ref ArtifactBucketPrefix, "" ]
+  NoNamespace: !Equals [ !Ref Namespace, "" ]
 
 Resources:
   EC2LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
-      LaunchTemplateName: !Join ["-", [!Ref LaunchTemplateNamePrefix, !Select [2, !Split ["/", !Ref "AWS::StackId" ]]]]
+      LaunchTemplateName: 
+        Fn::Join: 
+          - "-"
+          - - !Ref LaunchTemplateNamePrefix
+            - Fn::If:
+                - NoNamespace
+                - !Select [2, !Split ["/", !Ref "AWS::StackId" ]]
+                - !Ref Namespace
+        
       LaunchTemplateData:
         TagSpecifications:
           - ResourceType: instance

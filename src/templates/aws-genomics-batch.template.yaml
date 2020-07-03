@@ -10,6 +10,7 @@ Metadata:
       - Label:
           default: "AWS Batch Environment Config"
         Parameters:
+        - Namespace
         - LaunchTemplateId
         - VpcId
         - SubnetIds
@@ -44,6 +45,10 @@ Metadata:
 
 
 Parameters:
+  Namespace:
+    Type: String
+    Description: Optional namespace (e.g. project name) to use to label resources
+    Default: ""
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: 'The VPC to create security groups and deploy AWS Batch to. NOTE: Must be the same VPC as the provided subnet IDs.'
@@ -83,6 +88,8 @@ Parameters:
     Type: String
     Description: The IAM Role ARN for the Batch service
 
+Conditions:
+  NoNamespace: !Equals [ !Ref Namespace, "" ]
 
 Resources:
   SecurityGroup:
@@ -120,8 +127,12 @@ Resources:
     Type: AWS::Batch::ComputeEnvironment
     Properties:
       ComputeEnvironmentName: !Sub 
-       - spot-${StackGuid}
-       - StackGuid: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
+        - spot-${Label}
+        - Label:
+            Fn::If:
+              - NoNamespace
+              - !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
+              - !Ref Namespace
       ServiceRole: !Ref BatchServiceRoleArn
       Type: MANAGED
       State: ENABLED
@@ -155,8 +166,12 @@ Resources:
     Type: AWS::Batch::ComputeEnvironment
     Properties:
       ComputeEnvironmentName: !Sub 
-       - ondemand-${StackGuid}
-       - StackGuid: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
+        - ondemand-${Label}
+        - Label:
+            Fn::If:
+              - NoNamespace
+              - !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
+              - !Ref Namespace
       ServiceRole: !Ref BatchServiceRoleArn
       Type: MANAGED
       State: ENABLED
@@ -182,8 +197,12 @@ Resources:
     Type: AWS::Batch::JobQueue
     Properties:
       JobQueueName: !Sub
-        - highpriority-${StackGuid}
-        - StackGuid: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
+        - priority-${Label}
+        - Label:
+            Fn::If:
+              - NoNamespace
+              - !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
+              - !Ref Namespace
       Priority: 1000
       State: ENABLED
       ComputeEnvironmentOrder:
@@ -196,8 +215,12 @@ Resources:
     Type: AWS::Batch::JobQueue
     Properties:
       JobQueueName: !Sub
-        - default-${StackGuid}
-        - StackGuid: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
+        - default-${Label}
+        - Label:
+            Fn::If:
+              - NoNamespace
+              - !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
+              - !Ref Namespace
       Priority: 1
       State: ENABLED
       ComputeEnvironmentOrder:
