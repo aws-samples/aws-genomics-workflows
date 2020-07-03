@@ -130,7 +130,7 @@ Resources:
   CodeStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-launch-template.template.yaml
+      TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-code.template.yaml
       Parameters:
         S3BucketName: !Sub ${S3Stack.Outputs.BucketName}
         ArtifactBucketName: !Ref ArtifactBucketName
