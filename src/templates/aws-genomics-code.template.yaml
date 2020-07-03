@@ -69,13 +69,29 @@ Resources:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-
+        
+        - PolicyName: s3-write-access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
               - Effect: Allow
                 Resource:
                   - !Sub arn:aws:s3:::${S3BucketName}
                   - !Sub arn:aws:s3:::${S3BucketName}/*
                 Action:
                   - s3:*
+        
+        - PolicyName: s3-read-access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Resource:
+                  - !Sub arn:aws:s3:::${ArtifactBucketName}
+                  - !Sub arn:aws:s3:::${ArtifactBucketName}/*
+                Action:
+                  - s3:Get*
+                  - s3:List*
   
   IAMLambdaExecutionRole:
     Type: AWS::IAM::Role
