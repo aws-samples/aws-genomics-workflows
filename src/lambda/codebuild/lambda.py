@@ -61,7 +61,6 @@ def poll_update(event, context):
 @helper.poll_delete
 def poll_delete(event, context):
     logger.info("Got Delete poll")
-    return check_build_job_status(event, context)
 
 
 def handler(event, context):

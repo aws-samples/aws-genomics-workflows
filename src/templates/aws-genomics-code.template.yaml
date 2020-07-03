@@ -144,7 +144,6 @@ Resources:
   BuildEbsAutoscale:
     Type: "AWS::CodeBuild::Project"
     Properties:
-      Name: String
       Description: |
         Build project for amazon-ebs-autoscale artifact
       Environment: #required
@@ -182,7 +181,7 @@ Resources:
   CodeBuildInvocationFunction:
     Type: AWS::Lambda::Function
     Properties:
-      Handler: index.handler
+      Handler: lambda.handler
       Role: !GetAtt IAMLambdaExecutionRole.Arn
       Runtime: python3.7
       Timeout: 30
