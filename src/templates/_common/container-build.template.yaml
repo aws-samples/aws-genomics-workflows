@@ -120,6 +120,12 @@ Resources:
 
               - Effect: Allow
                 Resource:
+                  - !Sub arn:aws:codecommit:*:${AWS::AccountId}:*
+                Action:
+                  - codecommit:GitPull
+
+              - Effect: Allow
+                Resource:
                   # Constructing the ARN manually here since we are using a custom
                   # resource to create the repository
                   - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ImageName}"
