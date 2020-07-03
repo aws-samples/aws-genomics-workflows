@@ -65,8 +65,8 @@ cp -vf ${SOURCE_PATH}/ecs-additions/provision.sh ${ARTIFACT_PATH}
 
 # package container code
 echo "packaging container definitions"
-cd $SOURCE_PATH
-zip -r -v $ARTIFACT_PATH/containers.zip ./containers/*
+cd $SOURCE_PATH/containers
+zip -r -v $ARTIFACT_PATH/containers.zip ./*
 
 
 # add templates to dist
