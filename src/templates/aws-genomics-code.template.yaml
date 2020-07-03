@@ -101,6 +101,30 @@ Resources:
                   - "codebuild:StartBuild"
                   - "codebuild:BatchGetBuilds"
                 Resource: "*"
+
+        - PolicyName: !Sub events-access-${AWS::Region}
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - events:DeleteRule
+                  - events:PutRule
+                  - events:PutTargets
+                  - events:RemoveTargets
+                Resource:
+                  - !Sub arn:aws:events:*:${AWS::AccountId}:rule/*
+        
+        - PolicyName: !Sub lambda-access-${AWS::Region}
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:AddPermission
+                  - lambda:RemovePermission
+                Resource:
+                  - !Sub arn:aws:lambda:*:${AWS::AccountId}:function:*
   
   RepoEcsAdditions:
     Type: "AWS::CodeCommit::Repository"
@@ -112,7 +136,7 @@ Resources:
       Code:
         S3:
           Bucket: !Ref ArtifactBucketName
-          Key: !Sub ${ArtifactBucketPrefix}/ecs-additions.zip
+          Key: !Sub ${ArtifactBucketPrefix}/aws-ecs-additions.zip
       Tags:
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
@@ -161,32 +185,36 @@ Resources:
       Handler: index.handler
       Role: !GetAtt IAMLambdaExecutionRole.Arn
       Runtime: python3.7
-      Timeout: 300
+      Timeout: 30
       Code:
-        ZipFile: |
-          from time import sleep
+        S3Bucket: !Ref ArtifactBucketName
+        S3Key: !Sub ${ArtifactBucketPrefix}/lambda-codebuild.zip
 
-          import boto3
-          import cfnresponse
+      # Code:
+      #   ZipFile: |
+      #     from time import sleep
 
-          def handler(event, context):
-              if event['RequestType'] in ("Create", "Update"):
-                  codebuild = boto3.client('codebuild')
-                  build = codebuild.start_build(
-                      projectName=event["ResourceProperties"]["BuildProject"]
-                  )['build']
+      #     import boto3
+      #     import cfnresponse
+
+      #     def handler(event, context):
+      #         if event['RequestType'] in ("Create", "Update"):
+      #             codebuild = boto3.client('codebuild')
+      #             build = codebuild.start_build(
+      #                 projectName=event["ResourceProperties"]["BuildProject"]
+      #             )['build']
                           
-                  id = build['id']
-                  status = build['buildStatus']
-                  while status == 'IN_PROGRESS':
-                      sleep(10)
-                      build = codebuild.batch_get_builds(ids=[id])['builds'][0]
-                      status = build['buildStatus']
+      #             id = build['id']
+      #             status = build['buildStatus']
+      #             while status == 'IN_PROGRESS':
+      #                 sleep(10)
+      #                 build = codebuild.batch_get_builds(ids=[id])['builds'][0]
+      #                 status = build['buildStatus']
                   
-                  if status != "SUCCEEDED":
-                      cfnresponse.send(event, context, cfnresponse.FAILED, None)
+      #             if status != "SUCCEEDED":
+      #                 cfnresponse.send(event, context, cfnresponse.FAILED, None)
               
-              cfnresponse.send(event, context, cfnresponse.SUCCESS, None)
+      #         cfnresponse.send(event, context, cfnresponse.SUCCESS, None)
       
   
 Outputs:
