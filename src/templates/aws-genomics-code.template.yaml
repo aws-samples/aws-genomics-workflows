@@ -235,6 +235,8 @@ Resources:
 Outputs:
   EcsAdditionsRepo:
     Value: !Sub https://${AWS::Region}.console.aws.amazon.com/codesuite/codecommit/repositories/${RepoEcsAdditions}/browse?region=${AWS::Region}
+  EcsAdditionsRepoName:
+    Value: !GetAtt RepoEcsAdditions.Name 
   EcsAdditionsRepoCloneUrlHttp:
     Value: !GetAtt RepoEcsAdditions.CloneUrlHttp
   InstalledArtifactsBucket:

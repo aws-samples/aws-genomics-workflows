@@ -164,6 +164,69 @@ Resources:
         Ec2InstanceProfileArn: !Sub ${IamStack.Outputs.BatchInstanceProfileArn}
         SpotFleetRoleArn: !Sub ${IamStack.Outputs.BatchSpotFleetRoleArn}
 
+  ParamS3Bucket:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: /gwfcore/s3-bucket
+      Type: String #required
+      Value: !Sub ${S3Stack.Outputs.BucketName} #required
+      Description: GWFCore S3 Bucket
+  
+  ParamDefaultJobQueue:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: /gwfcore/job-queue/default
+      Type: String #required
+      Value: !Sub ${BatchStack.Outputs.DefaultJobQueueArn} #required
+      Description: GWFCore Default AWS Batch Job Queue
+  
+  ParamPriorityJobQueue:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: /gwfcore/job-queue/priority
+      Type: String #required
+      Value: !Sub ${BatchStack.Outputs.HighPriorityJobQueueArn} #required
+      Description: GWFCore Priority AWS Batch Job Queue
+  
+  ParamAdditionsRepoName:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: /gwfcore/additions-repository/name
+      Type: String #required
+      Value: !Sub ${CodeStack.Outputs.EcsAdditionsRepoName} #required
+      Description: GWFCore ECS Additions Repository Name
+  
+  ParamAdditionsRepoCloneUrlHttp:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: /gwfcore/additions-repository/clone-url-http
+      Type: String #required
+      Value: !Sub ${CodeStack.Outputs.EcsAdditionsRepoCloneUrlHttp} #required
+      Description: GWFCore ECS Additions Repository HTTP Clone Url
+  
+  ParamInstalledArtifactsBucket:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: /gwfcore/installed-artifacts/bucket
+      Type: String #required
+      Value: !Sub ${CodeStack.Outputs.InstalledArtifactsBucket} #required
+      Description: GWFCore S3 Bucket for Installed Artifacts
+  
+  ParamInstalledArtifactsPrefix:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: /gwfcore/installed-artifacts/prefix
+      Type: String #required
+      Value: !Sub ${CodeStack.Outputs.InstalledArtifactsPrefix} #required
+      Description: GWFCore S3 Prefix for Installed Artifacts
+  
+  ParamInstalledArtifactsS3RootUrl:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: /gwfcore/installed-artifacts/s3-root-url
+      Type: String #required
+      Value: !Sub ${CodeStack.Outputs.InstalledArtifactsS3RootUrl} #required
+      Description: GWFCore S3 Root Url for Installed Artifacts
 
 Outputs:
   GenomicsEnvS3Bucket:
