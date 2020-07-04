@@ -121,7 +121,7 @@ Resources:
   GWFCoreStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL:  !Sub ${TemplateRootUrl}/aws-genomics-root-novpc.template.yaml
+      TemplateURL:  !Sub ${TemplateRootUrl}/gwfcore/gwfcore-root.template.yaml
       Parameters:
         VpcId: !GetAtt 'VpcStack.Outputs.VPCID'
         SubnetIds: !Sub "${VpcStack.Outputs.PrivateSubnet1AID}, ${VpcStack.Outputs.PrivateSubnet2AID}"

@@ -123,7 +123,7 @@ Resources:
   S3Stack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-s3.template.yaml
+      TemplateURL: !Sub ${TemplateRootUrl}/gwfcore/gwfcore-s3.template.yaml
       TimeoutInMinutes: 5
       Parameters:
         Namespace:
@@ -138,7 +138,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: S3Stack
     Properties:
-      TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-iam.template.yaml
+      TemplateURL: !Sub ${TemplateRootUrl}/gwfcore/gwfcore-iam.template.yaml
       TimeoutInMinutes: 10
       Parameters:
         Namespace:
@@ -151,7 +151,7 @@ Resources:
   CodeStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-code.template.yaml
+      TemplateURL: !Sub ${TemplateRootUrl}/gwfcore/gwfcore-code.template.yaml
       Parameters:
         Namespace:
           Fn::If:
@@ -165,7 +165,7 @@ Resources:
   LaunchTplStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-launch-template.template.yaml
+      TemplateURL: !Sub ${TemplateRootUrl}/gwfcore/gwfcore-launch-template.template.yaml
       Parameters:
         Namespace:
           Fn::If:
@@ -179,7 +179,7 @@ Resources:
       - IamStack
       - LaunchTplStack
     Properties:
-      TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-batch.template.yaml
+      TemplateURL: !Sub ${TemplateRootUrl}/gwfcore/gwfcore-batch.template.yaml
       TimeoutInMinutes: 10
       Parameters:
         Namespace:
