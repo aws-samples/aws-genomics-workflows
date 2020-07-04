@@ -20,7 +20,8 @@ Metadata:
           default: "Network Configuration"
         Parameters:
           - VpcId
-          - PublicSubnetID
+          - ServerSubnetID
+          - DBSubnetIDs
       - Label:
           default: "Instance Configuration"
         Parameters:
@@ -40,12 +41,14 @@ Metadata:
           - S3BucketName
           - S3OpenDataBucketARNs
           - BatchQueue
+          - DBUsername
+          - DBPassword
       
     ParameterLabels:
       VpcId:
         default: "VPC ID"
-      PublicSubnetID:
-        default: "Public Subnet ID"
+      ServerSubnetID:
+        default: "Server Subnet ID"
       InstanceName:
         default: "Instance Name"
       LatestAmazonLinuxAMI:
@@ -66,6 +69,12 @@ Metadata:
         default: "Cromwell Version"
       CromwellVersionSpecified:
         default: "..."
+      DBSubnetIDs:
+        default: "Database Subnet IDs"
+      DBUsername:
+        default: "Cromwell Database Username"
+      DBPassword:
+        default: "Cromwell Database Password"
 
 
 # Parameters
@@ -90,9 +99,9 @@ Parameters:
     Type: AWS::EC2::VPC::Id
     Description: Recommended to use the Default VPC here
   
-  PublicSubnetID:
+  ServerSubnetID:
     Type: AWS::EC2::Subnet::Id
-    Description: Select a public subnet to launch into
+    Description: Subnet for the Cromwell server. For public access, use a public subnet.
   
   LatestAmazonLinuxAMI:
     Description: The latest Amazon Linux AMI
@@ -123,6 +132,32 @@ Parameters:
     Description: >-
       URL to a pre-built cromwell-*.jar file.  Example: https://mycicdserver.com/build/cromwell-XX-SNAP.jar.
       If this is specifed, CromwellVersion is ignored.
+  
+  DBSubnetIDs:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Subnets for the Cromwell Database. Private subnets are recommended.
+
+  DBUsername:
+    Type: String
+    Description: >-
+      The master username for the Aurora MySQL RDS cluster that will be used as Cromwell's database
+    Default: cromwell
+    MaxLength: 16
+    MinLength: 1
+    AllowedPattern: "^[a-zA-Z]{1}[a-zA-Z0-9]{0,15}$"
+    ConstraintDescription: >-
+      DBUsername must have 1 to 16 alphanumeric characters. First character must be a letter
+
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: >-
+      The master password for the Aurora MySQL RDS cluster that will be used as Cromwell's database
+    MinLength: 8
+    AllowedPattern: '^[ -~][^"@/]{7,}$'
+    ConstraintDescription: >-
+      DBPassword must have at least 8 printable ASCII characters. Can't contain any of the following: / (slash), "(double quote) and @ (at sign).
+
 
   InstanceName:
     Type: String
@@ -348,48 +383,61 @@ Resources:
               group: "ec2-user"
 
             "/home/ec2-user/cromwell.conf":
-              content: !Sub |
-                include required(classpath("application"))
+              content: !Sub
+                - |
+                  include required(classpath("application"))
 
-                webservice {
-                  interface = localhost
-                  port = 8000
-                }
-
-                system {
-                  job-rate-control {
-                    jobs = 1
-                    per = 2 second
+                  webservice {
+                    interface = localhost
+                    port = 8000
                   }
-                }
 
-                aws {
-                  application-name = "cromwell"
-                  auths = [{
-                      name = "default"
-                      scheme = "default"
-                  }]
-                  region = "${AWS::Region}"
-                }
+                  system {
+                    job-rate-control {
+                      jobs = 1
+                      per = 2 second
+                    }
+                  }
 
-                engine { filesystems { s3 { auth = "default" } } }
+                  aws {
+                    application-name = "cromwell"
+                    auths = [{
+                        name = "default"
+                        scheme = "default"
+                    }]
+                    region = "${AWS::Region}"
+                  }
 
-                backend {
-                  default = "AWSBATCH"
-                  providers {
-                    AWSBATCH {
-                      actor-factory = "cromwell.backend.impl.aws.AwsBatchBackendLifecycleActorFactory"
-                      config {
-                        numSubmitAttempts = 10
-                        numCreateDefinitionAttempts = 10
-                        root = "s3://${S3BucketName}/cromwell-execution"
-                        auth = "default"
-                        default-runtime-attributes { queueArn = "${BatchQueue}" , scriptBucketName = "${S3BucketName}" }
-                        filesystems { s3 { auth = "default" } }
+                  database {
+                    profile = "slick.jdbc.MySQLProfile$"
+                    db {
+                      driver = "com.mysql.cj.jdbc.Driver"
+                      url = "jdbc:mysql://${DBAddress}/cromwell?rewriteBatchedStatements=true"
+                      user = "${DBUsername}"
+                      password = "${DBPassword}"
+                      connectionTimeout = 5000
+                    }
+                  }
+
+                  engine { filesystems { s3 { auth = "default" } } }
+
+                  backend {
+                    default = "AWSBATCH"
+                    providers {
+                      AWSBATCH {
+                        actor-factory = "cromwell.backend.impl.aws.AwsBatchBackendLifecycleActorFactory"
+                        config {
+                          numSubmitAttempts = 10
+                          numCreateDefinitionAttempts = 10
+                          root = "s3://${S3BucketName}/cromwell-execution"
+                          auth = "default"
+                          default-runtime-attributes { queueArn = "${BatchQueue}" , scriptBucketName = "${S3BucketName}" }
+                          filesystems { s3 { auth = "default" } }
+                        }
                       }
                     }
                   }
-                }
+                - DBAddress: !GetAtt RDSCluster.Endpoint.Address
               mode: "000644"
               owner: "ec2-user"
               group: "ec2-user"
@@ -537,8 +585,7 @@ Resources:
             02_start_cromwell:
               cwd: "/home/ec2-user"
               command: "sudo -u ec2-user /usr/local/bin/supervisord"
-        
-            
+    
     Properties:
       ImageId: !Ref LatestAmazonLinuxAMI
       InstanceType: !Ref InstanceType
@@ -578,11 +625,66 @@ Resources:
           DeviceIndex: "0"
           GroupSet:
             - !Ref EC2SecurityGroup
-          SubnetId: !Ref PublicSubnetID
+          SubnetId: !Ref ServerSubnetID
 
     CreationPolicy:
       ResourceSignal:
         Timeout: PT15M
+
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Limit access to Cromwell DB to just the Cromwell server security group
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          SourceSecurityGroupId: !GetAtt EC2SecurityGroup.GroupId
+          ToPort: 3306
+          FromPort: 3306
+      Tags:
+        - Key: Name
+          Value: cromwell-db-sg
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+        - Key: solution
+          Value: !FindInMap ["TagMap", "default", "solution"]
+  DBSubnetGroup:
+    Type: 'AWS::RDS::DBSubnetGroup'
+    Properties:
+      DBSubnetGroupDescription: !Ref 'AWS::StackName'
+      SubnetIds: !Ref DBSubnetIDs
+      Tags:
+        - Key: Name
+          Value: cromwell-db-subnet-group
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+        - Key: solution
+          Value: !FindInMap ["TagMap", "default", "solution"]
+
+  RDSCluster:
+    Type: 'AWS::RDS::DBCluster'
+    Properties:
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      DBClusterIdentifier: cromwell-db
+      BackupRetentionPeriod: 7
+      DatabaseName: cromwell
+      Engine: aurora
+      EngineMode: serverless
+      EnableHttpEndpoint: true
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      ScalingConfiguration:
+        AutoPause: true
+        MinCapacity: 1
+        MaxCapacity: 64
+        SecondsUntilAutoPause: 1000
+      StorageEncrypted: true
+      VpcSecurityGroupIds: [!GetAtt RDSSecurityGroup.GroupId]
+      Tags:
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+        - Key: solution
+          Value: !FindInMap ["TagMap", "default", "solution"]
 
 Outputs:
   CromwellVersion:
