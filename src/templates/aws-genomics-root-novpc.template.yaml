@@ -19,8 +19,8 @@ Metadata:
         Parameters:
           - DefaultCEMinvCpus
           - DefaultCEMaxvCpus
-          - HighPriorityCEMinvCpus
-          - HighPriorityCEMaxvCpus
+          - PriorityCEMinvCpus
+          - PriorityCEMaxvCpus
           - ArtifactBucketName
           - ArtifactBucketPrefix
           - TemplateRootUrl
@@ -38,9 +38,9 @@ Metadata:
         default: Default Min vCPU
       DefaultCEMaxvCpus:
         default: Default Max vCPU
-      HighPriorityCEMinvCpus:
+      PriorityCEMinvCpus:
         default: High Priority Min vCPU
-      HighPriorityCEMaxvCpus:
+      PriorityCEMaxvCpus:
         default: High Priority Max vCPU
       ArtifactBucketName:
         default: Artifact S3 Bucket Name
@@ -80,11 +80,11 @@ Parameters:
     Description: The maximum number of CPUs for the default Batch Compute Environment
     Type: Number
     Default: 100
-  HighPriorityCEMinvCpus:
+  PriorityCEMinvCpus:
     Description: The minimum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
     Default: 0
-  HighPriorityCEMaxvCpus:
+  PriorityCEMaxvCpus:
     Description: The maximum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
     Default: 100
@@ -163,8 +163,8 @@ Resources:
         SubnetIds: !Join [",", !Ref SubnetIds ]
         DefaultCEMinvCpus: !Ref DefaultCEMinvCpus
         DefaultCEMaxvCpus: !Ref DefaultCEMaxvCpus
-        HighPriorityCEMinvCpus: !Ref HighPriorityCEMinvCpus
-        HighPriorityCEMaxvCpus: !Ref HighPriorityCEMaxvCpus
+        PriorityCEMinvCpus: !Ref PriorityCEMinvCpus
+        PriorityCEMaxvCpus: !Ref PriorityCEMaxvCpus
         BatchServiceRoleArn: !Sub ${IamStack.Outputs.BatchServiceRoleArn}
         Ec2InstanceProfileArn: !Sub ${IamStack.Outputs.BatchInstanceProfileArn}
         SpotFleetRoleArn: !Sub ${IamStack.Outputs.BatchSpotFleetRoleArn}
@@ -190,7 +190,7 @@ Resources:
     Properties:
       Name: !Sub /gwfcore/${AWS::StackName}/job-queue/priority
       Type: String #required
-      Value: !Sub ${BatchStack.Outputs.HighPriorityJobQueueArn} #required
+      Value: !Sub ${BatchStack.Outputs.PriorityJobQueueArn} #required
       Description: GWFCore Priority AWS Batch Job Queue
   
   ParamAdditionsRepoName:
@@ -234,19 +234,11 @@ Resources:
       Description: GWFCore S3 Root Url for Installed Artifacts
 
 Outputs:
-  GenomicsEnvS3Bucket:
+  S3BucketName:
     Value: !Sub ${S3Stack.Outputs.BucketName}
-    Export:
-        Name: !Sub "${AWS::StackName}-Genomics-S3Bucket"
-  GenomicsEnvBatchJobRoleArn:
+  BatchJobRoleArn:
     Value: !Sub ${IamStack.Outputs.BatchJobRoleArn}
-    Export:
-        Name: !Sub "${AWS::StackName}-Genomics-BatchJobRoleArn"
-  GenomicsEnvDefaultJobQueueArn:
+  DefaultJobQueueArn:
     Value: !Sub ${BatchStack.Outputs.DefaultJobQueueArn}
-    Export:
-        Name: !Sub "${AWS::StackName}-Genomics-DefaultJobQueueArn"
-  GenomicsEnvHighPriorityJobQueueArn:
-    Value: !Sub ${BatchStack.Outputs.HighPriorityJobQueueArn}
-    Export:
-        Name: !Sub "${AWS::StackName}-Genomics-HighPriorityJobQueueArn"
+  PriorityJobQueueArn:
+    Value: !Sub ${BatchStack.Outputs.PriorityJobQueueArn}

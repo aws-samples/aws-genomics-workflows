@@ -16,8 +16,8 @@ Metadata:
         - SubnetIds
         - DefaultCEMinvCpus
         - DefaultCEMaxvCpus
-        - HighPriorityCEMinvCpus
-        - HighPriorityCEMaxvCpus
+        - PriorityCEMinvCpus
+        - PriorityCEMaxvCpus
         - BatchServiceRoleArn
         - Ec2InstanceProfileArn
         - SpotFleetRoleArn
@@ -32,10 +32,10 @@ Metadata:
         default: Default Queue Min vCPU count
       DefaultCEMaxvCpus:
         default: Default Queue Max vCPU count
-      HighPriorityCEMinvCpus:
-        default: HighPriority Queue Min vCPU count
-      HighPriorityCEMaxvCpus:
-        default: HighPriority Queue Max vCPU count
+      PriorityCEMinvCpus:
+        default: Priority Queue Min vCPU count
+      PriorityCEMaxvCpus:
+        default: Priority Queue Max vCPU count
       BatchServiceRoleArn:
         default: AWS Batch service role ARN
       Ec2InstanceProfileArn:
@@ -57,12 +57,12 @@ Parameters:
   LaunchTemplateId:
     Type: String
     Description: Launch Template you want your AWS Batch Compute Environments to use
-  HighPriorityCEMinvCpus:
+  PriorityCEMinvCpus:
     Type: Number
     Description: Minimum number of CPUs in the high-priority compute environment. Default 0.
     Default: 0
     MinValue: 0
-  HighPriorityCEMaxvCpus:
+  PriorityCEMaxvCpus:
     Type: Number
     Description: Maximum number of CPUs in the high-priority compute environment. Should be >= than MinCpus
     Default: 100
@@ -166,8 +166,8 @@ Resources:
         InstanceRole:  !Ref Ec2InstanceProfileArn
         InstanceTypes:
           - optimal
-        MinvCpus: !Ref HighPriorityCEMinvCpus
-        MaxvCpus: !Ref HighPriorityCEMaxvCpus
+        MinvCpus: !Ref PriorityCEMinvCpus
+        MaxvCpus: !Ref PriorityCEMaxvCpus
         SecurityGroupIds:
           - !Ref SecurityGroup
         Subnets: !Ref SubnetIds
@@ -204,5 +204,5 @@ Resources:
 Outputs:
   DefaultJobQueueArn:
     Value: !Ref DefaultQueue
-  HighPriorityJobQueueArn:
+  PriorityJobQueueArn:
     Value: !Ref PriorityQueue

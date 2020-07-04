@@ -47,7 +47,7 @@ Conditions:
       - ""
 
 Resources:
-  GenomicsEnvS3Bucket:
+  S3Bucket:
     Type: AWS::S3::Bucket
     Condition: BucketDoesNotExist
     DeletionPolicy: Retain
@@ -74,12 +74,12 @@ Outputs:
     Value:
       Fn::If:
         - BucketDoesNotExist
-        - !Ref GenomicsEnvS3Bucket
+        - !Ref S3Bucket
         - !Ref S3BucketName
   BucketArn:
     Value:
       Fn::If:
         - BucketDoesNotExist
-        - !GetAtt GenomicsEnvS3Bucket.Arn
+        - !GetAtt S3Bucket.Arn
         - !Join [":::", ["arn:aws:s3", !Ref S3BucketName]]
 ...
