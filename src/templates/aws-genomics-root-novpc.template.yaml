@@ -172,8 +172,6 @@ Resources:
             - NoNamespace
             - !Sub ${AWS::StackName}
             - !Ref Namespace
-        ArtifactBucketName: !Ref ArtifactBucketName
-        ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
   
   BatchStack:
     Type: AWS::CloudFormation::Stack
