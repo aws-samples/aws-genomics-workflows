@@ -21,19 +21,19 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "Data Storage"
+          default: "Data Storage Configuration"
         Parameters:
           - S3DataBucketName
           - ExistingDataBucket
       - Label:
-          default: "AWS Batch"
+          default: "AWS Batch Configuration"
         Parameters:
           - DefaultCEMinvCpus
           - DefaultCEMaxvCpus
           - PriorityCEMinvCpus
           - PriorityCEMaxvCpus
       - Label:
-          default: "Nextflow Resources"
+          default: "Nextflow Configuration"
         Parameters:
           - NextflowContainerImage
           - S3NextflowBucketName

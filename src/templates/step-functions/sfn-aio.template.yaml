@@ -20,12 +20,12 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "Data Storage"
+          default: "Data Storage Configuration"
         Parameters:
           - S3BucketName
           - ExistingBucket
       - Label:
-          default: "AWS Batch"
+          default: "AWS Batch Configuration"
         Parameters:
           - DefaultCEMinvCpus
           - DefaultCEMaxvCpus

@@ -20,23 +20,23 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "Required"
+          default: "Required Configuration"
         Parameters:
           - KeyPairName
       - Label:
-          default: "Data Storage"
+          default: "Data Storage Configuration"
         Parameters:
           - S3BucketName
           - ExistingBucket
       - Label:
-          default: "AWS Batch"
+          default: "AWS Batch Configuration"
         Parameters:
           - DefaultCEMinvCpus
           - DefaultCEMaxvCpus
           - PriorityCEMinvCpus
           - PriorityCEMaxvCpus
       - Label:
-          default: "Cromwell Server"
+          default: "Cromwell Configuration"
         Parameters:
           - CromwellVersion
           - CromwellVersionSpecified
