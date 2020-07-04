@@ -17,10 +17,14 @@ Metadata:
       - Label:
           default: Optional
         Parameters:
+          - Namespace
           - DefaultCEMinvCpus
           - DefaultCEMaxvCpus
           - PriorityCEMinvCpus
           - PriorityCEMaxvCpus
+      - Label:
+          default: Distribution Configuration
+        Parameters:
           - ArtifactBucketName
           - ArtifactBucketPrefix
           - TemplateRootUrl
@@ -51,6 +55,11 @@ Metadata:
 
 
 Parameters:
+  Namespace:
+    Type: String
+    Description: Optional namespace (e.g. project name) to use to label resources. If not specified the stack-name will be used.
+    Default: ""
+
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: 'The VPC to create security groups and deploy AWS Batch to. NOTE: Must be the same VPC as the provided subnet IDs.'
@@ -107,6 +116,8 @@ Parameters:
       Must be a valid S3 HTTP URL
     AllowedPattern: "https://[a-z0-9-./]{0,}s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
 
+Conditions:
+  NoNamespace: !Equals [ !Ref Namespace, "" ]
 
 Resources:
   S3Stack:
@@ -115,7 +126,11 @@ Resources:
       TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-s3.template.yaml
       TimeoutInMinutes: 5
       Parameters:
-        Namespace: !Sub ${AWS::StackName}
+        Namespace:
+          Fn::If:
+            - NoNamespace
+            - !Sub ${AWS::StackName}
+            - !Ref Namespace
         S3BucketName: !Ref S3BucketName
         ExistingBucket: !Ref ExistingBucket
   
@@ -126,7 +141,11 @@ Resources:
       TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-iam.template.yaml
       TimeoutInMinutes: 10
       Parameters:
-        Namespace: !Sub ${AWS::StackName}
+        Namespace:
+          Fn::If:
+            - NoNamespace
+            - !Sub ${AWS::StackName}
+            - !Ref Namespace
         S3BucketName: !Sub ${S3Stack.Outputs.BucketName}
   
   CodeStack:
@@ -134,7 +153,11 @@ Resources:
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-code.template.yaml
       Parameters:
-        Namespace: !Sub ${AWS::StackName}
+        Namespace:
+          Fn::If:
+            - NoNamespace
+            - !Sub ${AWS::StackName}
+            - !Ref Namespace
         InstallBucketName: !Sub ${S3Stack.Outputs.BucketName}
         ArtifactBucketName: !Ref ArtifactBucketName
         ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
@@ -144,7 +167,11 @@ Resources:
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-launch-template.template.yaml
       Parameters:
-        Namespace: !Sub ${AWS::StackName}
+        Namespace:
+          Fn::If:
+            - NoNamespace
+            - !Sub ${AWS::StackName}
+            - !Ref Namespace
         ArtifactBucketName: !Ref ArtifactBucketName
         ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
   
@@ -157,7 +184,11 @@ Resources:
       TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-batch.template.yaml
       TimeoutInMinutes: 10
       Parameters:
-        Namespace: !Sub ${AWS::StackName}
+        Namespace:
+          Fn::If:
+            - NoNamespace
+            - !Sub ${AWS::StackName}
+            - !Ref Namespace
         LaunchTemplateId: !Sub ${LaunchTplStack.Outputs.LaunchTemplateId}
         VpcId: !Ref VpcId
         SubnetIds: !Join [",", !Ref SubnetIds ]
@@ -172,7 +203,14 @@ Resources:
   ParamS3Bucket:
     Type: "AWS::SSM::Parameter"
     Properties:
-      Name: !Sub /gwfcore/${AWS::StackName}/s3-bucket
+      Name:
+        Fn::Sub:
+          - /gwfcore/${namespace}/s3-bucket
+          - namespace: 
+              Fn::If:
+                - NoNamespace
+                - !Sub ${AWS::StackName}
+                - !Ref Namespace
       Type: String #required
       Value: !Sub ${S3Stack.Outputs.BucketName} #required
       Description: GWFCore S3 Bucket
@@ -180,7 +218,15 @@ Resources:
   ParamDefaultJobQueue:
     Type: "AWS::SSM::Parameter"
     Properties:
-      Name: !Sub /gwfcore/${AWS::StackName}/job-queue/default
+      Name:
+        Fn::Sub:
+          - /gwfcore/${namespace}/job-queue/default
+          - namespace: 
+              Fn::If:
+                - NoNamespace
+                - !Sub ${AWS::StackName}
+                - !Ref Namespace
+
       Type: String #required
       Value: !Sub ${BatchStack.Outputs.DefaultJobQueueArn} #required
       Description: GWFCore Default AWS Batch Job Queue
@@ -188,7 +234,14 @@ Resources:
   ParamPriorityJobQueue:
     Type: "AWS::SSM::Parameter"
     Properties:
-      Name: !Sub /gwfcore/${AWS::StackName}/job-queue/priority
+      Name:
+        Fn::Sub:
+          - /gwfcore/${namespace}/job-queue/priority
+          - namespace: 
+              Fn::If:
+                - NoNamespace
+                - !Sub ${AWS::StackName}
+                - !Ref Namespace
       Type: String #required
       Value: !Sub ${BatchStack.Outputs.PriorityJobQueueArn} #required
       Description: GWFCore Priority AWS Batch Job Queue
@@ -196,7 +249,14 @@ Resources:
   ParamAdditionsRepoName:
     Type: "AWS::SSM::Parameter"
     Properties:
-      Name: !Sub /gwfcore/${AWS::StackName}/additions-repository/name
+      Name: 
+        Fn::Sub:
+          - /gwfcore/${namespace}/additions-repository/name
+          - namespace: 
+              Fn::If:
+                - NoNamespace
+                - !Sub ${AWS::StackName}
+                - !Ref Namespace
       Type: String #required
       Value: !Sub ${CodeStack.Outputs.EcsAdditionsRepoName} #required
       Description: GWFCore ECS Additions Repository Name
@@ -204,7 +264,14 @@ Resources:
   ParamAdditionsRepoCloneUrlHttp:
     Type: "AWS::SSM::Parameter"
     Properties:
-      Name: !Sub /gwfcore/${AWS::StackName}/additions-repository/clone-url-http
+      Name: 
+        Fn::Sub:
+          - /gwfcore/${namespace}/additions-repository/clone-url-http
+          - namespace: 
+              Fn::If:
+                - NoNamespace
+                - !Sub ${AWS::StackName}
+                - !Ref Namespace
       Type: String #required
       Value: !Sub ${CodeStack.Outputs.EcsAdditionsRepoCloneUrlHttp} #required
       Description: GWFCore ECS Additions Repository HTTP Clone Url
@@ -212,7 +279,14 @@ Resources:
   ParamInstalledArtifactsBucket:
     Type: "AWS::SSM::Parameter"
     Properties:
-      Name: !Sub /gwfcore/${AWS::StackName}/installed-artifacts/bucket
+      Name: 
+        Fn::Sub:
+          - /gwfcore/${namespace}/installed-artifacts/bucket
+          - namespace: 
+              Fn::If:
+                - NoNamespace
+                - !Sub ${AWS::StackName}
+                - !Ref Namespace
       Type: String #required
       Value: !Sub ${CodeStack.Outputs.InstalledArtifactsBucket} #required
       Description: GWFCore S3 Bucket for Installed Artifacts
@@ -220,7 +294,14 @@ Resources:
   ParamInstalledArtifactsPrefix:
     Type: "AWS::SSM::Parameter"
     Properties:
-      Name: !Sub /gwfcore/${AWS::StackName}/installed-artifacts/prefix
+      Name: 
+        Fn::Sub:
+          - /gwfcore/${namespace}/installed-artifacts/prefix
+          - namespace: 
+              Fn::If:
+                - NoNamespace
+                - !Sub ${AWS::StackName}
+                - !Ref Namespace
       Type: String #required
       Value: !Sub ${CodeStack.Outputs.InstalledArtifactsPrefix} #required
       Description: GWFCore S3 Prefix for Installed Artifacts
@@ -228,7 +309,14 @@ Resources:
   ParamInstalledArtifactsS3RootUrl:
     Type: "AWS::SSM::Parameter"
     Properties:
-      Name: !Sub /gwfcore/${AWS::StackName}/installed-artifacts/s3-root-url
+      Name: 
+        Fn::Sub:
+          - /gwfcore/${namespace}/installed-artifacts/s3-root-url
+          - namespace: 
+              Fn::If:
+                - NoNamespace
+                - !Sub ${AWS::StackName}
+                - !Ref Namespace
       Type: String #required
       Value: !Sub ${CodeStack.Outputs.InstalledArtifactsS3RootUrl} #required
       Description: GWFCore S3 Root Url for Installed Artifacts
