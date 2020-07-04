@@ -104,7 +104,7 @@ Resources:
                 - unzip -q /tmp/awscliv2.zip -d /tmp
                 - /tmp/aws/install -b /usr/bin
                 - mkdir -p /opt/aws-cli/bin
-                - cp -av $(dirname $(find /usr/local/aws-cli -name 'aws' -type f))/. /opt/aws-cli/bin/
+                - cp -a $(dirname $(find /usr/local/aws-cli -name 'aws' -type f))/. /opt/aws-cli/bin/
 
                 # set environment variables for provisioning
                 - export GWFCORE_NAMESPACE=${Namespace}
