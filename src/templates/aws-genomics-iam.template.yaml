@@ -1,3 +1,4 @@
+---
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   (WWPS-GLS-WF-IAM) Creates IAM roles to use with AWS Batch scalable genomics 
@@ -168,3 +169,4 @@ Outputs:
     Value: !GetAtt BatchSpotFleetRole.Arn
   BatchInstanceProfileArn:
     Value: !GetAtt BatchInstanceProfile.Arn
+...

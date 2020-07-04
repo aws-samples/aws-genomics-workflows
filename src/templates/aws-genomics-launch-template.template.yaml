@@ -1,3 +1,4 @@
+---
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
   (WWPS-GLS-WF-LT) Creates an EC2 Launch Template for AWS Batch based
@@ -121,3 +122,4 @@ Outputs:
       EC2 Launch Template ID to use when creating AWS Batch compute environments
       for genomics workflows
     Value: !Ref EC2LaunchTemplate
+...
