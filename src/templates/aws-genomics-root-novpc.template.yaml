@@ -92,12 +92,12 @@ Parameters:
     Type: String
     Default: aws-genomics-workflows
     Description: >-
-      S3 Bucket where artifacts and additions scripts are stored
+      S3 Bucket where distrubution artifacts and additions scripts are stored
   ArtifactBucketPrefix:
     Type: String
     Default: artifacts
     Description: >-
-      Prefix in ArtifactBucketName where artifacts and additions scripts are stored
+      Prefix in ArtifactBucketName where distribution artifacts and additions scripts are stored
   TemplateRootUrl:
     Type: String
     Description: >-
@@ -115,6 +115,7 @@ Resources:
       TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-s3.template.yaml
       TimeoutInMinutes: 5
       Parameters:
+        Namespace: !Sub ${AWS::StackName}
         S3BucketName: !Ref S3BucketName
         ExistingBucket: !Ref ExistingBucket
   
@@ -125,6 +126,7 @@ Resources:
       TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-iam.template.yaml
       TimeoutInMinutes: 10
       Parameters:
+        Namespace: !Sub ${AWS::StackName}
         S3BucketName: !Sub ${S3Stack.Outputs.BucketName}
   
   CodeStack:
@@ -132,7 +134,8 @@ Resources:
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/aws-genomics-code.template.yaml
       Parameters:
-        S3BucketName: !Sub ${S3Stack.Outputs.BucketName}
+        Namespace: !Sub ${AWS::StackName}
+        InstallBucketName: !Sub ${S3Stack.Outputs.BucketName}
         ArtifactBucketName: !Ref ArtifactBucketName
         ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
 

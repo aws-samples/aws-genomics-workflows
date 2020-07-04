@@ -3,6 +3,10 @@ Description: >-
   (WWPS-GLS-WF-IAM) Creates IAM roles to use with AWS Batch scalable genomics 
   workflow environment.
 Parameters:
+    Namespace:
+      Type: String
+      Description: Namespace (e.g. project name) to use to label resources
+  
     S3BucketName:
       Type: String
       Description: The name of the S3 bucket which will store the results of genomics analyses.
@@ -103,7 +107,7 @@ Resources:
               Action:
                 - codecommit:GitPull
               Resource:
-                - !Sub arn:aws:codecommit:*:${AWS::AccountId}:*
+                - !Sub arn:aws:codecommit:*:${AWS::AccountId}:*-${Namespace}
         
         # enable reading SSM parameters by provisioning scripts
         - PolicyName: !Sub SystemsManager-Access-${AWS::Region}
@@ -114,7 +118,7 @@ Resources:
                 Action:
                   - ssm:GetParameter*
                 Resource:
-                  - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/*
+                  - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/gwfcore/${Namespace}/*
               - Effect: Allow
                 Action:
                   - ssm:DescribeParameters
