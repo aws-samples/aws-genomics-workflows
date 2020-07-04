@@ -110,7 +110,7 @@ Resources:
                 - export GWFCORE_NAMESPACE=${Namespace}
                 - export GIT_CLONE_URL=$(aws ssm get-parameter --name /gwfcore/${Namespace}/additions-repository/clone-url-http --query 'Parameter.Value' --output text)
                 
-                - git clone $GIT_CLONE_URL ./ecs-additions
+                - git clone $GIT_CLONE_URL /opt/ecs-additions
                 - chmod a+x /opt/ecs-additions/provision.sh
                 - /opt/ecs-additions/provision.sh
 
