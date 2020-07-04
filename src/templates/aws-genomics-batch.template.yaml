@@ -149,9 +149,7 @@ Resources:
         Subnets: !Ref SubnetIds
         Type: SPOT
         Tags:
-          Name: !Sub
-            - batch-spot-worker-${StackGuid}
-            - StackGuid: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
+          Name: !Sub batch-worker-spot-${Namespace}
 
   OnDemandComputeEnv:
     Type: AWS::Batch::ComputeEnvironment
@@ -174,9 +172,7 @@ Resources:
         Subnets: !Ref SubnetIds
         Type: EC2
         Tags:
-          Name: !Sub
-            - batch-ondemand-worker-${StackGuid}
-            - StackGuid: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
+          Name: !Sub batch-worker-ondemand-${Namespace}
 
   PriorityQueue:
     Type: AWS::Batch::JobQueue
