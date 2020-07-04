@@ -223,10 +223,10 @@ Resources:
         TemplateRootUrl: !Ref TemplateRootUrl
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
-  CromwellServerStack:
+  CromwellStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL:  !Sub ${TemplateRootUrl}/cromwell/cromwell-server.template.yaml
+      TemplateURL:  !Sub ${TemplateRootUrl}/cromwell/cromwell-resources.template.yaml
       Parameters:
         InstanceType: !Ref 'InstanceType'
         VpcId: !GetAtt 'VpcStack.Outputs.VPCID'
