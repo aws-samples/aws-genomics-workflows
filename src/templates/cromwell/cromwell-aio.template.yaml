@@ -246,7 +246,7 @@ Resources:
 
 Outputs:
   CromwellServerHostName:
-    Value: !GetAtt 'CromwellServerStack.Outputs.HostName'
+    Value: !GetAtt 'CromwellStack.Outputs.HostName'
     Export:
       Name: !Sub "${AWS::StackName}-CromwellServerHostName"
     Description: >-
