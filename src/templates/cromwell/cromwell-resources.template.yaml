@@ -701,6 +701,7 @@ Outputs:
             - GetLatestCromwellVersion
             - !Ref CromwellVersion
             - !Ref CromwellVersionSpecified
+  
   EC2Instance:
     Description: The EC2 Instance ID of your Cromwell Server
     Value: !Ref EC2Instance
@@ -712,3 +713,12 @@ Outputs:
   HostName:
     Value: !GetAtt EC2Instance.PublicDnsName
     Description: Cromwell server public DNS name
+
+  CloudWatchLogStream:
+    Value:
+      Fn::Join:
+        - "/"
+        - - !Sub https://${AWS::Region}.console.aws.amazon.com
+          - !Sub cloudwatch/home?region=${AWS::Region}#logsV2:log-groups
+          - !Sub log-group/cromwell-server/log-events/${EC2Instance}
+    Description: Cromwell server log stream
