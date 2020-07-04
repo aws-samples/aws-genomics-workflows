@@ -111,6 +111,7 @@ Resources:
                 - export GIT_CLONE_URL=$(aws ssm get-parameter --name /gwfcore/${Namespace}/additions-repository/clone-url-http --query 'Parameter.Value' --output text)
                 
                 - cd /opt
+                - export HOME=/root
                 - git config --global credential.helper '!aws codecommit credential-helper $@'
                 - git config --global credential.UseHttpPath true
                 - git clone $GIT_CLONE_URL /opt/ecs-additions
