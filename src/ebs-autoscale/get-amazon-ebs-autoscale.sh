@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x
 
 INSTALL_VERSION=dist_release
 FILESYSTEM=btrfs
