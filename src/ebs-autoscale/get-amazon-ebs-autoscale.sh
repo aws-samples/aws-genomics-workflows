@@ -15,17 +15,17 @@ Options
     -i, --install-version       [dist_release] | release | latest | develop
             Version of Amazon EBS Autoscale to install.
             
-                "dist_release" uses `aws s3 cp` to retrieve a tarball from an S3 bucket.
+                "dist_release" uses 'aws s3 cp' to retrieve a tarball from an S3 bucket.
                     requires setting --artifact-root-url to an S3 URL.
 
-                "release" uses `curl` or `aws s3 cp` to retrieve a tarball from a publicly 
+                "release" uses 'curl' or 'aws s3 cp' to retrieve a tarball from a publicly 
                     accessible location - i.e. an upstream distribution.
                     requires setting --artifact-root-url to either an S3 or HTTP URL.
                 
-                "latest" uses `curl` to retrieve the latest released version of 
+                "latest" uses 'curl' to retrieve the latest released version of 
                     amazon-ebs-autoscale from GitHub
                 
-                "develop" uses `git` to clone the source code of amazon-ebs-autoscale
+                "develop" uses 'git' to clone the source code of amazon-ebs-autoscale
                     from GitHub.
     
     -a, --artifact-root-url     s3://... | https:// ...
