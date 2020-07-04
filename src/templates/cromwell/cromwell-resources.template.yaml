@@ -585,6 +585,16 @@ Metadata:
         default: "..."
 
 Outputs:
+  CromwellVersion:
+    Description: Version of Cromwell installed.
+    Value:
+      Fn::If:
+        - UseCromwellJar
+        - !Ref CromwellJarUrl
+        - Fn::If:
+            - GetLatestCromwellVersion
+            - !Ref CromwellVersion
+            - !Ref CromwellVersionSpecified
   EC2Instance:
     Description: The EC2 Instance ID of your Cromwell Server
     Value: !Ref EC2Instance
