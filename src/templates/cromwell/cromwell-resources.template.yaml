@@ -13,6 +13,61 @@ Mappings:
         - Key: "solution"
           Value: "cromwell"
 
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Network Configuration"
+        Parameters:
+          - VpcId
+          - PublicSubnetID
+      - Label:
+          default: "Instance Configuration"
+        Parameters:
+          - LatestAmazonLinuxAMI
+          - InstanceType
+          - InstanceName
+          - KeyName
+          - SSHLocation
+          - HTTPLocation
+
+      - Label:
+          default: "Cromwell Configuration"
+        Parameters:
+          - CromwellVersion
+          - CromwellVersionSpecified
+          - CromwellJarUrl
+          - S3BucketName
+          - S3OpenDataBucketARNs
+          - BatchQueue
+      
+    ParameterLabels:
+      VpcId:
+        default: "VPC ID"
+      PublicSubnetID:
+        default: "Public Subnet ID"
+      InstanceName:
+        default: "Instance Name"
+      LatestAmazonLinuxAMI:
+        default: "Latest Amazon Linux AMI"
+      SSHLocation:
+        default: "SSH Address Range"
+      HTTPLocation:
+        default: "HTTP Address Range"
+      KeyName:
+        default: "Key Pair Name"
+      S3BucketName:
+        default: "S3 Bucket Name"
+      S3OpenDataBucketARNs:
+        default: "S3 Open Data Bucket ARNs"
+      BatchQueue:
+        default: "Default Batch Queue"
+      CromwellVersion:
+        default: "Cromwell Version"
+      CromwellVersionSpecified:
+        default: "..."
+
+
 # Parameters
 Parameters:
   InstanceType:
@@ -529,60 +584,6 @@ Resources:
     CreationPolicy:
       ResourceSignal:
         Timeout: PT15M
-
-Metadata:
-  AWS::CloudFormation::Interface:
-    ParameterGroups:
-      - Label:
-          default: "Network Configuration"
-        Parameters:
-          - VpcId
-          - PublicSubnetID
-      - Label:
-          default: "Instance Configuration"
-        Parameters:
-          - LatestAmazonLinuxAMI
-          - InstanceType
-          - InstanceName
-          - KeyName
-          - SSHLocation
-          - HTTPLocation
-
-      - Label:
-          default: "Cromwell Configuration"
-        Parameters:
-          - CromwellVersion
-          - CromwellVersionSpecified
-          - CromwellJarUrl
-          - S3BucketName
-          - S3OpenDataBucketARNs
-          - BatchQueue
-      
-    ParameterLabels:
-      VpcId:
-        default: "VPC ID"
-      PublicSubnetID:
-        default: "Public Subnet ID"
-      InstanceName:
-        default: "Instance Name"
-      LatestAmazonLinuxAMI:
-        default: "Latest Amazon Linux AMI"
-      SSHLocation:
-        default: "SSH Address Range"
-      HTTPLocation:
-        default: "HTTP Address Range"
-      KeyName:
-        default: "Key Pair Name"
-      S3BucketName:
-        default: "S3 Bucket Name"
-      S3OpenDataBucketARNs:
-        default: "S3 Open Data Bucket ARNs"
-      BatchQueue:
-        default: "Default Batch Queue"
-      CromwellVersion:
-        default: "Cromwell Version"
-      CromwellVersionSpecified:
-        default: "..."
 
 Outputs:
   CromwellVersion:
