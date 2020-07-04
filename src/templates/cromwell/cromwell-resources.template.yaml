@@ -335,16 +335,14 @@ Resources:
         config1:
           files:
             "/etc/awslogs/awslogs.conf":
-              content: !Sub
-                - |
-                  [general]
-                  state_file = /var/lib/awslogs/agent-state        
-                  
-                  [cromwell-server]
-                  file = /tmp/cromwell-server.log
-                  log_group_name = cromwell-server
-                  log_stream_name = ${StackGuid}
-                - { StackGuid: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]] }
+              content: |
+                [general]
+                state_file = /var/lib/awslogs/agent-state        
+                
+                [cromwell-server]
+                file = /tmp/cromwell-server.log
+                log_group_name = cromwell-server
+                log_stream_name = %%INSTANCE-ID%%
               mode: 000664
               owner: root
               group: root
@@ -557,6 +555,12 @@ Resources:
                         }
                     }
                 }
+
+          commands:
+            00_get_instance_id:
+              command: curl -s http://169.254.169.254/latest/meta-data/instance-id/ > /etc/instance-id
+            01_set_log_stream_name:
+              command: sed -i -e "s/%%INSTANCE-ID%%/`cat /etc/instance-id`/g" /etc/awslogs/awslogs.conf
 
         config2:
           commands:
