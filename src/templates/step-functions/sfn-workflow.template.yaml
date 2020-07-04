@@ -174,7 +174,7 @@ Resources:
   StateMachine:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub ${TemplateRootUrl}/step-functions/sfn-workflow-example-mapping.template.yaml
+      TemplateURL: !Sub ${TemplateRootUrl}/step-functions/sfn-workflow-state-machine.template.yaml
       Parameters:
         S3BucketName: !Ref S3BucketName
         IAMStepFunctionsExecutionRole: !GetAtt IAMStepFunctionsExecutionRole.Arn
