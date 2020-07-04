@@ -189,8 +189,6 @@ Outputs:
     Value: !GetAtt StateMachine.Outputs.StateMachine
     Description: >
       AWS Step Functions State Machine that demonstrates a simple genomics workflow
-    Export:
-      Name: !Sub ${AWS::StackName}-StateMachine
   
   StateMachineInput:
     Value: !GetAtt StateMachine.Outputs.StateMachineInput
@@ -200,7 +198,5 @@ Outputs:
   StepFunctionsExecutionRole:
     Value: !GetAtt IAMStepFunctionsExecutionRole.Arn
     Description: IAM role used by AWS Step Functions to execute the state machine
-    Export:
-      Name: !Sub ${AWS::StackName}-StepFunctionsExecutionRole
 
 ...
