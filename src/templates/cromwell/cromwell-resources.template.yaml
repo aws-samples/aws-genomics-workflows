@@ -135,7 +135,7 @@ Parameters:
   
   DBSubnetIDs:
     Type: List<AWS::EC2::Subnet::Id>
-    Description: Subnets for the Cromwell Database. Private subnets are recommended.
+    Description: Minimum 2 subnets for the Cromwell Database. Private subnets are recommended.
 
   DBUsername:
     Type: String
