@@ -45,6 +45,12 @@ Metadata:
           - InstanceName
           - SSHLocation
           - HTTPLocation
+      - Label:
+          default: "Distribution Configuration"
+        Parameters:
+          - ArtifactBucketName
+          - ArtifactBucketPrefix
+          - TemplateRootUrl
 
     ParameterLabels:
       S3BucketName:

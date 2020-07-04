@@ -38,6 +38,12 @@ Metadata:
           - NextflowContainerImage
           - S3NextflowBucketName
           - ExistingNextflowBucket
+      - Label:
+          default: "Distribution Configuration"
+        Parameters:
+          - ArtifactBucketName
+          - ArtifactBucketPrefix
+          - TemplateRootUrl
 
     ParameterLabels:
       S3DataBucketName:

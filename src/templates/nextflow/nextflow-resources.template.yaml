@@ -26,7 +26,7 @@ Metadata:
           - S3NextflowBucketName
           - ExistingBucket
           - BatchDefaultJobQueue
-          - BatchHighPriorityJobQueue
+          - BatchPriorityJobQueue
       - Label:
           default: "Optional"
         Parameters:
@@ -34,6 +34,12 @@ Metadata:
           - S3NextflowPrefix
           - S3LogsDirPrefix
           - S3WorkDirPrefix
+      - Label:
+          default: "Distribution Configuration"
+        Parameters:
+          - ArtifactBucketName
+          - ArtifactBucketPrefix
+          - TemplateRootUrl
 
 
 Parameters:
@@ -91,7 +97,7 @@ Parameters:
     Description: >-
       ARN of the Batch Job Queue to use by default for workflow tasks.
 
-  BatchHighPriorityJobQueue:
+  BatchPriorityJobQueue:
     Type: String
     Description: >-
       ARN of the Batch Job Queue to use for high priority workflow tasks.
@@ -201,7 +207,7 @@ Resources:
                 Effect: Allow
                 Resource:
                   - !Ref BatchDefaultJobQueue
-                  - !Ref BatchHighPriorityJobQueue
+                  - !Ref BatchPriorityJobQueue
                   - arn:aws:batch:*:*:job-definition/nf-*:*
                 Action:
                   - "batch:*Job"

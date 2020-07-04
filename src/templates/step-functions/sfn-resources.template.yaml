@@ -23,6 +23,12 @@ Metadata:
         Parameters:
           - S3BucketName
           - BatchJobQueue
+      - Label:
+          default: "Distribution Configuration"
+        Parameters:
+          - ArtifactBucketName
+          - ArtifactBucketPrefix
+          - TemplateRootUrl
 
 Parameters:
   S3BucketName:

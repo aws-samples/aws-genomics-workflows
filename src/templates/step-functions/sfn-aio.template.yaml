@@ -31,6 +31,12 @@ Metadata:
           - DefaultCEMaxvCpus
           - PriorityCEMinvCpus
           - PriorityCEMaxvCpus
+      - Label:
+          default: "Distribution Configuration"
+        Parameters:
+          - ArtifactBucketName
+          - ArtifactBucketPrefix
+          - TemplateRootUrl
 
     ParameterLabels:
       S3BucketName:
