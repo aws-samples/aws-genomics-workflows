@@ -351,7 +351,7 @@ Resources:
     Properties:
       Handler: lambda.handler
       Role: !GetAtt IAMLambdaExecutionRole.Arn
-      Runtime: python3.7
+      Runtime: python3.8
       Timeout: 60
       Code:
         S3Bucket: !Ref ArtifactBucketName
