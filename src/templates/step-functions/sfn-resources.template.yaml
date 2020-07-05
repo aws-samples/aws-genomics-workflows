@@ -24,6 +24,10 @@ Metadata:
           - S3BucketName
           - BatchJobQueue
       - Label:
+          default: "Optional"
+        Parameters:
+          - Namespace
+      - Label:
           default: "Distribution Configuration"
         Parameters:
           - ArtifactBucketName
@@ -31,12 +35,16 @@ Metadata:
           - TemplateRootUrl
 
 Parameters:
+  Namespace:
+    Type: String
+    Description: Optional namespace (e.g. project name) to use to label resources. If not specified the stack-name will be used.
+    Default: ""
+  
   S3BucketName:
     Description: >-
       A S3 bucket name for storing analysis results.
       The bucket name must respect the S3 bucket naming conventions 
       (can contain lowercase letters, numbers, periods and hyphens).
-      If left blank a unique bucket name will be generated.
     Type: String
     AllowedPattern: "((?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)|(^.{0}$))"
     ConstraintDescription: "Must respect S3 bucket naming conventions"
@@ -64,6 +72,9 @@ Parameters:
     ConstraintDescription: >-
       Must be a valid S3 HTTP URL
     AllowedPattern: "https://[a-z0-9-./]{0,}s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
+
+Conditions:
+  NoNamespace: !Equals [ !Ref Namespace, "" ]
 
 Resources:
   ContainerSource:
@@ -182,6 +193,11 @@ Resources:
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/step-functions/sfn-resources-state-machine.template.yaml
       Parameters:
+        Namespace:
+          Fn::If:
+              - NoNamespace
+              - !Sub ${AWS::StackName}
+              - !Ref Namespace
         S3BucketName: !Ref S3BucketName
         IAMStepFunctionsExecutionRole: !GetAtt IAMStepFunctionsExecutionRole.Arn
         BatchJobQueue: !Ref BatchJobQueue

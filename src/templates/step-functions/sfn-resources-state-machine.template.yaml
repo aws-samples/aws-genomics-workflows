@@ -17,6 +17,10 @@ Mappings:
           Value: "step-functions"
 
 Parameters:
+  Namespace:
+    Type: String
+    Description: Namespace (e.g. project name) to use to label resources.
+  
   S3BucketName:
     Description: S3 URI (e.g. s3://bucket/prefix) you are using for workflow inputs and outputs
     Type: String
@@ -49,9 +53,7 @@ Resources:
   SfnStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: !Sub
-        - sfn-example-mapping-genomics-workflow-${GUID}
-        - GUID: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
+      StateMachineName: !Sub example-genomics-workflow-${Namespace}
       RoleArn: !Ref IAMStepFunctionsExecutionRole
       Tags: !FindInMap ["TagMap", "default", "tags"]
       DefinitionString: !Sub |-
