@@ -16,13 +16,14 @@ from time import sleep
 import boto3
 import cfnresponse
 
+
 send, SUCCESS, FAILED = (
     cfnresponse.send, 
     cfnresponse.SUCCESS, 
     cfnresponse.FAILED
 )
-
 ecr = boto3.client('ecr')
+
 
 def wait(repo, until):
     until = until.lower()
@@ -44,12 +45,15 @@ def wait(repo, until):
             except ecr.exceptions.RepositoryNotFoundException:
                 exists = False
 
+
+
 def put_lifecycle_policy(repo, props):
     if props.get("LifecyclePolicy"):
         ecr.put_lifecycle_policy(
             repositoryName=repo,
             lifecyclePolicyText=props["LifecyclePolicy"]["LifecyclePolicyText"]
         )
+
 
 def create(repo, props, event, context):
     # use existing repository if available, otherwise create
@@ -66,26 +70,26 @@ def create(repo, props, event, context):
         send(event, context, FAILED, None)
         raise(e)
 
+
 def update(repo, props, event, context):
     # use existing repository if available
     update_policy = props.get("UpdateReplacePolicy")
     try:
         if update_policy and update_policy.lower() == "retain":
             put_lifecycle_policy(repo, props)
-
         else:
             # replace the repo
             delete(repo, props, event, context)
             create(repo, props, event, context)
-
     except Exception as e:
         send(event, context, FAILED, None)
         raise(e)
 
+
 def delete(repo, props, event, context):
     # retain repository if specified
     # otherwise force delete
-    delete_policy = props.get("DetetePolicy")
+    delete_policy = props.get("DeletePolicy")
     try:
         if delete_policy and not delete_policy.lower() == "retain":
             ecr.delete_repository(repositoryName=repo, force=True)
@@ -95,6 +99,7 @@ def delete(repo, props, event, context):
         send(event, context, FAILED, None)
         raise(e)
 
+
 def handler(event, context):
     props = event["ResourceProperties"]
     repo = props.get("RepositoryName")
@@ -103,7 +108,6 @@ def handler(event, context):
         action = globals()[event["RequestType"].lower()]
         action(repo, props, event, context)
         send(event, context, SUCCESS, None)
-
     else:
         # unhandled request type
-        send(event, context, FAILED, None)    
+        send(event, context, FAILED, None)
