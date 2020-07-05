@@ -670,7 +670,7 @@ Resources:
     Properties:
       MasterUsername: !Ref DBUsername
       MasterUserPassword: !Ref DBPassword
-      DBClusterIdentifier: cromwell-db
+      DBClusterIdentifier: !Sub ${AWS::StackName}
       BackupRetentionPeriod: 7
       DatabaseName: cromwell
       Engine: aurora
