@@ -22,9 +22,23 @@ NEXTFLOW_PROJECT=$1
 shift
 NEXTFLOW_PARAMS="$@"
 
+# AWS Batch places multiple jobs on an instance
+# To avoid file path clobbering use the JobID and JobAttempt
+# to create a unique path. This is important if /opt/work
+# is mapped to a filesystem external to the container
+GUID="$AWS_BATCH_JOB_ID/$AWS_BATCH_JOB_ATTEMPT"
+
+if [ "$GUID" = "/" ]; then
+    GUID=`date | md5sum | cut -d " " -f 1`
+fi
+
+mkdir -p /opt/work/$GUID
+cd /opt/work/$GUID
+
 # Create the default config using environment variables
 # passed into the container
-NF_CONFIG=~/.nextflow/config
+NF_CONFIG=./nextflow.config
+echo "Creating config file: $NF_CONFIG"
 
 cat << EOF > $NF_CONFIG
 workDir = "$NF_WORKDIR"
@@ -35,19 +49,7 @@ aws.batch.cliPath = "$AWS_CLI_PATH"
 EOF
 
 echo "=== CONFIGURATION ==="
-cat ~/.nextflow/config
-
-# AWS Batch places multiple jobs on an instance
-# To avoid file path clobbering use the JobID and JobAttempt
-# to create a unique path
-GUID="$AWS_BATCH_JOB_ID/$AWS_BATCH_JOB_ATTEMPT"
-
-if [ "$GUID" = "/" ]; then
-    GUID=`date | md5sum | cut -d " " -f 1`
-fi
-
-mkdir -p /opt/work/$GUID
-cd /opt/work/$GUID
+cat ./nextflow.config
 
 # stage in session cache
 # .nextflow directory holds all session information for the current and past runs.
