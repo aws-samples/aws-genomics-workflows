@@ -175,7 +175,7 @@ Resources:
       TemplateURL: !Sub ${TemplateRootUrl}/_common/container-build.template.yaml
       Parameters:
         ImageName: nextflow
-        ImageTag: latest
+        ImageTag: 20.04.1
         GitRepoType: CODECOMMIT
         GitCloneUrlHttp: !GetAtt ContainerSource.CloneUrlHttp
         ProjectPath: ./nextflow
