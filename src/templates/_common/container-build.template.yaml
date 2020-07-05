@@ -352,7 +352,7 @@ Resources:
       Handler: lambda.handler
       Role: !GetAtt IAMLambdaExecutionRole.Arn
       Runtime: python3.7
-      Timeout: 10
+      Timeout: 60
       Code:
         S3Bucket: !Ref ArtifactBucketName
         S3Key: !Sub ${ArtifactBucketPrefix}/lambda-ecr.zip
