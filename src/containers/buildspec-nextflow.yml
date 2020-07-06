@@ -16,7 +16,7 @@ phases:
   build:
     commands:
       - echo "Building container image"
-      - docker build --build-arg VERSION=${IMAGE_TAG} -t ${IMAGE_NAME}:${IMAGE_TAG} .
+      - docker build --build-arg VERSION=${IMAGE_TAG} -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest .
   post_build:
     commands:
       - echo "Pushing container image"
