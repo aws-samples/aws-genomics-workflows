@@ -44,7 +44,6 @@ cat << EOF > $NF_CONFIG
 workDir = "$NF_WORKDIR"
 process.executor = "awsbatch"
 process.queue = "$NF_JOB_QUEUE"
-tower.enabled = true
 aws.batch.cliPath = "$AWS_CLI_PATH"
 EOF
 
