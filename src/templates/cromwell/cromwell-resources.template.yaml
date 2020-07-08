@@ -410,11 +410,16 @@ Resources:
                     profile = "slick.jdbc.MySQLProfile$"
                     db {
                       driver = "com.mysql.cj.jdbc.Driver"
-                      url = "jdbc:mysql://${DBAddress}/cromwell?rewriteBatchedStatements=true"
+                      url = "jdbc:mysql://${DBAddress}/cromwell?rewriteBatchedStatements=true&useSSL=false"
                       user = "${DBUsername}"
                       password = "${DBPassword}"
                       connectionTimeout = 5000
                     }
+                  }
+
+                  call-caching {
+                    enabled = true
+                    invalidate-bad-cache-results = true
                   }
 
                   engine { filesystems { s3 { auth = "default" } } }
@@ -430,7 +435,14 @@ Resources:
                           root = "s3://${S3BucketName}/cromwell-execution"
                           auth = "default"
                           default-runtime-attributes { queueArn = "${BatchQueue}" , scriptBucketName = "${S3BucketName}" }
-                          filesystems { s3 { auth = "default" } }
+                          filesystems { 
+                            s3 { 
+                              auth = "default"
+                              duplication-strategy: [
+                                "hard-link", "soft-link", "copy"
+                              ]
+                            } 
+                          }
                         }
                       }
                     }
