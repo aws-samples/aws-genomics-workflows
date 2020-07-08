@@ -102,6 +102,58 @@ Resources:
                   - s3:Get*
                   - s3:List*
   
+  IAMCodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+      Path: /
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketVersioning
+                  - s3:DeleteObject
+                  - s3:PutObject
+                Resource:
+                  - !Sub "arn:aws:s3:::${InstallBucketName}"
+                  - !Sub "arn:aws:s3:::${InstallBucketName}/*"
+        - PolicyName: CodeBuildAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                Resource:
+                  - !Sub "arn:aws:codebuild:*:*:project/${BuildEcsAdditions}*"
+        - PolicyName: CodeCommitAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - codecommit:UploadArchive
+                  - codecommit:GetBranch
+                  - codecommit:GetCommit
+                  - codecommit:GetUploadArchiveStatus
+                Resource:
+                  - !Sub arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:${RepoEcsAdditions.Name}*
+  
   IAMLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -166,6 +218,127 @@ Resources:
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
   
+  BuildEcsAdditions:
+    Type: "AWS::CodeBuild::Project"
+    Properties:
+      Description: !Sub Build project for ${Namespace} ecs-additions
+      Environment: #required
+        Type: LINUX_CONTAINER
+        Image: aws/codebuild/standard:1.0
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: ARTIFACT
+            Value: ecs-additions
+          - Name: TARGET_ARTIFACT_URL
+            Value: !Sub s3://${InstallBucketName}/${InstallBucketPrefix}
+      Source: #required
+        Type: CODECOMMIT
+        Location: !GetAtt RepoEcsAdditions.CloneUrlHttp
+        BuildSpec: |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - aws s3 sync --delete . ${TARGET_ARTIFACT_URL}/${ARTIFACT}
+      Artifacts: #required
+        Type: NO_ARTIFACTS
+      ServiceRole: !GetAtt IAMCodeBuildRole.Arn
+      Tags:
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+  
+  PipelineEcsAdditions:
+    Type: "AWS::CodePipeline::Pipeline"
+    Properties:
+      Name: !Sub ${Namespace}-ecs-additions
+      RoleArn: !GetAtt IAMCodePipelineRole.Arn #required
+      ArtifactStore:
+        Location: !Ref InstallBucketName
+        Type: S3
+      Stages: #required
+        - Name: Source
+          Actions:
+            - Name: CodeCommitRepo
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeCommit
+                Version: "1"
+              Configuration:
+                BranchName: master
+                RepositoryName: !Sub ${RepoEcsAdditions.Name}
+                PollForSourceChanges: false
+              OutputArtifacts:
+                - Name: SourceStageOutput
+        - Name: Build
+          Actions:
+            - Name: Code
+              ActionTypeId:
+                  Category: Build
+                  Owner: AWS
+                  Provider: CodeBuild
+                  Version: "1"
+              Configuration:
+                ProjectName: !Ref BuildEcsAdditions
+              InputArtifacts:
+                - Name: SourceStageOutput
+      Tags:
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+  
+  SourceEvent:
+    Type: AWS::Events::Rule
+    DependsOn:
+      - PipelineEcsAdditions
+    Properties:
+      Description: >
+        Rule for Amazon CloudWatch Events to detect changes to the source
+        repository and trigger pipeline execution
+      EventPattern:
+        detail:
+          event:
+            - referenceCreated
+            - referenceUpdated
+          referenceName:
+            - master
+          referenceType:
+            - branch
+        detail-type:
+          - CodeCommit Repository State Change
+        resources:
+          - !Sub ${RepoEcsAdditions.Arn}
+        source:
+          - aws.codecommit
+      Name: !Sub ${RepoEcsAdditions.Name}-Pipeline-Trigger
+      State: ENABLED
+      Targets:
+        - Arn: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${PipelineEcsAdditions}
+          Id: ProjectPipelineTarget
+          RoleArn: !GetAtt IAMSourceEventRole.Arn
+  
+  IAMSourceEventRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: IAM role to allow Amazon CloudWatch Events to trigger AWS CodePipeline execution
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Sid: 1
+      Policies:
+        - PolicyName: CloudWatchEventPolicy
+          PolicyDocument:
+            Statement:
+              - Action:
+                  - codepipeline:StartPipelineExecution
+                Effect: Allow
+                Resource:
+                  - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${PipelineEcsAdditions}*
+
+  
   BuildEbsAutoscale:
     Type: "AWS::CodeBuild::Project"
     Properties:
@@ -174,7 +347,7 @@ Resources:
       Environment: #required
         Type: LINUX_CONTAINER
         Image: aws/codebuild/standard:1.0
-        ComputeType: BUILD_GENERAL1_LARGE
+        ComputeType: BUILD_GENERAL1_SMALL
         EnvironmentVariables:
           - Name: SOURCE_ARTIFACT_URL
             Value: !Sub s3://${ArtifactBucketName}/${ArtifactBucketPrefix}
