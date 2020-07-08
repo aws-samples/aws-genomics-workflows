@@ -12,11 +12,6 @@ Parameters:
     Type: String
     Description: >-
       Bucket where installed artifacts will be stored
-  InstallBucketPrefix:
-    Type: String
-    Description: >-
-      Prefix where installed artifacts will be stored
-    Default: _gwfcore/artifacts
     
   ArtifactBucketName:
     Type: String
@@ -230,7 +225,7 @@ Resources:
           - Name: ARTIFACT
             Value: ecs-additions
           - Name: TARGET_ARTIFACT_URL
-            Value: !Sub s3://${InstallBucketName}/${InstallBucketPrefix}
+            Value: !Sub s3://${InstallBucketName}/_gwfcore/${Namespace}/artifacts
       Source: #required
         Type: CODECOMMIT
         Location: !GetAtt RepoEcsAdditions.CloneUrlHttp
@@ -339,11 +334,11 @@ Resources:
                   - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${PipelineEcsAdditions}*
 
   
-  BuildEbsAutoscale:
+  BuildInstalledArtifacts:
     Type: "AWS::CodeBuild::Project"
     Properties:
       Description: |
-        Build project for amazon-ebs-autoscale artifact
+        Build project to install artifacts from upstream distribution
       Environment: #required
         Type: LINUX_CONTAINER
         Image: aws/codebuild/standard:1.0
@@ -351,10 +346,8 @@ Resources:
         EnvironmentVariables:
           - Name: SOURCE_ARTIFACT_URL
             Value: !Sub s3://${ArtifactBucketName}/${ArtifactBucketPrefix}
-          - Name: ARTIFACT
-            Value: amazon-ebs-autoscale.tgz
           - Name: TARGET_ARTIFACT_URL
-            Value: !Sub s3://${InstallBucketName}/${InstallBucketPrefix}
+            Value: !Sub s3://${InstallBucketName}/_gwfcore/${Namespace}/artifacts
       Source: #required
         Type: NO_SOURCE
         BuildSpec: |
@@ -362,7 +355,7 @@ Resources:
           phases:
             build:
               commands:
-                - aws s3 cp ${SOURCE_ARTIFACT_URL}/${ARTIFACT} ${TARGET_ARTIFACT_URL}/${ARTIFACT}
+                - aws s3 sync ${SOURCE_ARTIFACT_URL} ${TARGET_ARTIFACT_URL}
       Artifacts:
         Type: NO_ARTIFACTS
       ServiceRole: !GetAtt IAMCodeBuildRole.Arn
@@ -374,7 +367,7 @@ Resources:
     Type: Custom::CodeBuildInvocation
     Properties:
       ServiceToken: !GetAtt CodeBuildInvocationFunction.Arn
-      BuildProject: !Ref BuildEbsAutoscale
+      BuildProject: !Ref BuildInstalledArtifacts
     
   CodeBuildInvocationFunction:
     Type: AWS::Lambda::Function
@@ -382,11 +375,31 @@ Resources:
       Handler: lambda.handler
       Role: !GetAtt IAMLambdaExecutionRole.Arn
       Runtime: python3.7
-      Timeout: 30
+      Timeout: 300
       Code:
-        S3Bucket: !Ref ArtifactBucketName
-        S3Key: !Sub ${ArtifactBucketPrefix}/lambda-codebuild.zip      
-  
+         ZipFile: |
+          from time import sleep
+          import boto3
+          import cfnresponse
+          def handler(event, context):
+              if event['RequestType'] in ("Create", "Update"):
+                  codebuild = boto3.client('codebuild')
+                  build = codebuild.start_build(
+                      projectName=event["ResourceProperties"]["BuildProject"]
+                  )['build']
+                          
+                  id = build['id']
+                  status = build['buildStatus']
+                  while status == 'IN_PROGRESS':
+                      sleep(10)
+                      build = codebuild.batch_get_builds(ids=[id])['builds'][0]
+                      status = build['buildStatus']
+                  
+                  if status != "SUCCEEDED":
+                      cfnresponse.send(event, context, cfnresponse.FAILED, None)
+              
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, None)
+              
 Outputs:
   EcsAdditionsRepo:
     Value: !Sub https://${AWS::Region}.console.aws.amazon.com/codesuite/codecommit/repositories/${RepoEcsAdditions.Name}/browse?region=${AWS::Region}
@@ -397,7 +410,7 @@ Outputs:
   InstalledArtifactsBucket:
     Value: !Ref InstallBucketName
   InstalledArtifactsPrefix:
-    Value: !Ref InstallBucketPrefix
+    Value: !Sub _gwfcore/${Namespace}/artifacts
   InstalledArtifactsS3RootUrl:
-    Value: !Sub s3://${InstallBucketName}/${InstallBucketPrefix}
+    Value: !Sub s3://${InstallBucketName}/_gwfcore/${Namespace}/artifacts
 ...
