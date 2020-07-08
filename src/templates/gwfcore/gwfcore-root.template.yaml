@@ -234,7 +234,7 @@ Resources:
     Properties:
       Name:
         Fn::Sub:
-          - /gwfcore/${namespace}/job-queue/priority
+          - /gwfcore/${namespace}/job-queue/default
           - namespace: 
               Fn::If:
                 - NoNamespace
@@ -328,3 +328,20 @@ Outputs:
     Value: !Sub ${BatchStack.Outputs.DefaultJobQueueArn}
   PriorityJobQueueArn:
     Value: !Sub ${BatchStack.Outputs.PriorityJobQueueArn}
+  ParamS3Bucket:
+    Value: !Ref ParamS3Bucket
+  ParamDefaultJobQueue:
+    Value: !Ref ParamDefaultJobQueue
+  ParamPriorityJobQueue:
+    Value: !Ref ParamPriorityJobQueue
+  ParamAdditionsRepoName:
+    Value: !Ref ParamAdditionsRepoName
+  ParamAdditionsRepoCloneUrlHttp:
+    Value: !Ref ParamAdditionsRepoCloneUrlHttp
+  ParamInstalledArtifactsBucket:
+    Value: !Ref ParamInstalledArtifactsBucket
+  ParamInstalledArtifactsPrefix:
+    Value: !Ref ParamInstalledArtifactsPrefix
+  ParamInstalledArtifactsS3RootUrl:
+    Value: !Ref ParamInstalledArtifactsS3RootUrl
+  
