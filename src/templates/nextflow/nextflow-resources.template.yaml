@@ -22,27 +22,36 @@ Metadata:
       - Label:
           default: "Required"
         Parameters:
+          - Namespace
+          - GWFCoreNamespace
           - S3DataBucketName
           - S3NextflowBucketName
           - ExistingBucket
-          - BatchDefaultJobQueue
-          - BatchPriorityJobQueue
       - Label:
           default: "Optional"
         Parameters:
-          - NextflowContainerImage
+          - NextflowVersion
+          - NextflowVersionSpecified
           - S3NextflowPrefix
           - S3LogsDirPrefix
           - S3WorkDirPrefix
       - Label:
           default: "Distribution Configuration"
         Parameters:
-          - ArtifactBucketName
-          - ArtifactBucketPrefix
           - TemplateRootUrl
 
 
 Parameters:
+  Namespace:
+    Type: String
+    Description: >-
+      Namespace (e.g. project name) to use to label resources.
+  
+  GWFCoreNamespace:
+    Type: String
+    Description: >-
+      Namespace of the GWFCore deployment to use.
+
   S3DataBucketName:
     Type: String
     Description: >-
@@ -84,34 +93,19 @@ Parameters:
       that contains workflow intermediate results
     Default: runs
 
-  NextflowContainerImage:
+  NextflowVersion:
     Type: String
+    Default: latest
+    AllowedValues:
+      - latest
+      - specify ...
     Description: >-
-      (Optional) Container image for nextflow with custom entrypoint for config and workflow
-      script staging. (Example, "<dockerhub-user>/nextflow:latest").
-      Provide this if you have a specific version of nextflow you want to use, otherwise a
-      container will be built using the latest version.
-
-  BatchDefaultJobQueue:
-    Type: String
-    Description: >-
-      ARN of the Batch Job Queue to use by default for workflow tasks.
-
-  BatchPriorityJobQueue:
-    Type: String
-    Description: >-
-      ARN of the Batch Job Queue to use for high priority workflow tasks.
+      Version of Nextflow to use. Select "specify ..." to provide a specific version.
   
-  ArtifactBucketName:
+  NextflowVersionSpecified:
     Type: String
-    Default: aws-genomics-workflows
     Description: >-
-      S3 Bucket where artifacts and additions scripts are stored
-  ArtifactBucketPrefix:
-    Type: String
-    Default: artifacts
-    Description: >-
-      Prefix in ArtifactBucketName where artifacts and additions scripts are stored
+      Specific version of Nextflow to use. Must match a released version number - e.g. "20.04.1".
 
   TemplateRootUrl:
     Type: String
@@ -128,10 +122,10 @@ Conditions:
       - !Ref S3NextflowBucketName
       - !Ref S3DataBucketName
 
-  BuildNextflowContainer:
+  UseLatestNextflowVersion:
     Fn::Equals:
-      - !Ref NextflowContainerImage
-      - ""
+      - !Ref NextflowVersion
+      - latest
 
   NextflowBucketDoesNotExist:
     Fn::Equals:
@@ -161,8 +155,10 @@ Resources:
         Source code for workflow tooling containers
       Code:
         S3:
-          Bucket: !Ref ArtifactBucketName
-          Key: !Sub ${ArtifactBucketPrefix}/containers.zip
+          Bucket: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/bucket:1}}'
+          Key: !Sub 
+            - ${Prefix}/containers.zip
+            - Prefix: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/prefix:1}}'
       Tags:
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
@@ -170,19 +166,22 @@ Resources:
 
   ContainerBuildNextflow:
     Type: AWS::CloudFormation::Stack
-    Condition: BuildNextflowContainer
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/_common/container-build.template.yaml
       Parameters:
         ImageName: nextflow
-        ImageTag: 20.04.1
+        ImageTag:
+          Fn::If:
+            - UseLatestNextflowVersion
+            - !Ref NextflowVersion
+            - !Ref NextflowVersionSpecified
         GitRepoType: CODECOMMIT
         GitCloneUrlHttp: !GetAtt ContainerSource.CloneUrlHttp
         ProjectPath: ./nextflow
         ProjectBuildSpecFile: ./buildspec-nextflow.yml
         CreateBatchJobDefinition: "No"
-        ArtifactBucketName: !Ref ArtifactBucketName
-        ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
+        ArtifactBucketName: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/bucket:1}}'
+        ArtifactBucketPrefix: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/prefix:1}}'
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
   IAMNextflowJobRole:
@@ -206,8 +205,8 @@ Resources:
               - Sid: "BatchWriteAccessAllowJobSubmission"
                 Effect: Allow
                 Resource:
-                  - !Ref BatchDefaultJobQueue
-                  - !Ref BatchPriorityJobQueue
+                  - !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/job-queue/default:1}}'
+                  - !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/job-queue/priority:1}}'
                   - arn:aws:batch:*:*:job-definition/nf-*:*
                 Action:
                   - "batch:*Job"
@@ -260,14 +259,10 @@ Resources:
         Memory: 1024
         JobRoleArn: !GetAtt IAMNextflowJobRole.Arn
         Vcpus: 2
-        Image:
-          Fn::If:
-            - BuildNextflowContainer
-            - !Sub ${ContainerBuildNextflow.Outputs.ContainerImage}
-            - !Ref NextflowContainerImage
+        Image: !Sub ${ContainerBuildNextflow.Outputs.ContainerImage}
         Environment:
           - Name: "NF_JOB_QUEUE"
-            Value: !Ref BatchDefaultJobQueue
+            Value: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/job-queue/default:1}}'
           - Name: "NF_LOGSDIR"
             Value:
               Fn::Join:
@@ -287,7 +282,7 @@ Resources:
                       - !Sub "s3://${S3NextflowBucketName}"
                   - !Ref S3WorkDirPrefix
 
-      JobDefinitionName: nextflow
+      JobDefinitionName: !Sub nextflow-${Namespace}
 
 
 Outputs:
@@ -327,11 +322,7 @@ Outputs:
   NextflowContainerImage:
     Description: >-
       The nextflow container used.
-    Value:
-      Fn::If:
-        - BuildNextflowContainer
-        - !Sub ${ContainerBuildNextflow.Outputs.ContainerImage}
-        - !Ref NextflowContainerImage
+    Value: !Sub ${ContainerBuildNextflow.Outputs.ContainerImage}
 
   NextflowJobDefinition:
     Description: >-

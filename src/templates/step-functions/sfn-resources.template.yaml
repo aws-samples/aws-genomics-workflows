@@ -21,24 +21,23 @@ Metadata:
       - Label:
           default: "Required"
         Parameters:
-          - S3BucketName
-          - BatchJobQueue
-      - Label:
-          default: "Optional"
-        Parameters:
           - Namespace
+          - GWFCoreNamespace
+          - S3BucketName
       - Label:
           default: "Distribution Configuration"
         Parameters:
-          - ArtifactBucketName
-          - ArtifactBucketPrefix
           - TemplateRootUrl
 
 Parameters:
   Namespace:
     Type: String
-    Description: Optional namespace (e.g. project name) to use to label resources. If not specified the stack-name will be used.
-    Default: ""
+    Description: Namespace (e.g. project name) to use to label resources.
+  
+  GWFCoreNamespace:
+    Type: String
+    Description: >-
+      Namespace of the GWFCore deployment to use.
   
   S3BucketName:
     Description: >-
@@ -48,22 +47,7 @@ Parameters:
     Type: String
     AllowedPattern: "((?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)|(^.{0}$))"
     ConstraintDescription: "Must respect S3 bucket naming conventions"
-  
-  BatchJobQueue:
-    Description: Name or ARN of the AWS Batch Job Queue the workflow will use by default
-    Type: String
-  
-  ArtifactBucketName:
-    Type: String
-    Default: aws-genomics-workflows
-    Description: >-
-      S3 Bucket where artifacts and additions scripts are stored
-  ArtifactBucketPrefix:
-    Type: String
-    Default: artifacts
-    Description: >-
-      Prefix in ArtifactBucketName where artifacts and additions scripts are stored
-  
+    
   TemplateRootUrl:
     Type: String
     Description: >-
@@ -85,8 +69,10 @@ Resources:
         Source code for workflow tooling containers
       Code:
         S3:
-          Bucket: !Ref ArtifactBucketName
-          Key: !Sub ${ArtifactBucketPrefix}/containers.zip
+          Bucket: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/bucket:1}}'
+          Key: !Sub 
+            - ${Prefix}/containers.zip
+            - Prefix: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/prefix:1}}'
       Tags:
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
@@ -104,8 +90,8 @@ Resources:
         ProjectBuildSpecFile: ./buildspec-workflow-tool.yml
         CreateBatchJobDefinition: "Yes"
         BatchJobDefinitionName: !Sub "bwa-${AWS::StackName}"
-        ArtifactBucketName: !Ref ArtifactBucketName
-        ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
+        ArtifactBucketName: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/bucket:1}}'
+        ArtifactBucketPrefix: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/prefix:1}}'
       Tags: !FindInMap ["TagMap", "default", "tags"]
   
   ContainerBuildSamtools:
@@ -121,8 +107,8 @@ Resources:
         ProjectBuildSpecFile: ./buildspec-workflow-tool.yml
         CreateBatchJobDefinition: "Yes"
         BatchJobDefinitionName: !Sub "samtools-${AWS::StackName}"
-        ArtifactBucketName: !Ref ArtifactBucketName
-        ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
+        ArtifactBucketName: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/bucket:1}}'
+        ArtifactBucketPrefix: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/prefix:1}}'
       Tags: !FindInMap ["TagMap", "default", "tags"]
   
   ContainerBuildBcftools:
@@ -138,8 +124,8 @@ Resources:
         ProjectBuildSpecFile: ./buildspec-workflow-tool.yml
         CreateBatchJobDefinition: "Yes"
         BatchJobDefinitionName: !Sub "bcftools-${AWS::StackName}"
-        ArtifactBucketName: !Ref ArtifactBucketName
-        ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
+        ArtifactBucketName: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/bucket:1}}'
+        ArtifactBucketPrefix: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/prefix:1}}'
       Tags: !FindInMap ["TagMap", "default", "tags"]
   
   IAMStepFunctionsExecutionRole:
@@ -200,7 +186,7 @@ Resources:
               - !Ref Namespace
         S3BucketName: !Ref S3BucketName
         IAMStepFunctionsExecutionRole: !GetAtt IAMStepFunctionsExecutionRole.Arn
-        BatchJobQueue: !Ref BatchJobQueue
+        BatchJobQueue: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/job-queue/default:1}}'
         BatchJobDefinitionBwa: !GetAtt ContainerBuildBwa.Outputs.JobDefinition
         BatchJobDefinitionSamtools: !GetAtt ContainerBuildSamtools.Outputs.JobDefinition
         BatchJobDefinitionBcftools: !GetAtt ContainerBuildBcftools.Outputs.JobDefinition

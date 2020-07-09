@@ -17,11 +17,18 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
+          default: "Stack Configuration"
+        Parameters:
+          - Namespace
+          - GWFCoreNamespace
+
+      - Label:
           default: "Network Configuration"
         Parameters:
           - VpcId
           - ServerSubnetID
           - DBSubnetIDs
+
       - Label:
           default: "Instance Configuration"
         Parameters:
@@ -40,7 +47,6 @@ Metadata:
           - CromwellJarUrl
           - S3BucketName
           - S3OpenDataBucketARNs
-          - BatchQueue
           - DBUsername
           - DBPassword
       
@@ -63,12 +69,10 @@ Metadata:
         default: "S3 Bucket Name"
       S3OpenDataBucketARNs:
         default: "S3 Open Data Bucket ARNs"
-      BatchQueue:
-        default: "Default Batch Queue"
       CromwellVersion:
         default: "Cromwell Version"
       CromwellVersionSpecified:
-        default: "..."
+        default: "Cromwell Version Specified"
       DBSubnetIDs:
         default: "Database Subnet IDs"
       DBUsername:
@@ -79,6 +83,16 @@ Metadata:
 
 # Parameters
 Parameters:
+  Namespace:
+    Type: String
+    Description: >-
+      Namespace (e.g. project name) to use to label resources.
+  
+  GWFCoreNamespace:
+    Type: String
+    Description: >-
+      Namespace of the GWFCore deployment to use.
+  
   InstanceType:
     Description: >-
       EC2 instance type.  Cromwell itself does not require much compute power. 
@@ -199,10 +213,6 @@ Parameters:
     Description: Open datasets on AWS S3 for workflow inputs
     Type: String
     Default: "arn:aws:s3:::gatk-test-data/*,arn:aws:s3:::broad-references/*"
-  
-  BatchQueue:
-    Description: ARN of the AWS Batch Job Queue this server will use by default
-    Type: String
 
 
 Conditions:
@@ -300,7 +310,7 @@ Resources:
       VpcId: !Ref VpcId
       Tags:
         - Key: Name
-          Value: cromwell-server-sg
+          Value: !Sub cromwell-server-sg-${Namespace}
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
         - Key: solution
@@ -448,6 +458,7 @@ Resources:
                     }
                   }
                 - DBAddress: !GetAtt RDSCluster.Endpoint.Address
+                  BatchQueue: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/job-queue/default:1}}'
               mode: "000644"
               owner: "ec2-user"
               group: "ec2-user"
@@ -609,7 +620,7 @@ Resources:
       KeyName: !Ref KeyName
       Tags:
         - Key: Name
-          Value: !Ref InstanceName
+          Value: !Sub ${InstanceName}-${Namespace}
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
         - Key: solution
@@ -659,7 +670,7 @@ Resources:
           FromPort: 3306
       Tags:
         - Key: Name
-          Value: cromwell-db-sg
+          Value: !Sub cromwell-db-sg-${Namespace}
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
         - Key: solution
@@ -671,7 +682,7 @@ Resources:
       SubnetIds: !Ref DBSubnetIDs
       Tags:
         - Key: Name
-          Value: cromwell-db-subnet-group
+          Value: !Sub cromwell-db-subnet-group-${Namespace}
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
         - Key: solution
@@ -682,7 +693,7 @@ Resources:
     Properties:
       MasterUsername: !Ref DBUsername
       MasterUserPassword: !Ref DBPassword
-      DBClusterIdentifier: !Sub ${AWS::StackName}
+      DBClusterIdentifier: !Sub cromwell-${Namespace}
       BackupRetentionPeriod: 7
       DatabaseName: cromwell
       Engine: aurora
