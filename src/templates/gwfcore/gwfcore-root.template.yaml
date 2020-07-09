@@ -234,7 +234,7 @@ Resources:
     Properties:
       Name:
         Fn::Sub:
-          - /gwfcore/${namespace}/job-queue/default
+          - /gwfcore/${namespace}/job-queue/priority
           - namespace: 
               Fn::If:
                 - NoNamespace
