@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  (WWPS-GLS-WF-BATCH) Deploys resource for a AWS Batch environment that is 
+  (WWPS-GLS-WF-GWFCORE-BATCH) Deploys resource for a AWS Batch environment that is 
   suitable for genomics, including default and high-priority JobQueues.
 
 

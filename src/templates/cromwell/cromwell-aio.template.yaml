@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  (WWPS-GLS-WF-CROMWELL-AIO) Creates the complete set of resources needed to run
+  (WWPS-GLS-WF-AIO-CROMWELL) Creates the complete set of resources needed to run
   genomics workflows using Cromwell on AWS Batch
 
 Mappings:

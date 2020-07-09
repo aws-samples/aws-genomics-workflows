@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  (WWPS-GLS-WF-LT) Creates an EC2 Launch Template for AWS Batch based
+  (WWPS-GLS-WF-GWFCORE-LT) Creates an EC2 Launch Template for AWS Batch based
   genomics workflows
 
 Mappings:

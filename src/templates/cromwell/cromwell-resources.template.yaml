@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  (WWPS-GLS-WF-CROMWELL-SERVER) Creates an EC2 Instance and Roles for a Cromwell Server
+  (WWPS-GLS-WF-ORCHESTRATOR-CROMWELL) Creates resources specific to running Cromwell on AWS
 
 Mappings:
   TagMap:

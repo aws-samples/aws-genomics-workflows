@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  (WWPS-GLS-WF-ROOT) Scalable genomics workflows environment
+  (WWPS-GLS-WF-GWFCORE) Genomics workflow core execution environment
 
 
 Metadata:

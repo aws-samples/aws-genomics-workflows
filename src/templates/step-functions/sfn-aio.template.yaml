@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  (WWPS-GLS-WF-SFN-AIO) Creates the complete set of resources needed to run
+  (WWPS-GLS-WF-AIO-SFN) Creates the complete set of resources needed to run
   genomics workflows using AWS Step-Functions on AWS Batch, including an example
   WGS secondary analysis workflow using bwa-mem, samtools, and bcftools.
 

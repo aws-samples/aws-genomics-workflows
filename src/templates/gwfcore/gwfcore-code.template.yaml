@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
 Description: |
-  (WWPS-GLS-WF-CODE) Creates AWS CodeCommit repos and CodeBuild projects for Genomics Workflows Core assets and artifacts
+  (WWPS-GLS-WF-GWFCORE-CODE) Creates AWS CodeCommit repos and CodeBuild projects for Genomics Workflows Core assets and artifacts
 
 Parameters:
   Namespace:

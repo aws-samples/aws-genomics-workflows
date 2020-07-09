@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  (WWPS-GLS-WF-NEXTFLOW) Creates resources specific to running Nextflow on AWS
+  (WWPS-GLS-WF-ORCHESTRATOR-NEXTFLOW) Creates resources specific to running Nextflow on AWS
 
 
 Mappings:

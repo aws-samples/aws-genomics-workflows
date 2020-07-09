@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  (WWPS-GLS-WF-SFN-WORKFLOW) Creates container images, AWS Batch Job Definitions, 
+  (WWPS-GLS-WF-ORCHESTRATOR-SFN) Creates container images, AWS Batch Job Definitions, 
   and an AWS Step Functions State Machine for a genomics workflow.
 
 Mappings:

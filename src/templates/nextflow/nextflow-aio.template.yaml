@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  (WWPS-GLS-WF-NEXTFLOW-AIO) Creates the complete set of resources needed to run
+  (WWPS-GLS-WF-AIO-NEXTFLOW) Creates the complete set of resources needed to run
   genomics workflows using Nextflow on AWS Batch
 
 
