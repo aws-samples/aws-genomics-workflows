@@ -372,7 +372,7 @@ Resources:
   CodeBuildInvocationFunction:
     Type: AWS::Lambda::Function
     Properties:
-      Handler: lambda.handler
+      Handler: index.handler
       Role: !GetAtt IAMLambdaExecutionRole.Arn
       Runtime: python3.7
       Timeout: 300
