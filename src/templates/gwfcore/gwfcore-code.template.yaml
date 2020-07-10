@@ -355,7 +355,8 @@ Resources:
           phases:
             build:
               commands:
-                - aws s3 sync ${SOURCE_ARTIFACT_URL} ${TARGET_ARTIFACT_URL}
+                - aws s3 sync ${SOURCE_ARTIFACT_URL} ./artifacts
+                - aws s3 sync ./artifacts ${TARGET_ARTIFACT_URL}
       Artifacts:
         Type: NO_ARTIFACTS
       ServiceRole: !GetAtt IAMCodeBuildRole.Arn
