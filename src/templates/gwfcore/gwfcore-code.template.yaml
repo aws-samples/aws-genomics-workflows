@@ -355,7 +355,11 @@ Resources:
           phases:
             build:
               commands:
-                - aws s3 sync ${SOURCE_ARTIFACT_URL} ${TARGET_ARTIFACT_URL}
+                # codebuild uses VPC endpoints for S3, to avoid cross-region copy
+                # errors, you need to use the current instance as an intermediate stage
+                # see: https://aws.amazon.com/premiumsupport/knowledge-center/s3-troubleshoot-copy-between-buckets/
+                - aws s3 sync ${SOURCE_ARTIFACT_URL} ./artifacts
+                - aws s3 sync ./artifacts ${TARGET_ARTIFACT_URL}
       Artifacts:
         Type: NO_ARTIFACTS
       ServiceRole: !GetAtt IAMCodeBuildRole.Arn
