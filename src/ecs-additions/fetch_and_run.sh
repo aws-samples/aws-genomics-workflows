@@ -62,7 +62,8 @@ if [ "${scheme}" != "s3" ]; then
 fi
 
 # Check that necessary programs are available
-which "${AWS}" >/dev/null 2>&1 || error_exit "Unable to find AWS CLI executable."
+command -v "${AWS}" >/dev/null 2>&1 || error_exit "Unable to find AWS CLI executable.\nAWS CLI is either not installed or referenced at ${AWS} or is not accessible. To diagnose the problem, ensure that your EC2 Launch Template contains steps to download and install the AWS CLI. Check your EC2 system log for any errors indicating a failure to download or install the CLI. Check the permissions on ${AWS}"
+
 
 # Create a temporary directory to hold the downloaded contents, and make sure
 # it's removed later, unless the user set KEEP_BATCH_FILE_CONTENTS.
@@ -88,13 +89,13 @@ fetch_and_run_script () {
   # Make the temporary file executable and run it with any given arguments
   local script="./${1}"; shift
   chmod u+x "${TMPFILE}" || error_exit "Failed to chmod script."
-  exec ${TMPFILE} "${@}" || error_exit "Failed to execute script."
+  exec "${TMPFILE}" "${@}" || error_exit "Failed to execute script."
 }
 
 # Download a zip and run a specified script from inside
 fetch_and_run_zip () {
   # Check that necessary programs are available
-  which unzip >/dev/null 2>&1 || error_exit "Unable to find unzip executable."
+  command -v unzip >/dev/null 2>&1 || error_exit "Unable to find unzip executable."
 
   # Create a temporary file and download the zip file
   "${AWS}" s3 cp "${BATCH_FILE_S3_URL}" - > "${TMPFILE}" || error_exit "Failed to download S3 zip file from ${BATCH_FILE_S3_URL}"
