@@ -73,12 +73,12 @@ Queue that you define at launch.
 | -- | -- | :--: | :--: |
 {{ cfn_stack_row("Cromwell Server", "CromwellServer", "cromwell/cromwell-server.template.yaml", "Create an EC2 instance and an IAM instance profile to run Cromwell") }}
 
-Once the stack is created, you can access the server in a web browser via the 
+Once the stack is created, you can access the server in a web browser via the
 instance's hostname.  There you should see Cromwell's SwaggerUI, which provides
 a simple web interface for submitting workflows.
 
 The CloudFormation template above also configures the server with integration to
-[Amazon CloudWatch](https://aws.amazon.com/cloudwatch/) for monitoring Cromwell's 
+[Amazon CloudWatch](https://aws.amazon.com/cloudwatch/) for monitoring Cromwell's
 log output and [AWS Systems Manager](https://aws.amazon.com/systems-manager/) for
 performing any maintenance, or gaining terminal access.
 
@@ -129,7 +129,7 @@ Lets the Cromwell server instance submit and get info about AWS Batch jobs.
 
 ### Access to S3
 
-Lets the Cromwell server instance read and write data from/to S3 - i.e. the 
+Lets the Cromwell server instance read and write data from/to S3 - i.e. the
 return codes (written to `rc.txt` files) for each job.
 
 ```json
@@ -159,60 +159,61 @@ The following is an example `*.conf` file to use the `AWSBackend`.
 include required(classpath("application"))
 
 webservice {
-    interface = localhost
-    port = 8000
+  interface = localhost
+  port = 8000
 }
 
-// this stanza controls how fast Cromwell submits jobs to AWS Batch
-// and avoids running into API request limits
 system {
-    job-rate-control {
-        jobs = 1
-        per = 2 second
-    }
+  job-rate-control {
+    jobs = 1
+    per = 2 second
+  }
 }
 
-// this stanza defines how your server will authenticate with your AWS
-// account.  it is recommended to use the "default-credential-provider" scheme.
 aws {
   application-name = "cromwell"
   auths = [{
       name = "default"
       scheme = "default"
   }]
-
-  // you must provide your operating region here - e.g. "us-east-1"
-  // this should be the same region your S3 bucket and AWS Batch resources
-  // are created in
-  region = "<your region>"
+  region = "<your-region>"
 }
 
-engine {
-  filesystems {
-    s3 { auth = "default" }
+database {
+  profile = "slick.jdbc.MySQLProfile$"
+  db {
+    driver = "com.mysql.cj.jdbc.Driver"
+    url = "<db-url>"
+    user = "cromwell"
+    password = "<cromwell_password>"
+    connectionTimeout = 5000
   }
 }
 
+call-caching {
+  enabled = true
+  invalidate-bad-cache-results = true
+}
+
+engine { filesystems { s3 { auth = "default" } } }
+
 backend {
-  // this configures the AWS Batch Backend for Cromwell
   default = "AWSBATCH"
   providers {
     AWSBATCH {
       actor-factory = "cromwell.backend.impl.aws.AwsBatchBackendLifecycleActorFactory"
       config {
-        root = "s3://<your-s3-bucket-name>/cromwell-execution"
+        numSubmitAttempts = 10
+        numCreateDefinitionAttempts = 10
+        root = "s3://<your-s3-bucket-name>"
         auth = "default"
-
-        numSubmitAttempts = 3
-        numCreateDefinitionAttempts = 3
-
-        default-runtime-attributes {
-          queueArn: "<your-queue-arn>"
-        }
-
+        default-runtime-attributes { queueArn = "<your-queue-arn>" , scriptBucketName = "<your-bucket-name>" }
         filesystems {
           s3 {
             auth = "default"
+            duplication-strategy: [
+              "hard-link", "soft-link", "copy"
+            ]
           }
         }
       }
@@ -227,9 +228,12 @@ Replace the following with values appropriate for your account and workload:
 
 * `<your region>` : the AWS region your S3 bucket and AWS Batch environment are
   deployed into - e.g. `us-east-1`
+* `<db-url>` : the JDBC url of the Cromwell metadata database
+* `<cromwell-password>` : the password of the `cromwell` user in the metadata database.
+This value can also be supplied as a Java command line variable.
 * `<your-s3-bucket-name>` : the name of the S3 bucket you will use for inputs
   and outputs from tasks in the workflow.
-* `<your-queue-arn>` : the Amazon Resoure Name of the AWS Batch queue you want
+* `<your-queue-arn>` : the Amazon Resource Name of the AWS Batch queue you want
   to use for your tasks.
 
 ### Start the Cromwell server
@@ -245,13 +249,13 @@ with Cromwell's REST API from your local machine:
 $ ssh -L localhost:8000:localhost:8000 ec2-user@<cromwell server host or ip>
 ```
 
-This port tunnel only needs to be open for submitting workflows.  You do not 
+This port tunnel only needs to be open for submitting workflows.  You do not
 need to be connected to the server while a workflow is running.
 
 Launch the server using the following command:
 
 ```bash
-$ java -Dconfig.file=cromwell.conf -jar cromwell-35.jar server
+$ java -Dconfig.file=cromwell.conf -jar cromwell.jar server
 ```
 
 !!! note
@@ -260,10 +264,21 @@ $ java -Dconfig.file=cromwell.conf -jar cromwell-35.jar server
     Cromwell running.  Alternatively, you could start Cromwell as a detached
     process in the background using `nohup`.
 
-You should now be able to access Cromwell's SwaggerUI from a web browser on
-your local machine by navigating to:
 
-[http://localhost:8000/](http://localhost:8000/)
+  You should now be able to access Cromwell's SwaggerUI from a web browser on
+  your local machine by navigating to:
+
+  [http://localhost:8000/](http://localhost:8000/)
+
+### Stop/ Start/ Restart the Cromwell service
+When setup by the CloudFormation template, Cromwell runs as a service under
+the control of `supervisorctl`. If you make changes to the `cromwell.conf` file
+you will want to restart the service so that configuration changes are included.
+
+```bash
+$ supervisorctl restart cromwell-server
+```
+`supervisorctl start` and `supervisorctl stop` are also supported.
 
 ## Running a workflow
 
@@ -273,7 +288,10 @@ To submit a workflow to your Cromwell server, you can use any of the following:
 * a REST client like [Insomnia](https://insomnia.rest/) or [Postman](https://www.getpostman.com/)
 * the command line with `curl`
 
+### Workflow logs
 After submitting a workflow, you can monitor the progress of tasks via the
-AWS Batch console.
+AWS Batch console. Cromwell server logs are captured in the `cromwell_server`
+log group and the logs of the AWS Batch jobs that run each task in the workflow
+can be found in the `/aws/batch/jobs` CloudWatch log group.
 
 The next section provides some examples of running Crommwell on AWS.
