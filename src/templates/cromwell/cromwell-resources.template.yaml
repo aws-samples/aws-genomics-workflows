@@ -491,11 +491,11 @@ Resources:
                 serverurl=unix:///tmp/supervisor.sock ; use a unix:// URL  for a unix socket
 
                 [program:cromwell-server]
-                command=java -Dconfig.file=cromwell.conf -jar cromwell.jar server  ; the program (relative uses PATH, can take args)
-                directory=/home/ec2-user                       ; directory to cwd to before exec (def no cwd)
-                user=ec2-user                                  ; setuid to this UNIX account to run the program
-                redirect_stderr=true                           ; redirect proc stderr to stdout (default false)
-                stdout_logfile=/tmp/cromwell-server.log        ; stdout log path, NONE for none; default AUTO
+                command=java -Dconfig.file=cromwell.conf -XX:MaxRAMPercentage=85.0 -jar cromwell.jar server  ; the program (relative uses PATH, can take args)
+                directory=/home/ec2-user                                                                     ; directory to cwd to before exec (def no cwd)
+                user=ec2-user                                                                                ; setuid to this UNIX account to run the program
+                redirect_stderr=true                                                                         ; redirect proc stderr to stdout (default false)
+                stdout_logfile=/tmp/cromwell-server.log                                                      ; stdout log path, NONE for none; default AUTO
           
             "/etc/nginx/nginx.conf":
               mode: "000644"
