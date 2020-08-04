@@ -116,21 +116,18 @@ Parameters:
     Default: 100
   InstanceType:
     Description: >-
-      EC2 instance type.
-      
-      Cromwell itself does not require much compute power. 
-      A t2.medium should be sufficient.  If you want to run this server on the 
-      free tier, use a t2.micro or t3.micro.
+      EC2 instance type.  Cromwell itself does not require much compute power.
+      A t3.medium should be sufficient. Larger instances are recommended for concurrent workflow scenarios.
+      If you want to run this server on the free tier, use a t3.micro.
     Type: String
-    Default: t2.medium
+    Default: t3.medium
     AllowedValues:
-    - t2.micro
-    - t2.medium
-    - t2.large
-    - t3.micro
-    - t3.medium
-    - t3.large
-    ConstraintDescription: "Must be 't2.micro', 't2.medium', 't2.large', t3.micro, t3.medium, or t3.large."
+      - t3.micro
+      - t3.medium
+      - t3.large
+      - t3.xlarge
+      - t3.2xlarge
+    ConstraintDescription: "Must be 't3' instance type."
   InstanceName:
     Type: String
     Default: cromwell-server
