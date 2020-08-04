@@ -96,18 +96,17 @@ Parameters:
   InstanceType:
     Description: >-
       EC2 instance type.  Cromwell itself does not require much compute power. 
-      A t2.medium should be sufficient.  If you want to run this server on the 
-      free tier, use a t2.micro or t3.micro.
+      A t3.medium should be sufficient. Larger instances are recommended for concurrent workflow scenarios.
+      If you want to run this server on the free tier, use a t3.micro.
     Type: String
-    Default: t2.medium
+    Default: t3.medium
     AllowedValues:
-    - t2.micro
-    - t2.medium
-    - t2.large
     - t3.micro
     - t3.medium
     - t3.large
-    ConstraintDescription: "Must be 't2.micro', 't2.medium', 't2.large' 't3.micro', 't3.medium', or 't3.large'."
+    - t3.xlarge
+    - t3.2xlarge
+    ConstraintDescription: "Must be 't3' instance type."
   
   VpcId:
     Type: AWS::EC2::VPC::Id
@@ -492,11 +491,11 @@ Resources:
                 serverurl=unix:///tmp/supervisor.sock ; use a unix:// URL  for a unix socket
 
                 [program:cromwell-server]
-                command=java -Dconfig.file=cromwell.conf -jar cromwell.jar server  ; the program (relative uses PATH, can take args)
-                directory=/home/ec2-user                       ; directory to cwd to before exec (def no cwd)
-                user=ec2-user                                  ; setuid to this UNIX account to run the program
-                redirect_stderr=true                           ; redirect proc stderr to stdout (default false)
-                stdout_logfile=/tmp/cromwell-server.log        ; stdout log path, NONE for none; default AUTO
+                command=java -Dconfig.file=cromwell.conf -XX:MaxRAMPercentage=85.0 -jar cromwell.jar server  ; the program (relative uses PATH, can take args)
+                directory=/home/ec2-user                                                                     ; directory to cwd to before exec (def no cwd)
+                user=ec2-user                                                                                ; setuid to this UNIX account to run the program
+                redirect_stderr=true                                                                         ; redirect proc stderr to stdout (default false)
+                stdout_logfile=/tmp/cromwell-server.log                                                      ; stdout log path, NONE for none; default AUTO
           
             "/etc/nginx/nginx.conf":
               mode: "000644"
