@@ -25,13 +25,13 @@ For architectural details, best practices, step-by-step instructions, and custom
 
 ## Step 1: Core Environment
 
-### Option A: Full stack
-
-The "Full Stack" CloudFormation template below will create all of the AWS resources required - S3 Bucket, EC2 Launch Templates, IAM Roles, Batch Compute Environments, Batch Job Queues - you will need for a genomics workflow environment into an existing VPC.
+The CloudFormation template below will create all of the AWS resources required - S3 Bucket, EC2 Launch Templates, IAM Roles, Batch Compute Environments, Batch Job Queues - needed for a genomics workflow core execution environment. It is intended to be deployed into an existing VPC. You can use your Default VPC for testing, but it is recommended that you create a new one (e.g. using the VPC Quickstart above) with at least two private subnets.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("Full Stack (Existing VPC)", "GWFCore-Full", "aws-genomics-root-novpc.template.yaml", "Create EC2 Launch Templates, AWS Batch Job Queues and Compute Environments, a secure Amazon S3 bucket, and IAM policies and roles within an **existing** VPC. _NOTE: You must provide VPC ID, and subnet IDs_.") }}
+{{ cfn_stack_row("Genomics Workflow Core", "GWFCore", "gwfcore/gwfcore-root.template.yaml", "Create EC2 Launch Templates, AWS Batch Job Queues and Compute Environments, a secure Amazon S3 bucket, and IAM policies and roles within an **existing** VPC. _NOTE: You must provide VPC ID, and subnet IDs_.") }}
+
+When launching the stack you can supply a `Namespace` as an optional parameter. The core can be installed multiple times in your account if needed (e.g. for use by different projects). The `Namespace` value is used to group resources accordingly. By default, the `Namespace` is set to the stack name, which must be unique within an AWS region.
 
 Prior to the final create button, be sure to acknowledge "IAM CAPABILITIES".
 
@@ -39,28 +39,12 @@ Prior to the final create button, be sure to acknowledge "IAM CAPABILITIES".
 
 The template will take about 15-20 minutes to finish creating resources.
 
-Once completed, click on the `Outputs` tab and copy down the AWS Batch Job Queue ARN for the default and high-priority queues. You will need these when configuring your workflow orchestration system (e.g. AWS Step Functions, Cromwell, or Nextflow) to use AWS Batch as a backend for task distribution.
-
-![CloudFormation web console wizard output job queue ARN](./images/root-vpc-5.png)
-
-### Option B: Individual components
-
-The `Full Stack` CloudFormation template above is a [nested stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html), a hierarchy of templates that pass values from a parent template to dependent templates.
-
-Below are the stand-alone CloudFormation templates for each of the sub-stacks. These are handy in case you need to modify the individual components, or need to have another individual with elevated privileges to execute one of them (e.g. the IAM template). They are in order of dependency, and you will need to provide output values from one template to the dependent templates.
-
-| Name | Description | Source | Launch Stack |
-| -- | -- | :--: | :--: |
-{{ cfn_stack_row("Amazon S3 Bucket", "GWFCore-S3", "aws-genomics-s3.template.yaml", "Creates a secure Amazon S3 bucket to read inputs and write results.") }}
-{{ cfn_stack_row("Amazon IAM Roles", "GWFCore-IAM", "aws-genomics-iam.template.yaml", "Create the necessary IAM Roles. This is useful to hand to someone with the right permissions to create these on your behalf. _You will need to provide an Amazon S3 bucket name_.") }}
-{{ cfn_stack_row("EC2 Launch Template", "GWFCore-LT", "aws-genomics-launch-template.template.yaml", "Creates an EC2 Launch Template that provisions instances on first boot for processing genomics workflow tasks.") }}
-{{ cfn_stack_row("AWS Batch", "GWFCore-Batch", "aws-genomics-batch.template.yaml", "Creates AWS Batch Job Queues and Compute Environments. _You will need to provide the details for your Launch Template ID, IAM roles and instance profiles, and the IDs for a VPC and subnets._") }}
-
 ## Step 2: Worklow Orchestrators
 
+The CloudFormation templates below will create resources specific to a workflow orchestrator. All assume that you have already installed the core environment described above. When launching these stacks, you must provide a `Namespace` parameter. This is used to assocate a workflow orchestrator stack to a specific core environment. Multiple workflow orchestrators can share a single core environment.
+
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("AWS Step Functions Example", "SfnExample", "step-functions/sfn-workflow.template.yaml", "Create a Step Functions State Machine, Batch Job Definitions, and container images to run an example genomics workflow") }}
-{{ cfn_stack_row("Cromwell Server", "CromwellServer", "cromwell/cromwell-server.template.yaml", "Create an EC2 instance and an IAM instance profile to run Cromwell") }}
-{{ cfn_stack_row("Nextflow Resources", "NextflowResources", "nextflow/nextflow-resources.template.yaml", "Create Nextflow specific resources needed to run on AWS: an S3 Bucket for nextflow config and workflows, AWS Batch Job Definition for a Nextflow head node, and an IAM role for the nextflow head node job") }}
-
+{{ cfn_stack_row("AWS Step Functions", "SfnResources", "step-functions/sfn-resources.template.yaml", "Create a Step Functions State Machine, Batch Job Definitions, and container images to run an example genomics workflow") }}
+{{ cfn_stack_row("Cromwell", "CromwellResources", "cromwell/cromwell-resources.template.yaml", "Create resources needed to run Cromwell on AWS: an RDS Aurora database, an EC2 instance with Cromwell installed as a server, and an IAM instance profile") }}
+{{ cfn_stack_row("Nextflow", "NextflowResources", "nextflow/nextflow-resources.template.yaml", "Create resources needed to run Nextflow on AWS: an S3 Bucket for nextflow logs and metadata, AWS Batch Job Definition for a Nextflow head node, and an IAM role for the nextflow head node job") }}
