@@ -1,4 +1,4 @@
-# Troubleshooting
+# Cromwell Troubleshooting
 
 The following are some common errors that we have seen and suggested solutions
 
@@ -60,28 +60,33 @@ and `stdout.txt` of the previous step for possible reasons.
 ## Cromwell Server OutOfMemory errors
 
 ### Possible Cause(s)
+
 * Out of memory errors on the Cromwell Server are typically the result of the JVM running
 out of memory while attempting to keep track of multiple workflows or workflows with very
 large scatter steps. 
 
 ### Suggested Solutions
+
 * Consider upgrading the server instance type to one with more RAM.
 * Investigate tuning [Cromwell's `job-control` limits](https://github.com/broadinstitute/cromwell/blob/9249537fd094c6979b0c64e99fcc90d48c861487/core/src/main/resources/reference.conf#L543-L572) 
 to find a configuration that appropriately restricts the number of queued Akka messages.
 * Consider increasing the maximum instance RAM available to the JVM. Our Cloudformation templates 
 this set to 85% (`-XX:MaxRAMPercentage=85.0`) allowing some head room for the OS. 
 On larger instance types you may be able to increase this further.
- * Ensure you are *not* using an in memory database on the server instance. Our cloudformation templates configure
+* Ensure you are *not* using an in memory database on the server instance. Our cloudformation templates configure
  a separate Aurora MySQL cluster to avoid this. 
  
- ## Cromwell Task (Container) OutOfMemory errors
- ### Possible Cause(s)
- * Individual tasks from a workflow run in docker containers on AWS Batch. If those containers
+## Cromwell Task (Container) OutOfMemory errors
+
+### Possible Cause(s)
+ 
+* Individual tasks from a workflow run in docker containers on AWS Batch. If those containers
  have insufficient RAM for the task they can fail.
- * Some older applications (including older versions of the JVM) do not always respect the memory
+* Some older applications (including older versions of the JVM) do not always respect the memory
  limits imposed by the container and may think they have resources they cannot use.
  
- ### Suggested solutions
- * Assign more memory to the task in the `runtime: {}` stanza of the WDL or if the task application
+### Suggested solutions
+
+* Assign more memory to the task in the `runtime: {}` stanza of the WDL or if the task application
  allows use command line or configuration parameters to appropriately limit memory.
- * For tasks executed by the JVM investigate `-Xmx` and `-XX:MaxRAMPercentage` parameters.
+* For tasks executed by the JVM investigate `-Xmx` and `-XX:MaxRAMPercentage` parameters.

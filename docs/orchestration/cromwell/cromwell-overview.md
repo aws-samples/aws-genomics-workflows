@@ -6,99 +6,77 @@
 system for scientific workflows developed by the [Broad Institute](https://broadinstitute.org/)
 and supports job execution using [AWS Batch](https://aws.amazon.com/batch/).
 
-## Full Stack Deployment
-
-If you need a Cromwell server backed by AWS **now** and will worry about the
-details later, use the CloudFormation template below.
-
-| Name | Description | Source | Launch Stack |
-| -- | -- | :--: | :--: |
-{{ cfn_stack_row("Cromwell All-in-One", "Cromwell", "cromwell/cromwell-aio.template.yaml", "Create all resources needed to run Cromwell on AWS: an S3 Bucket, AWS Batch Environment, and Cromwell Server Instance") }}
-
-When the above stack is complete, navigate to the `HostName` that is generated
-in the outputs to access Cromwell via its SwaggerUI, which provides a simple web interface for submitting workflows.
-
-
-![cromwell on aws](images/cromwell-all-in-one.png)
-
-
 ## Requirements
 
 To get started using Cromwell on AWS you'll need the following setup in your AWS
 account:
 
-* The core set of resources (S3 Bucket, IAM Roles, AWS Batch) described in the [Getting Started](../../../core-env/introduction/) section.
-* Custom Compute Resource (Launch Template or AMI) with Cromwell Additions
+* A VPC with at least 2 **private** subnets
+* The Genomics Workflow [Core Environment](../../core-env/introduction.md)
 * EC2 Instance as a Cromwell Server
+* RDS Cluster for the Cromwell metadata database
 
-The documentation and CloudFormation templates here will help you get
-these setup.
+The following will help you get these setup.
 
-!!! note
-    For a Cromwell server that will run multiple workflows, or workflows with many
-    steps (e.g. ones with large scatter steps), it is recommended to setup a
-    database to store workflow metadata.
+### VPC
 
-## Custom Compute Resource with Cromwell Additions
-
-Follow the [instructions on creating a custom compute resources](../../../core-env/create-custom-compute-resources/) with the following changes:
-
-* specify the scratch mount point as `/cromwell_root`
-* make sure that cromwell additions are included in the resource by selecting "cromwell" as the resource type.
-
-Once complete, you will have a resource ID to give to AWS Batch to setup compute environments.
-
-## Cromwell Server
-
-To ensure the highest level of security and robustness for long running workflows,
-it is recommended that you use an EC2 instance as your Cromwell server for submitting
-workflows to AWS Batch.
-
-A couple things to note:
-
-* This server does not need to be permanent. In fact,
-  when you are not running workflows, you should stop or terminate the instance
-  so that you are not paying for resources you are not using.
-
-* You can launch a Cromwell server just for yourself and exactly when you need it.
-
-* This server does not need to be in the same VPC as the one that Batch will
-  launch instances in.
-
-The following CloudFormation template will create a CromwellServer instance with
-Cromwell installed, running, and preconfigured to operate with an S3 Bucket and Batch
-Queue that you define at launch.
+Cromwell uses a relational database for storing metadata information. In AWS you can use an RDS cluster for this. For security and availability is is recommended that your RDS cluster deploy into at least 2 private subnets. If the target VPC you want to deploy Cromwell into already has this, you can skip ahead. If not, you can use the Cloudformation template below, which uses the [AWS VPC Quickstart](ttps://aws.amazon.com/quickstart/architecture/vpc/), to create one that meets these requirements.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("Cromwell Server", "CromwellServer", "cromwell/cromwell-server.template.yaml", "Create an EC2 instance and an IAM instance profile to run Cromwell") }}
+{{ cfn_stack_row("VPC (Optional)", "GenomicsVPC", "https://aws-quickstart.s3.amazonaws.com/quickstart-aws-vpc/templates/aws-vpc.template", "Creates a new Virtual Private Cloud to use for your genomics workflow resources.") }}
 
-Once the stack is created, you can access the server in a web browser via the
-instance's hostname.  There you should see Cromwell's SwaggerUI, which provides
-a simple web interface for submitting workflows.
+### Genomics Workflow Core
 
-The CloudFormation template above also configures the server with integration to
-[Amazon CloudWatch](https://aws.amazon.com/cloudwatch/) for monitoring Cromwell's
-log output and [AWS Systems Manager](https://aws.amazon.com/systems-manager/) for
-performing any maintenance, or gaining terminal access.
+To launch the Gneomics Workflow Core in your AWS account, use the Cloudformation template below.
 
-For details of how this instance was constructed - e.g. if you want to customize
-it for your purposes, checkout the template source and read the sections below.
+| Name | Description | Source | Launch Stack |
+| -- | -- | :--: | :--: |
+{{ cfn_stack_row("Genomics Workflow Core", "GWFCore", "gwfcore/gwfcore-root.template.yaml", "Create EC2 Launch Templates, AWS Batch Job Queues and Compute Environments, a secure Amazon S3 bucket, and IAM policies and roles within an **existing** VPC. _NOTE: You must provide VPC ID, and subnet IDs_.") }}
 
-### Cromwell server requirements
+The core is agnostic of the workflow orchestrator you intended to use, and can be installed multiple times in your account if needed (e.g. for use by different projects). Each installation uses a `Namespace` value to group resources accordingly. By default, the `Namespace` is set to the stack name, which must be unique within an AWS region.
 
-This instance needs the following:
+See the [Core Environment](../../core-env/introduction.md) For more details on how this core is architected.
 
-* Java 8 (per Cromwell's requirements)
-* The latest version of Cromwell with AWS Batch backend support (v35+)
+### Cromwell Resources
+
+The following CloudFormation template will create a Cromwell server instance and an RDS Aurora Serverless database cluster.
+
+| Name | Description | Source | Launch Stack |
+| -- | -- | :--: | :--: |
+{{ cfn_stack_row("Cromwell Resource", "CromwellResources", "cromwell/cromwell-resources.template.yaml", "Create resources needed to run Cromwell on AWS: an RDS Aurora database, an EC2 instance with Cromwell installed as a server, and an IAM instance profile") }}
+
+!!! important
+    The `Namespace` parameter in this template is used to associate and configure Cromwell with a specific Genomics Workflow Core.
+
+Once the stack is created, you can access the server instance in a web browser via the instance's public DNS name which can be found on the **Outputs** tab for the stack in the Cloudformation Console.  There you should see Cromwell's SwaggerUI, which provides a simple web interface for submitting workflows.
+
+!!! info
+    The server instance is created with a self-signed certificate and configured for HTTPS access. You may get a security warning from your web-browser when accessing it. In a production setting, it is recommended to install a certificate from a trusted authority.
+
+The CloudFormation template above also configures the server with integration to [Amazon CloudWatch](https://aws.amazon.com/cloudwatch/) for monitoring Cromwell's log output and [AWS Systems Manager](https://aws.amazon.com/systems-manager/) for gaining terminal access and performing any maintenance on the instance.
+
+## Deployment Details
+
+### Cromwell Database
+
+TBC
+
+### Cromwell server
+
+The Cloudformation template above launches an EC2 instance as a persistant Cromwell server. You can use this server as an endpoint for running multiple concurrent workflows. This instance needs the following:
+
+* Java 8
+* The latest version of Cromwell with AWS Batch backend support (v52+)
 * Permissions to
     * read from the S3 bucket used for input and output data
-    * submit / describe / cancel / terminate jobs to AWS Batch queues
+    * submit / describe / cancel / terminate jobs on AWS Batch queues
 
-The permissions above can be added to the instance via policies in an [instance profile](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html).
-Example policies are shown below:
+The permissions above applied to the server instance via an [instance profile](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html). This allows an EC2 instance to assume an IAM role and call other AWS services on your behalf.
 
-### Access to AWS Batch
+The specific IAM policies used in the instance profile are shown below.
+
+#### Access to AWS Batch
 
 Lets the Cromwell server instance submit and get info about AWS Batch jobs.
 
@@ -127,10 +105,11 @@ Lets the Cromwell server instance submit and get info about AWS Batch jobs.
 }
 ```
 
-### Access to S3
+If you want to limte Cromwell's access to compute resources - e.g. to specific job queues - you can scope down the above policy as needed by explicitly specifying `Resources`.
 
-Lets the Cromwell server instance read and write data from/to S3 - i.e. the
-return codes (written to `rc.txt` files) for each job.
+#### Access to S3
+
+Lets the Cromwell server instance read and write data from/to S3. Specifically, Cromwell needs access to the return code files (`rc.txt`) generated by each job to track job status. In addition, this should also include any open dataset buckets you may need to read from for your workflows since Cromwell will need to perform `HeadObject` and `ListBucket` operations when determining job inputs for tasks.
 
 ```json
 {
@@ -150,7 +129,7 @@ return codes (written to `rc.txt` files) for each job.
 ```
 
 
-### Configuring Cromwell to use AWS Batch
+#### Configuring Cromwell to use AWS Batch
 
 The following is an example `*.conf` file to use the `AWSBackend`.
 
@@ -161,13 +140,6 @@ include required(classpath("application"))
 webservice {
   interface = localhost
   port = 8000
-}
-
-system {
-  job-rate-control {
-    jobs = 1
-    per = 2 second
-  }
 }
 
 aws {
@@ -236,48 +208,16 @@ This value can also be supplied as a Java command line variable.
 * `<your-queue-arn>` : the Amazon Resource Name of the AWS Batch queue you want
   to use for your tasks.
 
-### Start the Cromwell server
+### Accessing the Cromwell server
 
-!!! note
-    The CloudFormation template above automatically starts Cromwell on launch.
-    Use the instructions below if you are provisioning your own EC2 instance.
+### Stop / Start / Restart the Cromwell service
 
-Log into your server using SSH.  If you setup a port tunnel, you can interact
-with Cromwell's REST API from your local machine:
+The CloudFormation template above installs Cromwell as a service under the control of `supervisorctl`. If you need to make changes to the `cromwell.conf` file you will want to restart the service so that configuration changes are included.
 
 ```bash
-$ ssh -L localhost:8000:localhost:8000 ec2-user@<cromwell server host or ip>
+supervisorctl restart cromwell-server
 ```
 
-This port tunnel only needs to be open for submitting workflows.  You do not
-need to be connected to the server while a workflow is running.
-
-Launch the server using the following command:
-
-```bash
-$ java -Dconfig.file=cromwell.conf -jar cromwell.jar server
-```
-
-!!! note
-    If you plan on having this server run for a while, it is recommended you use
-    a utility like `screen` or `tmux` so that you can log out while keeping
-    Cromwell running.  Alternatively, you could start Cromwell as a detached
-    process in the background using `nohup`.
-
-
-  You should now be able to access Cromwell's SwaggerUI from a web browser on
-  your local machine by navigating to:
-
-  [http://localhost:8000/](http://localhost:8000/)
-
-### Stop/ Start/ Restart the Cromwell service
-When setup by the CloudFormation template, Cromwell runs as a service under
-the control of `supervisorctl`. If you make changes to the `cromwell.conf` file
-you will want to restart the service so that configuration changes are included.
-
-```bash
-$ supervisorctl restart cromwell-server
-```
 `supervisorctl start` and `supervisorctl stop` are also supported.
 
 ## Running a workflow
@@ -289,6 +229,7 @@ To submit a workflow to your Cromwell server, you can use any of the following:
 * the command line with `curl`
 
 ### Workflow logs
+
 After submitting a workflow, you can monitor the progress of tasks via the
 AWS Batch console. Cromwell server logs are captured in the `cromwell_server`
 log group and the logs of the AWS Batch jobs that run each task in the workflow
