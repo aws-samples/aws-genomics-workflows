@@ -60,7 +60,7 @@ The CloudFormation template above also configures the server with integration to
 
 ### Cromwell Database
 
-TBC
+Cromwell uses a relational database to store workflow metadata and caching information. By default Cromwell will use an in-memory database, which is sufficient for ephemeral, single workflow use. However, for more scalability and to fully take advantage of workflow caching capabilities, it is recommended to use a dedicated database that is separate from the compute instance Cromwell is running on.
 
 ### Cromwell server
 
