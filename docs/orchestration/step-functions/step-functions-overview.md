@@ -2,13 +2,13 @@
 
 ![AWS reference architecture for genomics](./images/aws-sfn-genomics-workflow-arch.png)
 
-[AWS Step Functions](https://aws.amazon.com/step-functions/) is a service that allows you to orchestrate other AWS services, such as Lambda, Batch, SNS, and Glue, making it easy to coordinate the components of distributed applications as a series of steps in a visual workflow.
+The [AWS Step Functions](https://aws.amazon.com/step-functions/) service allows you to orchestrate other AWS services, such as Lambda, Batch, SNS, and Glue, making it easy to coordinate the components of distributed applications as a series of steps in a visual workflow.
 
 In the context of genomics workflows, the combination of AWS Step Functions with Batch and Lambda constitutes a robust, scalable, and serverless task orchestration solution.
 
 ## Full Stack Deployment
 
-If you need something up and running in a hurry, the follwoing CloudFormation template will create everything you need to run an example genomics workflow using `bwa-mem`, `samtools`, and `bcftools`.
+If you need something up and running in a hurry, the following CloudFormation template will create everything you need to run an example genomics workflow using `bwa-mem`, `samtools`, and `bcftools`.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |

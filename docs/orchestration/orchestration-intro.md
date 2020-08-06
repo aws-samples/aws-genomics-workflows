@@ -1,6 +1,6 @@
 # Workflow Orchestration
 
-Now that we have a way to execute individual tasks via AWS Batch, we turn to
+Having deployed a way to execute individual tasks via AWS Batch, we turn to
 orchestration of complete workflows.
 
 In order to process data, we will need to handle the cases for serial and parallel task execution, and retry logic when a task fails.
