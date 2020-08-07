@@ -23,15 +23,56 @@ The above template uses the AWS Quickstart reference for a [Modular and Scalable
 
 For architectural details, best practices, step-by-step instructions, and customization options, see the [deployment guide](https://fwd.aws/9VdxN).
 
+The VPC quick start template will deploy a VPC with 2 private subnets (the minimum recommended for the core environment) in two Availability Zones (AZs). 
+For production environments we recommend using as many AZs as are available in your region. This allows the
+AWS Batch compute environments to source workers from more AZs potentially resulting in better pricing and fewer interruptions when using Spot Instances.
+A simple way to create a CloudFormation template for a complete VPC stack with multiple AZs is to use the [AWS CDK](https://aws.amazon.com/cdk/). This example Java app will synthesize a CloudFormation template 
+that can be used to generate a VPC with subnets in upto 6 AZs (or the maximum for the region if there are less than 6):
+
+```java
+public class CdkVpcApp {
+    public static void main(final String[] args) {
+        App app = new App();
+
+        Environment env = Environment
+                .builder()
+                .account("my-account-number")
+                .region("us-east-1")
+                .build();
+
+        new CdkVpcStack(app, "CdkVpcStack", StackProps.builder().env(cromwell).build());
+
+        app.synth();
+    }
+}
+```
+```java
+public class CdkVpcStack extends Stack {
+    public CdkVpcStack(final Construct scope, final String id) {
+        this(scope, id, null);
+    }
+
+    public CdkVpcStack(final Construct scope, final String id, final StackProps props) {
+        super(scope, id, props);
+
+        // The code that defines your stack goes here
+        Vpc vpc = Vpc.Builder.create(this, "vpc")
+                .maxAzs(6)
+                .build();
+    }
+}
+```
+For a full set of options check out the VPC section of the [CDK API Guide](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_aws-ec2.Vpc.html)
+
 ## Step 1: Core Environment
 
-The CloudFormation template below will create all of the AWS resources required - S3 Bucket, EC2 Launch Templates, IAM Roles, Batch Compute Environments, Batch Job Queues - needed for a genomics workflow core execution environment. It is intended to be deployed into an existing VPC. You can use your Default VPC for testing, but it is recommended that you create a new one (e.g. using the VPC Quickstart above) with at least two private subnets.
+The CloudFormation template below will create all the AWS resources required - S3 Bucket, EC2 Launch Templates, IAM Roles, Batch Compute Environments, Batch Job Queues - needed for a genomics workflow core execution environment. It should be deployed into an existing VPC. You can use your Default VPC for testing. For production, you should use (or create) a VPC with at least two private subnets.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
 {{ cfn_stack_row("Genomics Workflow Core", "GWFCore", "gwfcore/gwfcore-root.template.yaml", "Create EC2 Launch Templates, AWS Batch Job Queues and Compute Environments, a secure Amazon S3 bucket, and IAM policies and roles within an **existing** VPC. _NOTE: You must provide VPC ID, and subnet IDs_.") }}
 
-When launching the stack you can supply a `Namespace` as an optional parameter. The core can be installed multiple times in your account if needed (e.g. for use by different projects). The `Namespace` value is used to group resources accordingly. By default, the `Namespace` is set to the stack name, which must be unique within an AWS region.
+When launching the stack you can supply a `Namespace` as an optional parameter. The core can be installed multiple times in your account if needed (e.g. for use by different projects) grouped by the provided `Namespace`. By default, the `Namespace` is set to the stack name, which must be unique within an AWS region.
 
 Prior to the final create button, be sure to acknowledge "IAM CAPABILITIES".
 
@@ -41,7 +82,7 @@ The template will take about 15-20 minutes to finish creating resources.
 
 ## Step 2: Worklow Orchestrators
 
-The CloudFormation templates below will create resources specific to a workflow orchestrator. All assume that you have already installed the core environment described above. When launching these stacks, you must provide a `Namespace` parameter. This is used to assocate a workflow orchestrator stack to a specific core environment. Multiple workflow orchestrators can share a single core environment.
+The CloudFormation templates below will create resources specific to a workflow orchestrator. All assume that you have already installed the core environment described above. When launching these stacks, you must provide a `Namespace` parameter. This is used to associate a workflow orchestrator stack to a specific core environment. Multiple workflow orchestrators can share a single core environment.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |

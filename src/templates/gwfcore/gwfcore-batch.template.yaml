@@ -140,7 +140,42 @@ Resources:
           Version: $Latest
         InstanceRole: !Ref Ec2InstanceProfileArn
         InstanceTypes:
-          - optimal
+          - c4.large
+          - m4.large
+          - r4.large
+          - c4.xlarge
+          - m4.xlarge
+          - r4.xlarge
+          - c4.2xlarge
+          - m4.2xlarge
+          - r4.2xlarge
+          - c4.4xlarge
+          - m4.4xlarge
+          - r4.4xlarge
+          - c5.large
+          - m5.large
+          - r5.large
+          - c5.xlarge
+          - m5.xlarge
+          - r5.xlarge
+          - c5.2xlarge
+          - m5.2xlarge
+          - r5.2xlarge
+          - c5.4xlarge
+          - m5.4xlarge
+          - r5.4xlarge
+          - c5n.large
+          - m5n.large
+          - r5n.large
+          - c5n.xlarge
+          - m5n.xlarge
+          - r5n.xlarge
+          - c5n.2xlarge
+          - m5n.2xlarge
+          - r5n.2xlarge
+          - c5n.4xlarge
+          - m5n.4xlarge
+          - r5n.4xlarge
         MinvCpus: !Ref DefaultCEMinvCpus
         MaxvCpus: !Ref DefaultCEMaxvCpus
         SecurityGroupIds:
@@ -164,7 +199,42 @@ Resources:
           Version: $Latest
         InstanceRole:  !Ref Ec2InstanceProfileArn
         InstanceTypes:
-          - optimal
+          - c4.large
+          - m4.large
+          - r4.large
+          - c4.xlarge
+          - m4.xlarge
+          - r4.xlarge
+          - c4.2xlarge
+          - m4.2xlarge
+          - r4.2xlarge
+          - c4.4xlarge
+          - m4.4xlarge
+          - r4.4xlarge
+          - c5.large
+          - m5.large
+          - r5.large
+          - c5.xlarge
+          - m5.xlarge
+          - r5.xlarge
+          - c5.2xlarge
+          - m5.2xlarge
+          - r5.2xlarge
+          - c5.4xlarge
+          - m5.4xlarge
+          - r5.4xlarge
+          - c5n.large
+          - m5n.large
+          - r5n.large
+          - c5n.xlarge
+          - m5n.xlarge
+          - r5n.xlarge
+          - c5n.2xlarge
+          - m5n.2xlarge
+          - r5n.2xlarge
+          - c5n.4xlarge
+          - m5n.4xlarge
+          - r5n.4xlarge
         MinvCpus: !Ref PriorityCEMinvCpus
         MaxvCpus: !Ref PriorityCEMaxvCpus
         SecurityGroupIds:
