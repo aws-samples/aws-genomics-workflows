@@ -44,6 +44,22 @@ function s3_uri() {
     echo "${BUCKET%/}/${PREFIX:1}"
 }
 
+function s3_sync() {
+    local source=$1
+    local destination$2
+
+    echo "syncing ..."
+    echo "   from: $source"
+    echo "     to: $destination"
+    aws s3 sync \
+        --profile asset-publisher \
+        --region us-east-1 \
+        --acl public-read \
+        --delete \
+        --metadata commit=$(git rev-parse HEAD) \
+        $source \
+        $destination
+}
 
 function publish() {
     local source=$1
@@ -52,52 +68,37 @@ function publish() {
     # root level is always "latest"
     S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH $destination)
 
-    echo "publishing templates: $S3_URI"
-    aws s3 sync \
-        --profile asset-publisher \
-        --region us-east-1 \
-        --acl public-read \
-        --delete \
-        --metadata commit=$(git rev-parse HEAD) \
-        $source \
-        $S3_URI
+    s3_sync $source $S3_URI
     
     if [[ $USE_RELEASE_TAG && ! -z "$TRAVIS_TAG" ]]; then
         # create explicit pinned versions "latest" and TRAVIS_TAG
         for version in latest $TRAVIS_TAG; do
             S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH $version $destination)
 
-            case $destination in
-                templates)
-                    local parameter=TemplateRootUrl
-                    ;;
-                artifacts)
-                    local parameter=ArtiractRootUrl
-                    ;;
-                *)
-                    echo "unknown destination $destination"
-                    exit 1
-                    ;;
-            esac
+            if [[ "$destination" == "templates" ]]; then
+                # pin distribution template and artifact paths in cfn templates
+                pin_version $version templates $source
+                pin_version $version artifacts $source
+            fi
 
-            # pin version
-            for file in `grep -irl $parameter $source`; do
-                local replace="s#/$destination#/$version/$destination#g"
-                sed -i '' -e $replace $file
-            done
-
-            echo "publishing templates: $S3_URI"
-            aws s3 sync \
-                --profile asset-publisher \
-                --region us-east-1 \
-                --acl public-read \
-                --delete \
-                --metadata commit=$(git rev-parse HEAD) \
-                $source \
-                $S3_URI
+            s3_sync $source $S3_URI
         done
     fi
 
+}
+
+
+function pin_version() {
+    # locates parameters in cfn templates files in {folder} that need to be version pinned
+    # using the locator pattern: "{asset}\s{2}# dist: {action}"
+    # replaces the locator pattern with: "{version}/{asset}  #"
+    local version=$1
+    local asset=$2
+    local folder=$3
+
+    for file in `grep -irl "$asset  # dist: pin_version" $folder`; do
+        sed -i '' -e "s|$asset  # dist: pin_version|$version/$asset  #|g" $file
+    done
 }
 
 

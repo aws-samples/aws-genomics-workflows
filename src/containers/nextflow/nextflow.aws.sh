@@ -80,7 +80,32 @@ function show_log() {
     cat ./.nextflow.log
 }
 
-trap "show_log; preserve_session" EXIT
+function cleanup() {
+    set -e
+    wait $NEXTFLOW_PID
+    echo "=== Running Cleanup ==="
+
+    show_log
+    preserve_session
+
+    echo "=== Bye! ==="
+}
+
+function cancel() {
+    # AWS Batch sends a SIGTERM to a container if its job is cancelled/terminated
+    # forward this signal to Nextflow so that it can cancel any pending workflow jobs
+    
+    set +e  # ignore errors here
+    echo "=== !! CANCELLING WORKFLOW !! ==="
+    echo "stopping nextflow pid: $NEXTFLOW_PID"
+    kill -TERM "$NEXTFLOW_PID"
+    wait $NEXTFLOW_PID
+    echo "=== !! cancellation complete !! ==="
+    set -e
+}
+
+trap "cancel" TERM
+trap "cleanup" EXIT
 
 # stage workflow definition
 if [[ "$NEXTFLOW_PROJECT" =~ ^s3://.* ]]; then
@@ -91,4 +116,10 @@ fi
 
 echo "== Running Workflow =="
 echo "nextflow run $NEXTFLOW_PROJECT $NEXTFLOW_PARAMS"
-nextflow run $NEXTFLOW_PROJECT $NEXTFLOW_PARAMS
+export NXF_ANSI_LOG=false
+nextflow run $NEXTFLOW_PROJECT $NEXTFLOW_PARAMS &
+
+NEXTFLOW_PID=$!
+echo "nextflow pid: $NEXTFLOW_PID"
+jobs
+wait $NEXTFLOW_PID

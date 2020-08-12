@@ -95,7 +95,7 @@ Parameters:
       S3 Bucket where artifacts and additions scripts are stored
   ArtifactBucketPrefix:
     Type: String
-    Default: artifacts
+    Default: artifacts  # dist: pin_version
     Description: >-
       Prefix in ArtifactBucketName where artifacts and additions scripts are stored
   
@@ -103,7 +103,7 @@ Parameters:
     Type: String
     Description: >-
       Root URL for where nested templates are stored
-    Default: https://aws-genomics-workflows.s3.amazonaws.com/templates
+    Default: https://aws-genomics-workflows.s3.amazonaws.com/templates  # dist: pin_version
     ConstraintDescription: >-
       Must be a valid S3 HTTP URL
     AllowedPattern: "https://[a-z0-9-./]{0,}s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
