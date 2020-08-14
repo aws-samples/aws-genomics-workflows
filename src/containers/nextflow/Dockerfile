@@ -26,6 +26,7 @@ ENV JAVA_HOME /usr/lib/jvm/jre-openjdk/
 # invoke nextflow once to download dependencies
 RUN nextflow -version
 
+# install a custom entrypoint script that handles being run within an AWS Batch Job
 COPY nextflow.aws.sh /opt/bin/nextflow.aws.sh
 RUN chmod +x /opt/bin/nextflow.aws.sh
 
