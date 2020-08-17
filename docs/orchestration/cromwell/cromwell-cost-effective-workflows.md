@@ -68,6 +68,14 @@ Cromwell Workflow run.
     
     ![Tasks Dashboard](images/TaskDashboard.png)
 
+### Correlating tasks with metrics
+To most effectively use CloudWatch Container Insight metrics it is important to know the time at which each workflow
+task started and finished. You can get this information from the Metadata API of your Cromwell server. The following 
+will return the metadata of the workflow run as a JSON object. 
+```
+curl -k -X GET "https://my-cromwell-server/api/workflows/v1/WORKFLOW-ID/metadata"
+```
+
 ## Consider CPU and memory ratios
 
 EC2 workers for Cromwell AWS Batch compute environments are drawn from `c`, `m`, and `r` instance families and these 
