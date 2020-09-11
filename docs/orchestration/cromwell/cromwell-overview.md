@@ -245,4 +245,4 @@ can be found in the `/aws/batch/jobs` CloudWatch log group.
 The next section provides some examples of running Crommwell on AWS.
 
 ## Cost optimizing workflows
-[Optimizing](cromwell-cost-effective-workflows.md) the allocation of resources to your workflows can help you to reduce costs
+[Optimizing](../cost-effective-workflows/cost-effective-workflows.md) the allocation of resources to your workflows can help you to reduce costs
