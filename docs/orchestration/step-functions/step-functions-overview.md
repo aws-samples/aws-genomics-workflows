@@ -368,3 +368,6 @@ You will then be taken to the execution tracking page where you can monitor the 
 ![execution tracking](./images/sfn-console-execution-inprogress.png)
 
 The example workflow references a small demo dataset and takes approximately 20-30 minutes to complete.
+
+## Cost optimizing workflows
+[Optimizing](../cost-effective-workflows/cost-effective-workflows.md) the allocation of resources to your workflows can help you to reduce costs
