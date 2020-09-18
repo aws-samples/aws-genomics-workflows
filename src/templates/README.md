@@ -20,18 +20,18 @@ Nested stacks are as follows and listed in order of creation:
 | `gwfcore-iam.template.yaml` | Creates IAM roles for AWS Batch resources |
 | `gwfcore-batch.template.yaml` | Creates AWS Batch Job Queues and Compute Environments for job execution |
 
-## All-in-One ("AIO") Stacks
+## Orchestration Stacks
 
-All-in-One stacks are provided for solutions that utilize:
+The following Stacks provide solutions that utilize:
 
 * AWS Step-Functions
 * Cromwell
 * Nextflow
 
-and build atop the Core Stack above.  They leverage the AWS VPC Quickstart to create a new VPC with subnets in 2 AZs and also include stacks specific to the orchestrator used:
+They build atop the Core Stack above. They provide the additional resources needed to run each orchestrator.
 
 | File | Description |
 | :--- | :---------- |
 | `step-functions/sfn-resources.template.yaml` | Creates an example AWS Step Functions state-machine and containers for an example genomics workflow using BWA, samtools, and bcftools. |
 | `cromwell/cromwell-resources.template.yaml` | Creates an EC2 instance with Cromwell pre-installed and launched in "server" mode and an RDS Aurora Serverless database |
-| `nextflow/nextflow-resources.template.yaml` | Creates a nextflow container and AWS Batch Job Definition for running nextflow |
+| `nextflow/nextflow-resources.template.yaml` | Creates a Nextflow container and AWS Batch Job Definition for running Nextflow |
