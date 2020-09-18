@@ -90,3 +90,18 @@ On larger instance types you may be able to increase this further.
 * Assign more memory to the task in the `runtime: {}` stanza of the WDL or if the task application
  allows use command line or configuration parameters to appropriately limit memory.
 * For tasks executed by the JVM investigate `-Xmx` and `-XX:MaxRAMPercentage` parameters.
+
+## Cromwell submitted AWS Batch jobs hang in 'Runnable' state
+
+### Possible Causes
+* The resources requested by the task exceed the largest size of instance available in your AWS Batch Compute Environment
+* Batch worker EC2 instances are not able to join the Compute Environments ECS cluster
+
+### Suggested solutions
+* Reduce the resources required by your task to less than the maximum CPU and memory of the largest instance type allowed
+in your Batch Compute Environment.
+* In your EC2 console determine if any gwf-core workers have started. If they have then ensure they have a route to the 
+internet (for example, does your subnet have a NAT gateway). Worker nodes require access to the internet so that required 
+dependencies can be downloaded by the worker nodes at startup time. If this process fails then Docker will not start, the 
+ecs-agent will not run, and the systems manager will also not run. In addition, the node will also not be able to 
+communicate with the AWS Batch service.
