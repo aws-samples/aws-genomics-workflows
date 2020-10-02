@@ -139,12 +139,14 @@ Parameters:
     Description: >-
       Specific version of Cromwell to install.  Must match a released version number.
       For example, 52, 52.1, etc. The minimum supported version is 52. Ignored if "Cromwell Version" is set to "latest".
+    Default: ""
   
   CromwellJarUrl:
     Type: String
     Description: >-
       URL to a pre-built cromwell-*.jar file.  Example: https://mycicdserver.com/build/cromwell-XX-SNAP.jar.
       If this is specifed, CromwellVersion is ignored.
+    Default: ""
   
   DBSubnetIDs:
     Type: List<AWS::EC2::Subnet::Id>
