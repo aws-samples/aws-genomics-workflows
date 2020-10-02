@@ -278,7 +278,8 @@ The `process` definitions in Nextflow scripts should include a couple key parts 
 * the `container` directive
 * `cpus` and `memory` directives to define resource that will be used by Batch Jobs
 
-An example defintion for a simple "Hello World" process is shown below:
+!!! note: The container image used to run a process needs to be capable of running the AWS CLI. It **doesn't** have to contain the CLI but it does need shared libraries such as `libz.so.1` which may not be present in very minimal images such as those based on Alpine.
+An example definition for a simple "Hello World" process is shown below:
 
 ```groovy
 texts = Channel.from("AWS", "Nextflow")
@@ -353,16 +354,16 @@ To run a workflow you submit a `nextflow` Batch job to the appropriate Batch Job
 * the AWS Batch Console
 * the command line with the AWS CLI
 
-This is what starting a workflow via the AWS CLI would look like using Nextflow's built-in "hello-world" workflow:
+This is what starting a workflow via the AWS CLI would look like using a modified fork of Nextflow's built-in "hello-world" workflow:
 
 ```bash
 aws batch submit-job \
     --job-name nf-hello \
     --job-queue <queue-name> \
-    --job-definition nextflow \
-    --container-overrides command=hello
+    --job-definition nextflow-<nextflow-stack-namespace> \
+    --container-overrides command=wleepang/hello
 ```
-
+!!! Note: The reason for the modification was purely to make use of a container that could provide libraries (such as `libz.so.1`) needed to run the AWS CLI which is responsible for marshalling files to and from S3
 After submitting a workflow, you can monitor the progress of tasks via the AWS Batch console.
 For the "Hello World" workflow above you will see five jobs run in Batch - one for the head node, and one for each `Channel` text as it goes through the `hello` process.
 
@@ -372,7 +373,7 @@ For a more complex example, you can try the following, which will run the [RNASe
 aws batch submit-job \
     --job-name nf-core-rnaseq \
     --job-queue <queue-name> \
-    --job-definition nextflow \
+    --job-definition nextflow-<nextflow-stack-namespace> \
     --container-overrides command=nf-core/rnaseq,\
 "--reads","'s3://1000genomes/phase3/data/HG00243/sequence_read/SRR*_{1,2}.filt.fastq.gz'",\
 "--genome","GRCh37",\
