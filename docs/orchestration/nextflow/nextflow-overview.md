@@ -278,7 +278,10 @@ The `process` definitions in Nextflow scripts should include a couple key parts 
 * the `container` directive
 * `cpus` and `memory` directives to define resource that will be used by Batch Jobs
 
-!!! note: The container image used to run a process needs to be capable of running the AWS CLI. It **doesn't** have to contain the CLI but it does need shared libraries such as `libz.so.1` which may not be present in very minimal images such as those based on Alpine.
+!!! Note: The container image used to run a process needs to be capable of running the AWS CLI. It **doesn't** have to 
+contain the CLI but it does need shared libraries from `glib.c` such as `libz.so.1` which may not be present in very 
+minimal images.
+
 An example definition for a simple "Hello World" process is shown below:
 
 ```groovy
