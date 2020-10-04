@@ -24,9 +24,6 @@ Metadata:
         Parameters:
           - Namespace
           - GWFCoreNamespace
-          - S3DataBucketName
-          - S3NextflowBucketName
-          - ExistingBucket
       - Label:
           default: "Optional"
         Parameters:
@@ -52,44 +49,23 @@ Parameters:
     Description: >-
       Namespace of the GWFCore deployment to use.
 
-  S3DataBucketName:
-    Type: String
-    Description: >-
-      S3 Bucket used to store input and output data for the workflow.
-      This should bucket should already exist.
-
-  S3NextflowBucketName:
-    Type: String
-    Description: >-
-      S3 Bucket used to store Nextflow metadata (session cache, logs, and intermediate results)
-
-  ExistingBucket:
-    Type: String
-    Description: >-
-      Does the S3 Bucket for Nextflow metadata already exist?  If not, it will be created.
-    AllowedValues:
-      - Yes
-      - No
-    Default: No
-
   S3NextflowPrefix:
     Type: String
     Description: >-
-      (Optional) Parent folder in the Nextflow metadata bucket for metadata folders.
-      Used only if the Nextflow metadata bucket is the same as the Data bucket.
+      (Optional) Parent folder in the GWFCore bucket for metadata folders.
     Default: _nextflow
 
   S3LogsDirPrefix:
     Type: String
     Description: >-
-      (Optional) Folder in the Nextflow metadata bucket (under the {Nextflow Prefix} if needed)
+      (Optional) Folder in the GWFCore bucket under the {Nextflow Prefix}
       for session cache and logs.
     Default: logs
 
   S3WorkDirPrefix:
     Type: String
     Description: >-
-      (Optional) Folder in the Nextflow metadata bucket (under the {Nextflow Prefix} if needed)
+      (Optional) Folder in the GWFCore bucket under the {Nextflow Prefix}
       that contains workflow intermediate results
     Default: runs
 
@@ -118,36 +94,12 @@ Parameters:
     AllowedPattern: "https://[a-z0-9-./]{0,}s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
 
 Conditions:
-  DataBucketIsNextflowBucket:
-    Fn::Equals:
-      - !Ref S3NextflowBucketName
-      - !Ref S3DataBucketName
-
   UseLatestNextflowVersion:
     Fn::Equals:
       - !Ref NextflowVersion
       - latest
 
-  NextflowBucketDoesNotExist:
-    Fn::Equals:
-      - !Ref ExistingBucket
-      - No
-
-
 Resources:
-  S3NextflowBucket:
-    Type: AWS::S3::Bucket
-    Condition: NextflowBucketDoesNotExist
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
-    Properties:
-      BucketName: !Ref S3NextflowBucketName
-      BucketEncryption:
-        ServerSideEncryptionConfiguration:
-          - ServerSideEncryptionByDefault:
-             SSEAlgorithm: AES256
-      Tags: !FindInMap ["TagMap", "default", "tags"]
-  
   ContainerSource:
     Type: "AWS::CodeCommit::Repository"
     Properties:
@@ -228,16 +180,8 @@ Resources:
             Statement:
               - Effect: Allow
                 Resource:
-                  Fn::If:
-                    - DataBucketIsNextflowBucket
-
-                    - - !Join ["", ["arn:aws:s3:::", !Ref S3DataBucketName]]
-                      - !Join ["", ["arn:aws:s3:::", !Ref S3DataBucketName, "/*"]]
-
-                    - - !Join ["", ["arn:aws:s3:::", !Ref S3DataBucketName]]
-                      - !Join ["", ["arn:aws:s3:::", !Ref S3DataBucketName, "/*"]]
-                      - !Join ["", ["arn:aws:s3:::", !Ref S3NextflowBucketName]]
-                      - !Join ["", ["arn:aws:s3:::", !Ref S3NextflowBucketName, "/*"]]
+                  - !Join ["", ["arn:aws:s3:::", !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"]]
+                  - !Join ["", ["arn:aws:s3:::", !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}", "/*"]]
                 Action:
                   - "s3:*"
         - PolicyName: !Sub Nextflow-Instance-Access-${AWS::Region}
@@ -284,19 +228,15 @@ Resources:
             Value:
               Fn::Join:
                 - "/"
-                - - Fn::If:
-                      - DataBucketIsNextflowBucket
-                      - !Join ["/", [!Sub "s3://${S3NextflowBucketName}", !Ref S3NextflowPrefix]]
-                      - !Sub "s3://${S3NextflowBucketName}"
+                - - !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
+                  - !Ref S3NextflowPrefix
                   - !Ref S3LogsDirPrefix
           - Name: "NF_WORKDIR"
             Value:
               Fn::Join:
                 - "/"
-                - - Fn::If:
-                      - DataBucketIsNextflowBucket
-                      - !Join ["/", [!Sub "s3://${S3NextflowBucketName}", !Ref S3NextflowPrefix]]
-                      - !Sub "s3://${S3NextflowBucketName}"
+                - - !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
+                  - !Ref S3NextflowPrefix
                   - !Ref S3WorkDirPrefix
 
       JobDefinitionName: !Sub nextflow-${Namespace}
@@ -306,11 +246,7 @@ Outputs:
   NextflowBucket:
     Description: >-
       S3 Bucket used to store Nextflow metadata (session cache, logs, and intermediate results)
-    Value:
-      Fn::If:
-        - NextflowBucketDoesNotExist
-        - !Ref S3NextflowBucket
-        - !Ref S3NextflowBucketName
+    Value: !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
 
   LogsDir:
     Description: >-
@@ -318,10 +254,8 @@ Outputs:
     Value:
       Fn::Join:
         - "/"
-        - - Fn::If:
-              - DataBucketIsNextflowBucket
-              - !Join ["/", [!Sub "s3://${S3NextflowBucketName}", !Ref S3NextflowPrefix]]
-              - !Sub "s3://${S3NextflowBucketName}"
+        - - !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
+          - !Ref S3NextflowPrefix
           - !Ref S3LogsDirPrefix
 
   WorkDir:
@@ -330,10 +264,8 @@ Outputs:
     Value:
       Fn::Join:
         - "/"
-        - - Fn::If:
-              - DataBucketIsNextflowBucket
-              - !Join ["/", [!Sub "s3://${S3NextflowBucketName}", !Ref S3NextflowPrefix]]
-              - !Sub "s3://${S3NextflowBucketName}"
+        - - !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
+          - !Ref S3NextflowPrefix
           - !Ref S3WorkDirPrefix
 
   NextflowContainerImage:

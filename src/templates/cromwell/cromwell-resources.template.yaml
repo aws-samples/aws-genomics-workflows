@@ -45,7 +45,6 @@ Metadata:
           - CromwellVersion
           - CromwellVersionSpecified
           - CromwellJarUrl
-          - S3BucketName
           - S3OpenDataBucketARNs
           - DBUsername
           - DBPassword
@@ -65,8 +64,6 @@ Metadata:
         default: "HTTP Address Range"
       KeyName:
         default: "Key Pair Name"
-      S3BucketName:
-        default: "S3 Bucket Name"
       S3OpenDataBucketARNs:
         default: "S3 Open Data Bucket ARNs"
       CromwellVersion:
@@ -206,10 +203,6 @@ Parameters:
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
 
-  S3BucketName:
-    Description: S3 bucket you are using for workflow inputs and outputs
-    Type: String
-
   S3OpenDataBucketARNs:
     Description: Open datasets on AWS S3 for workflow inputs
     Type: String
@@ -263,8 +256,8 @@ Resources:
             Statement:
               - Effect: Allow
                 Resource:
-                  - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName]] 
-                  - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+                  - !Join ["", ["arn:aws:s3:::", !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"]] 
+                  - !Join ["", ["arn:aws:s3:::", !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}", "/*"]]
                 Action:
                   - "s3:*"
               - Effect: Allow
@@ -447,9 +440,9 @@ Resources:
                         config {
                           numSubmitAttempts = 10
                           numCreateDefinitionAttempts = 10
-                          root = "s3://${S3BucketName}/cromwell-execution"
+                          root = "s3://${S3Bucket}/cromwell-execution"
                           auth = "default"
-                          default-runtime-attributes { queueArn = "${BatchQueue}" , scriptBucketName = "${S3BucketName}" }
+                          default-runtime-attributes { queueArn = "${BatchQueue}" , scriptBucketName = "${S3Bucket}" }
                           filesystems { 
                             s3 { 
                               auth = "default"
@@ -464,6 +457,7 @@ Resources:
                   }
                 - DBAddress: !GetAtt RDSCluster.Endpoint.Address
                   BatchQueue: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/job-queue/default:1}}'
+                  S3Bucket: !Sub "{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
               mode: "000644"
               owner: "ec2-user"
               group: "ec2-user"
