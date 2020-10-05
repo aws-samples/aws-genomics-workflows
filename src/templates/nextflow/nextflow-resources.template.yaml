@@ -180,8 +180,8 @@ Resources:
             Statement:
               - Effect: Allow
                 Resource:
-                  - !Join ["", ["arn:aws:s3:::", !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"]]
-                  - !Join ["", ["arn:aws:s3:::", !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}", "/*"]]
+                  - !Join ["", ["arn:aws:s3:::", !Sub "{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"]]
+                  - !Join ["", ["arn:aws:s3:::", !Sub "{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}", "/*"]]
                 Action:
                   - "s3:*"
         - PolicyName: !Sub Nextflow-Instance-Access-${AWS::Region}

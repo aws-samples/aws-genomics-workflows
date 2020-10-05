@@ -174,7 +174,7 @@ Resources:
               - NoNamespace
               - !Sub ${AWS::StackName}
               - !Ref Namespace
-        S3BucketName: !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
+        S3BucketName: !Sub "{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
         IAMStepFunctionsExecutionRole: !GetAtt IAMStepFunctionsExecutionRole.Arn
         BatchJobQueue: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/job-queue/default:1}}'
         BatchJobDefinitionBwa: !GetAtt ContainerBuildBwa.Outputs.JobDefinition
