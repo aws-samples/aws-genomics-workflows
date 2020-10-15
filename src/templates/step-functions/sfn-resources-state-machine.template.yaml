@@ -56,6 +56,14 @@ Resources:
       StateMachineName: !Sub example-genomics-workflow-${Namespace}
       RoleArn: !Ref IAMStepFunctionsExecutionRole
       Tags: !FindInMap ["TagMap", "default", "tags"]
+
+      # In the state machine below each Task state `ResultPath` is set to `$.result`.
+      # this will write the results returned from each task to this member of the Task
+      # state's corresponding input. Since this is all the same, each task overwrites
+      # the last task's result. This is fine because all this information is also
+      # stored in the execution event history. Doing this keeps the overall payload
+      # for each task state within limits. You can reduce this further by setting
+      # `ResultPath` to `null`
       DefinitionString: !Sub |-
         {
             "Comment": "Simple Genomics Workflow with mapping",
@@ -81,7 +89,7 @@ Resources:
                 "BwaMem": {
                     "Type": "Task",
                     "InputPath": "$",
-                    "ResultPath": "$.results.bwa.mem",
+                    "ResultPath": "$.result",
                     "Resource": "arn:aws:states:::batch:submitJob.sync",
                     "Parameters": {
                         "JobName": "bwa-mem",
@@ -111,7 +119,7 @@ Resources:
                 "SamtoolsSort": {
                     "Type": "Task",
                     "InputPath": "$",
-                    "ResultPath": "$.results.samtools.sort",
+                    "ResultPath": "$.result",
                     "Resource": "arn:aws:states:::batch:submitJob.sync",
                     "Parameters": {
                         "JobName": "samtools-sort",
@@ -139,7 +147,7 @@ Resources:
                 "SamtoolsIndex": {
                     "Type": "Task",
                     "InputPath": "$",
-                    "ResultPath": "$.results.samtools.index",
+                    "ResultPath": "$.result",
                     "Resource": "arn:aws:states:::batch:submitJob.sync",
                     "Parameters": {
                         "JobName": "samtools-index",
@@ -169,7 +177,7 @@ Resources:
                     "InputPath": "$",
                     "ItemsPath": "$.params.chromosomes",
                     "MaxConcurrency": 23,
-                    "ResultPath": "$.results.variant_calls",
+                    "ResultPath": "$.result",
                     "Parameters": {
                         "workflow.$": "$.workflow",
                         "params.$": "$.params",
@@ -182,7 +190,7 @@ Resources:
                             "BcftoolsMPileup": {
                                 "Type": "Task",
                                 "InputPath": "$",
-                                "ResultPath": "$.result.bcftools.mpileup",
+                                "ResultPath": "$.result",
                                 "Resource": "arn:aws:states:::batch:submitJob.sync",
                                 "Parameters": {
                                     "JobName": "bcftools-mpileup",
@@ -212,7 +220,7 @@ Resources:
                             "BcftoolsCall": {
                                 "Type": "Task",
                                 "InputPath": "$",
-                                "ResultPath": "$.result.bcftools.call",
+                                "ResultPath": "$.result",
                                 "Resource": "arn:aws:states:::batch:submitJob.sync",
                                 "Parameters": {
                                     "JobName": "bcftools-call",
