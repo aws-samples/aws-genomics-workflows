@@ -58,12 +58,11 @@ Resources:
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
       # In the state machine below each Task state `ResultPath` is set to `$.result`.
-      # this will write the results returned from each task to this member of the Task
-      # state's corresponding input. Since this is all the same, each task overwrites
-      # the last task's result. This is fine because all this information is also
-      # stored in the execution event history. Doing this keeps the overall payload
-      # for each task state within limits. You can reduce this further by setting
-      # `ResultPath` to `null`
+      # This will write the results returned from each task to this member of the Task
+      # state's corresponding input. Since this is the same for all tasks, each task overwrites
+      # the last task's result. The full result history is stored in the execution 
+      # event history. Doing this keeps the overall payload for each task state 
+      # within limits. You can reduce this further by setting `ResultPath` to `null`
       DefinitionString: !Sub |-
         {
             "Comment": "Simple Genomics Workflow with mapping",
