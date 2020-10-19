@@ -1,4 +1,4 @@
-# Data Storage
+# Core: Data Storage
 
 You will need a robust location to store your input and output data.  Genomics data files often equal or exceed 100GB per file.  In addition to input sample files, genomics data processing typically relies on additional items like reference sequences or annotation databases that can be equally large.
 
@@ -21,7 +21,10 @@ You can use an existing bucket for your workflows, or you can create a new one u
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("Amazon S3 Bucket", "GWFCore-S3", "aws-genomics-s3.template.yaml", "Creates a secure Amazon S3 bucket to read from and write results to.") }}
+{{ cfn_stack_row("Amazon S3 Bucket", "GWFCore-S3", "gwfcore/gwfcore-s3.template.yaml", "Creates a secure Amazon S3 bucket to read from and write results to.", enable_cfn_button=False) }}
+
+!!! info
+    The launch button has been disabled above since this template is part of a set of nested templates. It is not recommended to launch it independently of its intended parent stack.
 
 ### Manually via the AWS Console
 

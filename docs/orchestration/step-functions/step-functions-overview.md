@@ -2,25 +2,9 @@
 
 ![AWS reference architecture for genomics](./images/aws-sfn-genomics-workflow-arch.png)
 
-[AWS Step Functions](https://aws.amazon.com/step-functions/) is a service that allows you to orchestrate other AWS services, such as Lambda, Batch, SNS, and Glue, making it easy to coordinate the components of distributed applications as a series of steps in a visual workflow.
+The [AWS Step Functions](https://aws.amazon.com/step-functions/) service allows you to orchestrate other AWS services, such as Lambda, Batch, SNS, and Glue, making it easy to coordinate the components of distributed applications as a series of steps in a visual workflow.
 
 In the context of genomics workflows, the combination of AWS Step Functions with Batch and Lambda constitutes a robust, scalable, and serverless task orchestration solution.
-
-## Full Stack Deployment
-
-If you need something up and running in a hurry, the follwoing CloudFormation template will create everything you need to run an example genomics workflow using `bwa-mem`, `samtools`, and `bcftools`.
-
-| Name | Description | Source | Launch Stack |
-| -- | -- | :--: | :--: |
-{{ cfn_stack_row("AWS Step Functions All-in-One Example", "AWSGenomicsWorkflow", "step-functions/sfn-aio.template.yaml", "Create all resources needed to run a genomics workflow with Step Functions: an S3 Bucket, AWS Batch Environment, State Machine, Batch Job Definitions, and container images") }}
-
-Another example that uses a scripted setup process is provided at this GitHub repository:
-
-[AWS Batch Genomics](https://github.com/aws-samples/aws-batch-genomics)
-
-
-If you are interested in creating your own solution with AWS Step Functions and AWS Batch,
-read through the rest of this page.
 
 ## Prerequisites
 
@@ -322,7 +306,7 @@ When the stack above completes, go to the outputs tab and copy the JSON string p
 ![cloud formation output tab](./images/cfn-stack-outputs-tab.png)
 ![example state-machine input](./images/cfn-stack-outputs-statemachineinput.png)
 
-The input JSON will like the following, but with the values for `queue` and `JOB_OUTPUT_PREFIX` prepopulated with resource names specific to the stack created by the CloudFormation template above:
+The input JSON will look like the following, but with the values for `queue` and `JOB_OUTPUT_PREFIX` prepopulated with resource names specific to the stack created by the CloudFormation template above:
 
 ```json
 {
@@ -363,8 +347,11 @@ In the dialog that appears, paste the input JSON into the "Input" field, and cli
 
 ![start execution dialog](./images/sfn-console-start-execution-dialog.png)
 
-You will then be taken to the execution tracking page where you can monitor the progress of your workflow.
+You will be taken to the execution tracking page where you can monitor the progress of your workflow.
 
 ![execution tracking](./images/sfn-console-execution-inprogress.png)
 
 The example workflow references a small demo dataset and takes approximately 20-30 minutes to complete.
+
+## Cost optimizing workflows
+[Optimizing](../cost-effective-workflows/cost-effective-workflows.md) the allocation of resources to your workflows can help you to reduce costs

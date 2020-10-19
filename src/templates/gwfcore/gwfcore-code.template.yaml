@@ -1,0 +1,420 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  (WWPS-GLS-WF-GWFCORE-CODE) Creates AWS CodeCommit repos and CodeBuild projects for Genomics Workflows Core assets and artifacts
+
+Parameters:
+  Namespace:
+    Type: String
+    Description: Namespace (e.g. project name) to use to label resources
+  
+  InstallBucketName:
+    Type: String
+    Description: >-
+      Bucket where installed artifacts will be stored
+    
+  ArtifactBucketName:
+    Type: String
+    Default: aws-genomics-workflows
+    Description: >-
+      S3 Bucket where distribution artifacts and additions scripts are stored
+  ArtifactBucketPrefix:
+    Type: String
+    Default: artifacts
+    Description: >-
+      Prefix in ArtifactBucketName where distribution artifacts and additions scripts are stored
+
+Mappings:
+  TagMap:
+    default:
+      architecture: "genomics-workflows"
+      solution: "default"
+      tags:
+        - Key: "architecture"
+          Value: "genomics-workflows"
+        - Key: "solution"
+          Value: "default"
+
+# Conditions:
+  
+Resources:
+
+  IAMCodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: !Sub codebuild-service-role-${AWS::StackName}-${AWS::Region}
+      Path: /service-role/
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub codebuild-basepolicy-${AWS::StackName}-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Resource:
+                  - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/*"
+                Action:
+                  - codebuild:CreateReportGroup
+                  - codebuild:CreateReport
+                  - codebuild:UpdateReport
+                  - codebuild:BatchPutTestCases
+
+              - Effect: Allow
+                Resource:
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*"
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*:*"
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+        
+        - PolicyName: s3-write-access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Resource:
+                  - !Sub arn:aws:s3:::${InstallBucketName}
+                  - !Sub arn:aws:s3:::${InstallBucketName}/*
+                Action:
+                  - s3:*
+        
+        - PolicyName: s3-read-access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Resource:
+                  - !Sub arn:aws:s3:::${ArtifactBucketName}
+                  - !Sub arn:aws:s3:::${ArtifactBucketName}/*
+                Action:
+                  - s3:Get*
+                  - s3:List*
+  
+  IAMCodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+      Path: /
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketVersioning
+                  - s3:DeleteObject
+                  - s3:PutObject
+                Resource:
+                  - !Sub "arn:aws:s3:::${InstallBucketName}"
+                  - !Sub "arn:aws:s3:::${InstallBucketName}/*"
+        - PolicyName: CodeBuildAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                Resource:
+                  - !Sub "arn:aws:codebuild:*:*:project/${BuildEcsAdditions}*"
+        - PolicyName: CodeCommitAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - codecommit:UploadArchive
+                  - codecommit:GetBranch
+                  - codecommit:GetCommit
+                  - codecommit:GetUploadArchiveStatus
+                Resource:
+                  - !Sub arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:${RepoEcsAdditions.Name}*
+  
+  IAMLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+      Policies:
+        - PolicyName: !Sub codebuild-access-${AWS::Region}
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "codebuild:StartBuild"
+                  - "codebuild:BatchGetBuilds"
+                Resource: "*"
+
+        - PolicyName: !Sub events-access-${AWS::Region}
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - events:DeleteRule
+                  - events:PutRule
+                  - events:PutTargets
+                  - events:RemoveTargets
+                Resource:
+                  - !Sub arn:aws:events:*:${AWS::AccountId}:rule/*
+        
+        - PolicyName: !Sub lambda-access-${AWS::Region}
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:AddPermission
+                  - lambda:RemovePermission
+                Resource:
+                  - !Sub arn:aws:lambda:*:${AWS::AccountId}:function:*
+  
+  RepoEcsAdditions:
+    Type: "AWS::CodeCommit::Repository"
+    Properties:
+      RepositoryName: !Sub ecs-additions-${Namespace}
+      RepositoryDescription: |
+        Provisioning scripts for Batch instances
+      
+      Code:
+        S3:
+          Bucket: !Ref ArtifactBucketName
+          Key: !Sub ${ArtifactBucketPrefix}/aws-ecs-additions.zip
+      Tags:
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+  
+  BuildEcsAdditions:
+    Type: "AWS::CodeBuild::Project"
+    Properties:
+      Description: !Sub Build project for ${Namespace} ecs-additions
+      Environment: #required
+        Type: LINUX_CONTAINER
+        Image: aws/codebuild/standard:1.0
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: ARTIFACT
+            Value: ecs-additions
+          - Name: TARGET_ARTIFACT_URL
+            Value: !Sub s3://${InstallBucketName}/_gwfcore/${Namespace}/artifacts
+      Source: #required
+        Type: CODECOMMIT
+        Location: !GetAtt RepoEcsAdditions.CloneUrlHttp
+        BuildSpec: |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - aws s3 sync --delete . ${TARGET_ARTIFACT_URL}/${ARTIFACT}
+      Artifacts: #required
+        Type: NO_ARTIFACTS
+      ServiceRole: !GetAtt IAMCodeBuildRole.Arn
+      Tags:
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+  
+  PipelineEcsAdditions:
+    Type: "AWS::CodePipeline::Pipeline"
+    Properties:
+      Name: !Sub ${Namespace}-ecs-additions
+      RoleArn: !GetAtt IAMCodePipelineRole.Arn #required
+      ArtifactStore:
+        Location: !Ref InstallBucketName
+        Type: S3
+      Stages: #required
+        - Name: Source
+          Actions:
+            - Name: CodeCommitRepo
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeCommit
+                Version: "1"
+              Configuration:
+                BranchName: master
+                RepositoryName: !Sub ${RepoEcsAdditions.Name}
+                PollForSourceChanges: false
+              OutputArtifacts:
+                - Name: SourceStageOutput
+        - Name: Build
+          Actions:
+            - Name: Code
+              ActionTypeId:
+                  Category: Build
+                  Owner: AWS
+                  Provider: CodeBuild
+                  Version: "1"
+              Configuration:
+                ProjectName: !Ref BuildEcsAdditions
+              InputArtifacts:
+                - Name: SourceStageOutput
+      Tags:
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+  
+  SourceEvent:
+    Type: AWS::Events::Rule
+    DependsOn:
+      - PipelineEcsAdditions
+    Properties:
+      Description: >
+        Rule for Amazon CloudWatch Events to detect changes to the source
+        repository and trigger pipeline execution
+      EventPattern:
+        detail:
+          event:
+            - referenceCreated
+            - referenceUpdated
+          referenceName:
+            - master
+          referenceType:
+            - branch
+        detail-type:
+          - CodeCommit Repository State Change
+        resources:
+          - !Sub ${RepoEcsAdditions.Arn}
+        source:
+          - aws.codecommit
+      Name: !Sub ${RepoEcsAdditions.Name}-Pipeline-Trigger
+      State: ENABLED
+      Targets:
+        - Arn: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${PipelineEcsAdditions}
+          Id: ProjectPipelineTarget
+          RoleArn: !GetAtt IAMSourceEventRole.Arn
+  
+  IAMSourceEventRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: IAM role to allow Amazon CloudWatch Events to trigger AWS CodePipeline execution
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Sid: 1
+      Policies:
+        - PolicyName: CloudWatchEventPolicy
+          PolicyDocument:
+            Statement:
+              - Action:
+                  - codepipeline:StartPipelineExecution
+                Effect: Allow
+                Resource:
+                  - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${PipelineEcsAdditions}*
+
+  
+  BuildInstalledArtifacts:
+    Type: "AWS::CodeBuild::Project"
+    Properties:
+      Description: |
+        Build project to install artifacts from upstream distribution
+      Environment: #required
+        Type: LINUX_CONTAINER
+        Image: aws/codebuild/standard:1.0
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: SOURCE_ARTIFACT_URL
+            Value: !Sub s3://${ArtifactBucketName}/${ArtifactBucketPrefix}
+          - Name: TARGET_ARTIFACT_URL
+            Value: !Sub s3://${InstallBucketName}/_gwfcore/${Namespace}/artifacts
+      Source: #required
+        Type: NO_SOURCE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                # codebuild uses VPC endpoints for S3, to avoid cross-region copy
+                # errors, you need to use the current instance as an intermediate stage
+                # see: https://aws.amazon.com/premiumsupport/knowledge-center/s3-troubleshoot-copy-between-buckets/
+                - aws s3 sync ${SOURCE_ARTIFACT_URL} ./artifacts
+                - aws s3 sync ./artifacts ${TARGET_ARTIFACT_URL}
+      Artifacts:
+        Type: NO_ARTIFACTS
+      ServiceRole: !GetAtt IAMCodeBuildRole.Arn
+      Tags:
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+  
+  CodeBuildInvocation:
+    Type: Custom::CodeBuildInvocation
+    Properties:
+      ServiceToken: !GetAtt CodeBuildInvocationFunction.Arn
+      BuildProject: !Ref BuildInstalledArtifacts
+    
+  CodeBuildInvocationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt IAMLambdaExecutionRole.Arn
+      Runtime: python3.7
+      Timeout: 300
+      Code:
+         ZipFile: |
+          from time import sleep
+          import boto3
+          import cfnresponse
+          def handler(event, context):
+              if event['RequestType'] in ("Create", "Update"):
+                  codebuild = boto3.client('codebuild')
+                  build = codebuild.start_build(
+                      projectName=event["ResourceProperties"]["BuildProject"]
+                  )['build']
+                          
+                  id = build['id']
+                  status = build['buildStatus']
+                  while status == 'IN_PROGRESS':
+                      sleep(10)
+                      build = codebuild.batch_get_builds(ids=[id])['builds'][0]
+                      status = build['buildStatus']
+                  
+                  if status != "SUCCEEDED":
+                      cfnresponse.send(event, context, cfnresponse.FAILED, None)
+              
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, None)
+              
+Outputs:
+  EcsAdditionsRepo:
+    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/codesuite/codecommit/repositories/${RepoEcsAdditions.Name}/browse?region=${AWS::Region}
+  EcsAdditionsRepoName:
+    Value: !GetAtt RepoEcsAdditions.Name 
+  EcsAdditionsRepoCloneUrlHttp:
+    Value: !GetAtt RepoEcsAdditions.CloneUrlHttp
+  InstalledArtifactsBucket:
+    Value: !Ref InstallBucketName
+  InstalledArtifactsPrefix:
+    Value: !Sub _gwfcore/${Namespace}/artifacts
+  InstalledArtifactsS3RootUrl:
+    Value: !Sub s3://${InstallBucketName}/_gwfcore/${Namespace}/artifacts
+...

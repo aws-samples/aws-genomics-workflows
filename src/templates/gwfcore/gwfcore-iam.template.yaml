@@ -1,17 +1,22 @@
+---
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  (WWPS-GLS-WF-IAM) Creates IAM roles to use with AWS Batch scalable genomics 
+  (WWPS-GLS-WF-GWFCORE-IAM) Creates IAM roles to use with AWS Batch scalable genomics 
   workflow environment.
 Parameters:
+    Namespace:
+      Type: String
+      Description: Namespace (e.g. project name) to use to label resources
+  
     S3BucketName:
       Type: String
       Description: The name of the S3 bucket which will store the results of genomics analyses.
 Resources:
-  GenomicsEnvBatchJobRole:
+  BatchJobRole:
     Type: AWS::IAM::Role
     Properties:
       Policies:
-        - PolicyName: !Sub GenomicsEnv-S3Bucket-Access-${AWS::Region}
+        - PolicyName: !Sub S3Bucket-Access-${AWS::Region}
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -37,7 +42,7 @@ Resources:
                 - "ecs-tasks.amazonaws.com"
             Action:
               - "sts:AssumeRole"
-  GenomicsEnvBatchInstanceRole:
+  BatchInstanceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -50,7 +55,7 @@ Resources:
             Action:
               - "sts:AssumeRole"
       Policies:
-        - PolicyName: !Sub GenomicsEnv-S3Bucket-Access-${AWS::Region}
+        - PolicyName: !Sub S3Bucket-Access-${AWS::Region}
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -79,28 +84,57 @@ Resources:
                 Action:
                   - "s3:*"
  
-        - PolicyName: !Sub GenomicsEnv-Autoscale-EBS-${AWS::Region}
+        # required for amazon-ebs-autoscale to resize filesystems
+        - PolicyName: !Sub Autoscale-EBS-${AWS::Region}
           PolicyDocument:
             Version: 2012-10-17
             Statement:
               Effect: Allow
               Action:
+                - "ec2:createTags"
                 - "ec2:createVolume"
                 - "ec2:attachVolume"
                 - "ec2:deleteVolume"
                 - "ec2:modifyInstanceAttribute"
                 - "ec2:describeVolumes"
               Resource: "*"
+        
+        # enable retrieving provisioning scripts from codecommit
+        - PolicyName: !Sub CodeCommit-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              Effect: Allow
+              Action:
+                - codecommit:GitPull
+              Resource:
+                - !Sub arn:aws:codecommit:*:${AWS::AccountId}:*-${Namespace}
+        
+        # enable reading SSM parameters by provisioning scripts
+        - PolicyName: !Sub SystemsManager-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter*
+                Resource:
+                  - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/gwfcore/${Namespace}/*
+              - Effect: Allow
+                Action:
+                  - ssm:DescribeParameters
+                Resource: "*"
+                
       ManagedPolicyArns:
       - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
       - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
       - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  GenomicsEnvBatchInstanceProfile:
+  BatchInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Roles:
-        - Ref: GenomicsEnvBatchInstanceRole
-  GenomicsEnvBatchSpotFleetRole:
+        - Ref: BatchInstanceRole
+  BatchSpotFleetRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -114,7 +148,7 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
       - "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole"
-  GenomicsEnvBatchServiceRole:
+  BatchServiceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -128,10 +162,11 @@ Resources:
       - arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole
 Outputs:
   BatchJobRoleArn:
-    Value: !GetAtt GenomicsEnvBatchJobRole.Arn
+    Value: !GetAtt BatchJobRole.Arn
   BatchServiceRoleArn:
-    Value: !GetAtt GenomicsEnvBatchServiceRole.Arn
+    Value: !GetAtt BatchServiceRole.Arn
   BatchSpotFleetRoleArn:
-    Value: !GetAtt GenomicsEnvBatchSpotFleetRole.Arn
+    Value: !GetAtt BatchSpotFleetRole.Arn
   BatchInstanceProfileArn:
-    Value: !GetAtt GenomicsEnvBatchInstanceProfile.Arn
+    Value: !GetAtt BatchInstanceProfile.Arn
+...

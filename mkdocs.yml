@@ -20,6 +20,7 @@ nav:
     - Cromwell:
       - Overview: orchestration/cromwell/cromwell-overview.md
       - Examples: orchestration/cromwell/cromwell-examples.md
+      - Trouble Shooting: orchestration/cromwell/cromwell-trouble-shooting.md
     - Nextflow: 
       - Overview: orchestration/nextflow/nextflow-overview.md
       # - Examples: orchestration/nextflow/nextflow-examples.md

@@ -1,0 +1,126 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  (WWPS-GLS-WF-GWFCORE-LT) Creates an EC2 Launch Template for AWS Batch based
+  genomics workflows
+
+Mappings:
+  TagMap:
+    default:
+      architecture: "genomics-workflows"
+      solution: "default"
+      tags:
+        - Key: "architecture"
+          Value: "genomics-workflows"
+        - Key: "solution"
+          Value: "default"
+
+Parameters:
+  Namespace:
+    Type: String
+    Description: Namespace (e.g. project name) to use to label resources
+  LaunchTemplateNamePrefix:
+    Type: String
+    Default: gwfcore
+    Description: Name of the launch template. This will be made unique using the Stack ID.
+  DockerStorageVolumeSize:
+    Type: Number
+    Default: 100
+    Description: The initial size of the volume Docker will use for image and metadata storage (GB)
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Required"
+        Parameters:
+          - Namespace
+      - Label:
+          default: "Optional"
+        Parameters:
+          - LaunchTemplateNamePrefix
+          - DockerStorageVolumeSize
+
+Conditions:
+  NoNamespace: !Equals [ !Ref Namespace, "" ]
+
+Resources:
+  EC2LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: 
+        Fn::Join: 
+          - "-"
+          - - !Ref LaunchTemplateNamePrefix
+            - Fn::If:
+                - NoNamespace
+                - !Select [2, !Split ["/", !Ref "AWS::StackId" ]]
+                - !Ref Namespace
+        
+      LaunchTemplateData:
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+            - Key: architecture
+              Value: !FindInMap ["TagMap", "default", "architecture"]
+        BlockDeviceMappings:
+          - Ebs:
+              DeleteOnTermination: True
+              VolumeSize: 50
+              VolumeType: gp2
+            DeviceName: /dev/xvda
+          - Ebs:
+              Encrypted: True
+              DeleteOnTermination: True
+              VolumeSize: 22
+              VolumeType: gp2
+            DeviceName: /dev/xvdcz
+          - Ebs:
+              Encrypted: True
+              DeleteOnTermination: True
+              VolumeSize: !Ref DockerStorageVolumeSize
+              VolumeType: gp2
+            DeviceName: /dev/xvdba
+        UserData:
+          Fn::Base64:
+            Fn::Sub: |
+                MIME-Version: 1.0
+                Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+
+                --==BOUNDARY==
+                Content-Type: text/cloud-config; charset="us-ascii"
+
+                packages:
+                - jq
+                - btrfs-progs
+                - sed
+                - git
+                - amazon-ssm-agent
+                - unzip
+
+                runcmd:
+                # install aws-cli v2 and copy the static binary in an easy to find location for bind-mounts into containers
+                - curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+                - unzip -q /tmp/awscliv2.zip -d /tmp
+                - /tmp/aws/install -b /usr/bin
+                - mkdir -p /opt/aws-cli/bin
+                - cp -a $(dirname $(find /usr/local/aws-cli -name 'aws' -type f))/. /opt/aws-cli/bin/
+
+                # set environment variables for provisioning
+                - export GWFCORE_NAMESPACE=${Namespace}
+                - export INSTALLED_ARTIFACTS_S3_ROOT_URL=$(aws ssm get-parameter --name /gwfcore/${Namespace}/installed-artifacts/s3-root-url --query 'Parameter.Value' --output text)
+
+                - cd /opt
+                - aws s3 sync $INSTALLED_ARTIFACTS_S3_ROOT_URL/ecs-additions ./ecs-additions
+                - chmod a+x /opt/ecs-additions/provision.sh
+                - /opt/ecs-additions/provision.sh
+
+                --==BOUNDARY==--
+
+Outputs:
+  LaunchTemplateId:
+    Description: >-
+      EC2 Launch Template ID to use when creating AWS Batch compute environments
+      for genomics workflows
+    Value: !Ref EC2LaunchTemplate
+...

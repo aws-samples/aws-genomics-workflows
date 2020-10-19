@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  (WWPS-GLS-WF-SFN-WORKFLOW) Creates container images, AWS Batch Job Definitions, 
+  (WWPS-GLS-WF-ORCHESTRATOR-SFN) Creates container images, AWS Batch Job Definitions, 
   and an AWS Step Functions State Machine for a genomics workflow.
 
 Mappings:
@@ -15,42 +15,73 @@ Mappings:
         - Key: "solution"
           Value: "step-functions"
 
+Metadata:
+  AWS::Cloudformation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Required"
+        Parameters:
+          - Namespace
+          - GWFCoreNamespace
+      - Label:
+          default: "Distribution Configuration"
+        Parameters:
+          - TemplateRootUrl
+
 Parameters:
-  S3BucketName:
-    Description: >-
-      A S3 bucket name for storing analysis results.
-      The bucket name must respect the S3 bucket naming conventions 
-      (can contain lowercase letters, numbers, periods and hyphens).
-      If left blank a unique bucket name will be generated.
+  Namespace:
     Type: String
-    AllowedPattern: "((?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)|(^.{0}$))"
-    ConstraintDescription: "Must respect S3 bucket naming conventions"
+    Description: Namespace (e.g. project name) to use to label resources.
   
-  BatchJobQueue:
-    Description: Name or ARN of the AWS Batch Job Queue the workflow will use by default
+  GWFCoreNamespace:
     Type: String
+    Description: >-
+      Namespace of the GWFCore deployment to use.
   
   TemplateRootUrl:
     Type: String
     Description: >-
       Root URL for where nested templates are stored
-    Default: https://s3.amazonaws.com/aws-genomics-workflows/templates
+    Default: https://aws-genomics-workflows.s3.amazonaws.com/templates  # dist: pin_version
     ConstraintDescription: >-
-      Must be a valid S3 URL
-    AllowedPattern: "https://s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
+      Must be a valid S3 HTTP URL
+    AllowedPattern: "https://[a-z0-9-./]{0,}s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
+
+Conditions:
+  NoNamespace: !Equals [ !Ref Namespace, "" ]
 
 Resources:
+  ContainerSource:
+    Type: "AWS::CodeCommit::Repository"
+    Properties:
+      RepositoryName: !Sub containers-${AWS::StackName}
+      RepositoryDescription: >-
+        Source code for workflow tooling containers
+      Code:
+        S3:
+          Bucket: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/bucket:1}}'
+          Key: !Sub 
+            - ${Prefix}/containers.zip
+            - Prefix: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/prefix:1}}'
+      Tags:
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+  
   ContainerBuildBwa:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/_common/container-build.template.yaml
       Parameters:
-        ContainerName: bwa
-        GitRepoType: GITHUB
-        GitCloneUrlHttp: https://github.com/aws-samples/aws-genomics-workflows.git
-        ProjectPath: ./src/containers/bwa
-        ProjectBuildSpecFile: ./src/containers/buildspec-workflow-tool.yml
+        ImageName: bwa
+        ImageTag: "0.7.17"
+        GitRepoType: CODECOMMIT
+        GitCloneUrlHttp: !GetAtt ContainerSource.CloneUrlHttp
+        ProjectPath: ./bwa
+        ProjectBuildSpecFile: ./buildspec-workflow-tool.yml
         CreateBatchJobDefinition: "Yes"
+        BatchJobDefinitionName: !Sub "bwa-${AWS::StackName}"
+        ArtifactBucketName: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/bucket:1}}'
+        ArtifactBucketPrefix: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/prefix:1}}'
       Tags: !FindInMap ["TagMap", "default", "tags"]
   
   ContainerBuildSamtools:
@@ -58,12 +89,16 @@ Resources:
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/_common/container-build.template.yaml
       Parameters:
-        ContainerName: samtools
-        GitRepoType: GITHUB
-        GitCloneUrlHttp: https://github.com/aws-samples/aws-genomics-workflows.git
-        ProjectPath: ./src/containers/samtools
-        ProjectBuildSpecFile: ./src/containers/buildspec-workflow-tool.yml
+        ImageName: samtools
+        ImageTag: "1.9"
+        GitRepoType: CODECOMMIT
+        GitCloneUrlHttp: !GetAtt ContainerSource.CloneUrlHttp
+        ProjectPath: ./samtools
+        ProjectBuildSpecFile: ./buildspec-workflow-tool.yml
         CreateBatchJobDefinition: "Yes"
+        BatchJobDefinitionName: !Sub "samtools-${AWS::StackName}"
+        ArtifactBucketName: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/bucket:1}}'
+        ArtifactBucketPrefix: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/prefix:1}}'
       Tags: !FindInMap ["TagMap", "default", "tags"]
   
   ContainerBuildBcftools:
@@ -71,12 +106,16 @@ Resources:
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/_common/container-build.template.yaml
       Parameters:
-        ContainerName: bcftools
-        GitRepoType: GITHUB
-        GitCloneUrlHttp: https://github.com/aws-samples/aws-genomics-workflows.git
-        ProjectPath: ./src/containers/bcftools
-        ProjectBuildSpecFile: ./src/containers/buildspec-workflow-tool.yml
+        ImageName: bcftools
+        ImageTag: "1.9"
+        GitRepoType: CODECOMMIT
+        GitCloneUrlHttp: !GetAtt ContainerSource.CloneUrlHttp
+        ProjectPath: ./bcftools
+        ProjectBuildSpecFile: ./buildspec-workflow-tool.yml
         CreateBatchJobDefinition: "Yes"
+        BatchJobDefinitionName: !Sub "bcftools-${AWS::StackName}"
+        ArtifactBucketName: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/bucket:1}}'
+        ArtifactBucketPrefix: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/prefix:1}}'
       Tags: !FindInMap ["TagMap", "default", "tags"]
   
   IAMStepFunctionsExecutionRole:
@@ -128,11 +167,16 @@ Resources:
   StateMachine:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub ${TemplateRootUrl}/step-functions/sfn-workflow-example-mapping.template.yaml
+      TemplateURL: !Sub ${TemplateRootUrl}/step-functions/sfn-resources-state-machine.template.yaml
       Parameters:
-        S3BucketName: !Ref S3BucketName
+        Namespace:
+          Fn::If:
+              - NoNamespace
+              - !Sub ${AWS::StackName}
+              - !Ref Namespace
+        S3BucketName: !Sub "{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
         IAMStepFunctionsExecutionRole: !GetAtt IAMStepFunctionsExecutionRole.Arn
-        BatchJobQueue: !Ref BatchJobQueue
+        BatchJobQueue: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/job-queue/default:1}}'
         BatchJobDefinitionBwa: !GetAtt ContainerBuildBwa.Outputs.JobDefinition
         BatchJobDefinitionSamtools: !GetAtt ContainerBuildSamtools.Outputs.JobDefinition
         BatchJobDefinitionBcftools: !GetAtt ContainerBuildBcftools.Outputs.JobDefinition
@@ -143,8 +187,6 @@ Outputs:
     Value: !GetAtt StateMachine.Outputs.StateMachine
     Description: >
       AWS Step Functions State Machine that demonstrates a simple genomics workflow
-    Export:
-      Name: !Sub ${AWS::StackName}-StateMachine
   
   StateMachineInput:
     Value: !GetAtt StateMachine.Outputs.StateMachineInput
@@ -154,7 +196,5 @@ Outputs:
   StepFunctionsExecutionRole:
     Value: !GetAtt IAMStepFunctionsExecutionRole.Arn
     Description: IAM role used by AWS Step Functions to execute the state machine
-    Export:
-      Name: !Sub ${AWS::StackName}-StepFunctionsExecutionRole
 
 ...

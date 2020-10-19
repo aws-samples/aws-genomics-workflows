@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  (WWPS-GLS-WF-NEXTFLOW) Creates resources specific to running Nextflow on AWS
+  (WWPS-GLS-WF-ORCHESTRATOR-NEXTFLOW) Creates resources specific to running Nextflow on AWS
 
 
 Mappings:
@@ -22,131 +22,119 @@ Metadata:
       - Label:
           default: "Required"
         Parameters:
-          - S3DataBucketName
-          - S3NextflowBucketName
-          - ExistingBucket
-          - BatchDefaultJobQueue
+          - Namespace
+          - GWFCoreNamespace
       - Label:
           default: "Optional"
         Parameters:
-          - NextflowContainerImage
+          - NextflowVersion
+          - NextflowVersionSpecified
           - S3NextflowPrefix
           - S3LogsDirPrefix
           - S3WorkDirPrefix
+      - Label:
+          default: "Distribution Configuration"
+        Parameters:
+          - TemplateRootUrl
 
 
 Parameters:
-  S3DataBucketName:
+  Namespace:
     Type: String
     Description: >-
-      S3 Bucket used to store input and output data for the workflow.
-      This should bucket should already exist.
-
-  S3NextflowBucketName:
+      Namespace (e.g. project name) to use to label resources.
+  
+  GWFCoreNamespace:
     Type: String
     Description: >-
-      S3 Bucket used to store Nextflow metadata (session cache, logs, and intermediate results)
-
-  ExistingBucket:
-    Type: String
-    Description: >-
-      Does the S3 Bucket for Nextflow metadata already exist?  If not, it will be created.
-    AllowedValues:
-      - Yes
-      - No
-    Default: No
+      Namespace of the GWFCore deployment to use.
 
   S3NextflowPrefix:
     Type: String
     Description: >-
-      (Optional) Parent folder in the Nextflow metadata bucket for metadata folders.
-      Used only if the Nextflow metadata bucket is the same as the Data bucket.
+      (Optional) Parent folder in the GWFCore bucket for metadata folders.
     Default: _nextflow
 
   S3LogsDirPrefix:
     Type: String
     Description: >-
-      (Optional) Folder in the Nextflow metadata bucket (under the {Nextflow Prefix} if needed)
+      (Optional) Folder in the GWFCore bucket under the {Nextflow Prefix}
       for session cache and logs.
     Default: logs
 
   S3WorkDirPrefix:
     Type: String
     Description: >-
-      (Optional) Folder in the Nextflow metadata bucket (under the {Nextflow Prefix} if needed)
+      (Optional) Folder in the GWFCore bucket under the {Nextflow Prefix}
       that contains workflow intermediate results
     Default: runs
 
-  NextflowContainerImage:
+  NextflowVersion:
+    Type: String
+    Default: latest
+    AllowedValues:
+      - latest
+      - specify ...
+    Description: >-
+      Version of Nextflow to use. Select "specify ..." to provide a specific version.
+  
+  NextflowVersionSpecified:
     Type: String
     Description: >-
-      (Optional) Container image for nextflow with custom entrypoint for config and workflow
-      script staging. (Example, "<dockerhub-user>/nextflow:latest").
-      Provide this if you have a specific version of nextflow you want to use, otherwise a
-      container will be built using the latest version.
-
-  BatchDefaultJobQueue:
-    Type: String
-    Description: >-
-      ARN of the Batch Job Queue to use by default for workflow tasks.
-
-  BatchHighPriorityJobQueue:
-    Type: String
-    Description: >-
-      ARN of the Batch Job Queue to use for high priority workflow tasks.
+      Specific version of Nextflow to use. Must match a released version number - e.g. "20.04.1".
+    Default: ""
 
   TemplateRootUrl:
     Type: String
     Description: >-
       Root URL for where nested templates are stored
-    Default: https://s3.amazonaws.com/aws-genomics-workflows/templates
+    Default: https://aws-genomics-workflows.s3.amazonaws.com/templates  # dist: pin_version
     ConstraintDescription: >-
-      Must be a valid S3 URL
-    AllowedPattern: "https://s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
+      Must be a valid S3 HTTP URL
+    AllowedPattern: "https://[a-z0-9-./]{0,}s3(-[a-z0-9]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
 
 Conditions:
-  DataBucketIsNextflowBucket:
+  UseLatestNextflowVersion:
     Fn::Equals:
-      - !Ref S3NextflowBucketName
-      - !Ref S3DataBucketName
-
-  BuildNextflowContainer:
-    Fn::Equals:
-      - !Ref NextflowContainerImage
-      - ""
-
-  NextflowBucketDoesNotExist:
-    Fn::Equals:
-      - !Ref ExistingBucket
-      - No
-
+      - !Ref NextflowVersion
+      - latest
 
 Resources:
-  S3NextflowBucket:
-    Type: AWS::S3::Bucket
-    Condition: NextflowBucketDoesNotExist
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
+  ContainerSource:
+    Type: "AWS::CodeCommit::Repository"
     Properties:
-      BucketName: !Ref S3NextflowBucketName
-      BucketEncryption:
-        ServerSideEncryptionConfiguration:
-          - ServerSideEncryptionByDefault:
-             SSEAlgorithm: AES256
-      Tags: !FindInMap ["TagMap", "default", "tags"]
+      RepositoryName: !Sub containers-${AWS::StackName}
+      RepositoryDescription: >-
+        Source code for workflow tooling containers
+      Code:
+        S3:
+          Bucket: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/bucket:1}}'
+          Key: !Sub 
+            - ${Prefix}/containers.zip
+            - Prefix: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/prefix:1}}'
+      Tags:
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+
 
   ContainerBuildNextflow:
     Type: AWS::CloudFormation::Stack
-    Condition: BuildNextflowContainer
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/_common/container-build.template.yaml
       Parameters:
-        ContainerName: nextflow
-        GitRepoType: GITHUB
-        GitCloneUrlHttp: https://github.com/aws-samples/aws-genomics-workflows.git
-        ProjectPath: ./src/containers/nextflow
-        ProjectBuildSpecFile: ./src/containers/buildspec-nextflow.yml
+        ImageName: nextflow
+        ImageTag:
+          Fn::If:
+            - UseLatestNextflowVersion
+            - !Ref NextflowVersion
+            - !Ref NextflowVersionSpecified
+        GitRepoType: CODECOMMIT
+        GitCloneUrlHttp: !GetAtt ContainerSource.CloneUrlHttp
+        ProjectPath: ./nextflow
+        ProjectBuildSpecFile: ./buildspec-nextflow.yml
         CreateBatchJobDefinition: "No"
+        ArtifactBucketName: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/bucket:1}}'
+        ArtifactBucketPrefix: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/installed-artifacts/prefix:1}}'
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
   IAMNextflowJobRole:
@@ -170,8 +158,8 @@ Resources:
               - Sid: "BatchWriteAccessAllowJobSubmission"
                 Effect: Allow
                 Resource:
-                  - !Ref BatchDefaultJobQueue
-                  - !Ref BatchHighPriorityJobQueue
+                  - !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/job-queue/default:1}}'
+                  - !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/job-queue/priority:1}}'
                   - arn:aws:batch:*:*:job-definition/nf-*:*
                 Action:
                   - "batch:*Job"
@@ -192,18 +180,26 @@ Resources:
             Statement:
               - Effect: Allow
                 Resource:
-                  Fn::If:
-                    - DataBucketIsNextflowBucket
-
-                    - - !Join ["", ["arn:aws:s3:::", !Ref S3DataBucketName]]
-                      - !Join ["", ["arn:aws:s3:::", !Ref S3DataBucketName, "/*"]]
-
-                    - - !Join ["", ["arn:aws:s3:::", !Ref S3DataBucketName]]
-                      - !Join ["", ["arn:aws:s3:::", !Ref S3DataBucketName, "/*"]]
-                      - !Join ["", ["arn:aws:s3:::", !Ref S3NextflowBucketName]]
-                      - !Join ["", ["arn:aws:s3:::", !Ref S3NextflowBucketName, "/*"]]
+                  - !Join ["", ["arn:aws:s3:::", !Sub "{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"]]
+                  - !Join ["", ["arn:aws:s3:::", !Sub "{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}", "/*"]]
                 Action:
                   - "s3:*"
+        - PolicyName: !Sub Nextflow-Instance-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              # these permissions allow Nextflow to collect instance metrics for running jobs
+              # this is used for cost estimation when using Nextflow Tower
+              - Effect: Allow
+                Action:
+                  - ecs:DescribeTasks
+                  - ec2:DescribeInstances
+                  - ec2:DescribeInstanceTypes
+                  - ec2:DescribeInstanceAttribute
+                  - ecs:DescribeContainerInstances
+                  - ec2:DescribeInstanceStatus
+                Resource: "*"
+
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -224,45 +220,33 @@ Resources:
         Memory: 1024
         JobRoleArn: !GetAtt IAMNextflowJobRole.Arn
         Vcpus: 2
-        Image:
-          Fn::If:
-            - BuildNextflowContainer
-            - !Sub ${ContainerBuildNextflow.Outputs.ContainerImage}
-            - !Ref NextflowContainerImage
+        Image: !Sub ${ContainerBuildNextflow.Outputs.ContainerImage}
         Environment:
           - Name: "NF_JOB_QUEUE"
-            Value: !Ref BatchDefaultJobQueue
+            Value: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/job-queue/default:1}}'
           - Name: "NF_LOGSDIR"
             Value:
               Fn::Join:
                 - "/"
-                - - Fn::If:
-                      - DataBucketIsNextflowBucket
-                      - !Join ["/", [!Sub "s3://${S3NextflowBucketName}", !Ref S3NextflowPrefix]]
-                      - !Sub "s3://${S3NextflowBucketName}"
+                - - !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
+                  - !Ref S3NextflowPrefix
                   - !Ref S3LogsDirPrefix
           - Name: "NF_WORKDIR"
             Value:
               Fn::Join:
                 - "/"
-                - - Fn::If:
-                      - DataBucketIsNextflowBucket
-                      - !Join ["/", [!Sub "s3://${S3NextflowBucketName}", !Ref S3NextflowPrefix]]
-                      - !Sub "s3://${S3NextflowBucketName}"
+                - - !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
+                  - !Ref S3NextflowPrefix
                   - !Ref S3WorkDirPrefix
 
-      JobDefinitionName: nextflow
+      JobDefinitionName: !Sub nextflow-${Namespace}
 
 
 Outputs:
   NextflowBucket:
     Description: >-
       S3 Bucket used to store Nextflow metadata (session cache, logs, and intermediate results)
-    Value:
-      Fn::If:
-        - NextflowBucketDoesNotExist
-        - !Ref S3NextflowBucket
-        - !Ref S3NextflowBucketName
+    Value: !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
 
   LogsDir:
     Description: >-
@@ -270,10 +254,8 @@ Outputs:
     Value:
       Fn::Join:
         - "/"
-        - - Fn::If:
-              - DataBucketIsNextflowBucket
-              - !Join ["/", [!Sub "s3://${S3NextflowBucketName}", !Ref S3NextflowPrefix]]
-              - !Sub "s3://${S3NextflowBucketName}"
+        - - !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
+          - !Ref S3NextflowPrefix
           - !Ref S3LogsDirPrefix
 
   WorkDir:
@@ -282,20 +264,14 @@ Outputs:
     Value:
       Fn::Join:
         - "/"
-        - - Fn::If:
-              - DataBucketIsNextflowBucket
-              - !Join ["/", [!Sub "s3://${S3NextflowBucketName}", !Ref S3NextflowPrefix]]
-              - !Sub "s3://${S3NextflowBucketName}"
+        - - !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
+          - !Ref S3NextflowPrefix
           - !Ref S3WorkDirPrefix
 
   NextflowContainerImage:
     Description: >-
       The nextflow container used.
-    Value:
-      Fn::If:
-        - BuildNextflowContainer
-        - !Sub ${ContainerBuildNextflow.Outputs.ContainerImage}
-        - !Ref NextflowContainerImage
+    Value: !Sub ${ContainerBuildNextflow.Outputs.ContainerImage}
 
   NextflowJobDefinition:
     Description: >-

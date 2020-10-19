@@ -1,4 +1,4 @@
-# Permissions
+# Core: Permissions
 
 IAM is used to control access to your AWS resources.  This includes access by users and groups in your account, as well as access by AWS services such as AWS Batch operating on your behalf.
 
@@ -47,7 +47,7 @@ If needed, the policy can be made more granular - i.e. only allowing access to a
 
 * **EBS Autoscale Policy (required)**:
 
-This policy allows job instance to attach EBS volumes to create extra scratch space for genomic data.
+This policy allows job instance to attach EBS volumes to create extra scratch space for genomic data using [Amazon EBS Autoscale](https://github.com/awslabs/amazon-ebs-autoscale).
 
 ```json
 {
@@ -58,9 +58,14 @@ This policy allows job instance to attach EBS volumes to create extra scratch sp
             {
                 "Effect": "Allow",
                 "Action": [
-                    "ec2:*Volume",
-                    "ec2:describeVolumes",
-                    "ec2:modifyInstanceAttribute"
+                    "ec2:AttachVolume",
+                    "ec2:DescribeVolumeStatus",
+                    "ec2:DescribeVolumes",
+                    "ec2:ModifyInstanceAttribute",
+                    "ec2:DescribeVolumeAttribute",
+                    "ec2:CreateVolume",
+                    "ec2:DeleteVolume",
+                    "ec2:CreateTags"
                 ],
                 "Resource": "*"
             }
@@ -88,7 +93,7 @@ IAM roles that your job execution environment in AWS Batch will use include:
 * **Batch SpotFleet Role (depends)**:
     
     This role is needed if you intend to launch spot instances from AWS Batch.
-    If you create a managed compute environment that uses Amazon EC2 Spot Fleet Instances, you must create a role that grants the Spot Fleet permission to set a cost threshold, launch, tag, and terminate instances on your behalf.
+    If you create a managed compute environment that uses Amazon EC2 Spot Fleet Instances with a `BEST_FIT` allocation strategy, you must create a role that grants the Spot Fleet permission to set a cost threshold, launch, tag, and terminate instances on your behalf.
     [(Learn More)](https://docs.aws.amazon.com/batch/latest/userguide/spot_fleet_IAM_role.html)
 
 * **Batch Job Role (optional)**:
@@ -103,10 +108,13 @@ The CloudFormation template below creates all of the above roles and policies.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("Amazon IAM Roles", "GWFCore-IAM", "aws-genomics-iam.template.yaml", "Create the necessary IAM Roles. This is useful to hand to someone with the right permissions to create these on your behalf. _You will need to provide a S3 bucket name_.") }}
+{{ cfn_stack_row("Amazon IAM Roles", "GWFCore-IAM", "gwfcore/gwfcore-iam.template.yaml", "Create the necessary IAM Roles. This is useful to hand to someone with the right permissions to create these on your behalf. _You will need to provide a S3 bucket name_.", enable_cfn_button=False) }}
+
+!!! info
+    The launch button has been disabled above since this template is part of a set of nested templates. It is not recommended to launch it independently of its intended parent stack.
 
 !!! danger "Administrative Access Required"
-    In order run this CloudFormation temlate you you will need privileged access to your account either through an IAM user, STS assumed role, or CloudFormation Stack role.
+    In order run this CloudFormation template you you will need privileged access to your account either through an IAM user, STS assumed role, or CloudFormation Stack role.
 
 ### Manually via the AWS Console
 

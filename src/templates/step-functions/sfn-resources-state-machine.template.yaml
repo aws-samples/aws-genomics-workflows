@@ -17,6 +17,10 @@ Mappings:
           Value: "step-functions"
 
 Parameters:
+  Namespace:
+    Type: String
+    Description: Namespace (e.g. project name) to use to label resources.
+  
   S3BucketName:
     Description: S3 URI (e.g. s3://bucket/prefix) you are using for workflow inputs and outputs
     Type: String
@@ -49,11 +53,16 @@ Resources:
   SfnStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: !Sub
-        - sfn-example-mapping-genomics-workflow-${GUID}
-        - GUID: !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
+      StateMachineName: !Sub example-genomics-workflow-${Namespace}
       RoleArn: !Ref IAMStepFunctionsExecutionRole
       Tags: !FindInMap ["TagMap", "default", "tags"]
+
+      # In the state machine below each Task state `ResultPath` is set to `$.result`.
+      # This will write the results returned from each task to this member of the Task
+      # state's corresponding input. Since this is the same for all tasks, each task overwrites
+      # the last task's result. The full result history is stored in the execution 
+      # event history. Doing this keeps the overall payload for each task state 
+      # within limits. You can reduce this further by setting `ResultPath` to `null`
       DefinitionString: !Sub |-
         {
             "Comment": "Simple Genomics Workflow with mapping",
@@ -79,7 +88,7 @@ Resources:
                 "BwaMem": {
                     "Type": "Task",
                     "InputPath": "$",
-                    "ResultPath": "$.results.bwa.mem",
+                    "ResultPath": "$.result",
                     "Resource": "arn:aws:states:::batch:submitJob.sync",
                     "Parameters": {
                         "JobName": "bwa-mem",
@@ -109,7 +118,7 @@ Resources:
                 "SamtoolsSort": {
                     "Type": "Task",
                     "InputPath": "$",
-                    "ResultPath": "$.results.samtools.sort",
+                    "ResultPath": "$.result",
                     "Resource": "arn:aws:states:::batch:submitJob.sync",
                     "Parameters": {
                         "JobName": "samtools-sort",
@@ -137,7 +146,7 @@ Resources:
                 "SamtoolsIndex": {
                     "Type": "Task",
                     "InputPath": "$",
-                    "ResultPath": "$.results.samtools.index",
+                    "ResultPath": "$.result",
                     "Resource": "arn:aws:states:::batch:submitJob.sync",
                     "Parameters": {
                         "JobName": "samtools-index",
@@ -167,7 +176,7 @@ Resources:
                     "InputPath": "$",
                     "ItemsPath": "$.params.chromosomes",
                     "MaxConcurrency": 23,
-                    "ResultPath": "$.results.variant_calls",
+                    "ResultPath": "$.result",
                     "Parameters": {
                         "workflow.$": "$.workflow",
                         "params.$": "$.params",
@@ -180,7 +189,7 @@ Resources:
                             "BcftoolsMPileup": {
                                 "Type": "Task",
                                 "InputPath": "$",
-                                "ResultPath": "$.result.bcftools.mpileup",
+                                "ResultPath": "$.result",
                                 "Resource": "arn:aws:states:::batch:submitJob.sync",
                                 "Parameters": {
                                     "JobName": "bcftools-mpileup",
@@ -210,7 +219,7 @@ Resources:
                             "BcftoolsCall": {
                                 "Type": "Task",
                                 "InputPath": "$",
-                                "ResultPath": "$.result.bcftools.call",
+                                "ResultPath": "$.result",
                                 "Resource": "arn:aws:states:::batch:submitJob.sync",
                                 "Parameters": {
                                     "JobName": "bcftools-call",
@@ -259,7 +268,7 @@ Outputs:
                     "SAMPLE_ID": "NIST7035",
                     "SOURCE_DATA_PREFIX": "s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq",
                     "JOB_OUTPUT_PREFIX": "s3://${S3BucketName}",
-                    "JOB_AWS_CLI_PATH": "/opt/miniconda/bin"
+                    "JOB_AWS_CLI_PATH": "/opt/aws-cli/bin"
                 },
                 "chromosomes": [
                   "chr19",

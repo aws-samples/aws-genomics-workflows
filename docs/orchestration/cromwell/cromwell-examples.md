@@ -7,7 +7,7 @@ The `curl` commands assume that you have access to a Cromwell server via `localh
 
 This is a single file workflow.  It simply echos "Hello AWS!" to `stdout` and exits.
 
-**Workflow Definition**
+### Workflow Definition
 
 `simple-hello.wdl`
 
@@ -28,7 +28,7 @@ workflow printHelloAndGoodbye {
 
 ```
 
-**Running the workflow**
+### Running the workflow
 
 To submit this workflow via `curl` use the following command:
 
@@ -54,12 +54,35 @@ If the workflow completes successfully, the server will log the following:
 2018-09-21 04:07:42,931 cromwell-system-akka.dispatchers.engine-dispatcher-25 INFO  - WorkflowManagerActor WorkflowActor-7eefeeed-157e-4307-9267-9b4d716874e5 is in a terminal state: WorkflowSucceededState
 ```
 
+### Call Caching
+
+If you submit the same job again Cromwell will find in the metadata database
+that the previous call to the `echoHello` task was completed successfully
+(a cache hit). Rather than submitting the job to AWS Batch the server will simply
+copy the previous result
+
+You can disable call caching on a single workflow by providing a JSON options file:
+```JSON
+{
+    "write_to_cache": false,
+    "read_from_cache": false
+}
+```
+This file may be submitted along with the workflow:
+
+```bash
+curl -X POST "http://localhost:8000/api/workflows/v1" \
+     -H "accept: application/json" \
+     -F "workflowSource=@workflow.wdl" \
+     -F "workflowOptions=@options.json"
+```
+
 ## Hello World with inputs
 
 This workflow is virtually the same as the single file workflow above, but
 uses an input file to define parameters in the workflow.
 
-**Workflow Definition**
+### Workflow Definition
 
 `hello-aws.wdl`
 
@@ -86,7 +109,7 @@ workflow wf_hello {
 }
 ```
 
-**Inputs**
+### Inputs
 
 `hello-aws.json`
 
@@ -96,7 +119,7 @@ workflow wf_hello {
 }
 ```
 
-**Running the workflow**
+### Running the workflow
 
 Submit this workflow using:
 
@@ -117,7 +140,7 @@ First, create some data:
 $ curl "https://baconipsum.com/api/?type=all-meat&paras=1&format=text" > meats.txt
 ```
 
-and upload it to your S3 bucket:
+and upload it to an S3 bucket accessible using the Cromwell server's IAM policy:
 
 
 ```bash
@@ -126,7 +149,7 @@ $ aws s3 cp meats.txt s3://<your-bucket-name>/
 
 Create the following `wdl` and input `json` files.
 
-**Workflow Definition**
+### Workflow Definition
 
 `s3inputs.wdl`
 
@@ -156,7 +179,7 @@ workflow ReadFile {
 }
 ```
 
-**Inputs**
+### Inputs
 
 `s3inputs.json`
 
@@ -166,7 +189,7 @@ workflow ReadFile {
 }
 ```
 
-**Running the workflow**
+### Running the workflow
 
 Submit the workflow via `curl`:
 
@@ -189,13 +212,13 @@ If successful the server should log the following:
 
 ## Real-world example: HaplotypeCaller
 
-This example demonstrates how to use Cromwell with the AWS backend to run GATK4 
+This example demonstrates how to use Cromwell with the AWS backend to run GATK4
 HaplotypeCaller against public data in S3.  The HaplotypeCaller tool is one of the
 primary steps in GATK best practices pipeline.
 
 The source for these files can be found in [Cromwell's test suite on GitHub](https://github.com/broadinstitute/cromwell/tree/develop/centaur/src/main/resources/integrationTestCases/germline/haplotype-caller-workflow).
 
-**Worflow Definition**
+### Worflow Definition
 
 `HaplotypeCaller.aws.wdl`
 
@@ -322,7 +345,6 @@ task HaplotypeCaller {
     docker: docker_image
     memory: mem_size
     cpu: 1
-    disks: "local-disk"
   }
 
   output {
@@ -353,8 +375,7 @@ task MergeGVCFs {
     docker: docker_image
     memory: mem_size
     cpu: 1
-    disks: "local-disk"
-}
+  }
 
   output {
     File output_vcf = "${vcf_name}"
@@ -363,7 +384,7 @@ task MergeGVCFs {
 }
 ```
 
-**Inputs**
+### Inputs
 
 The inputs for this workflow reference [public data on S3](https://registry.opendata.aws/gatk-test-data/) that is hosted by AWS as part of the [AWS Public Dataset Program](https://aws.amazon.com/opendata/).
 
@@ -400,7 +421,7 @@ The inputs for this workflow reference [public data on S3](https://registry.open
 }
 ```
 
-**Running the workflow**
+### Running the workflow
 
 Submit the workflow via `curl`:
 

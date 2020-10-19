@@ -1,4 +1,5 @@
-FROM bcftools:latest
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}:latest
 
 RUN apt-get update
 RUN apt-get install -y gettext-base

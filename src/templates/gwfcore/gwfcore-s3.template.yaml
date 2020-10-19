@@ -1,6 +1,7 @@
+---
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  (WWPS-GLS-WF-S3) A S3 bucket for storing results from genomics analysis
+  (WWPS-GLS-WF-GWFCORE-S3) A S3 bucket for storing results from genomics analysis
 
 Mappings:
   TagMap:
@@ -14,6 +15,10 @@ Mappings:
           Value: "default"
 
 Parameters:
+  Namespace:
+    Type: String
+    Description: Namespace (e.g. project name) to use to label resources
+  
   S3BucketName:
     Type: String
     Description: >-
@@ -42,7 +47,7 @@ Conditions:
       - ""
 
 Resources:
-  GenomicsEnvS3Bucket:
+  S3Bucket:
     Type: AWS::S3::Bucket
     Condition: BucketDoesNotExist
     DeletionPolicy: Retain
@@ -53,8 +58,8 @@ Resources:
           - GenerateBucketName
           - Fn::Join: 
             - "-"
-            - - "genomics-workflows"
-              - !Select [ 2, !Split [ "/", !Ref "AWS::StackId" ]]
+            - - "gwfcore"
+              - !Ref Namespace
           - !Ref S3BucketName
       BucketEncryption:
         ServerSideEncryptionConfiguration:
@@ -69,11 +74,12 @@ Outputs:
     Value:
       Fn::If:
         - BucketDoesNotExist
-        - !Ref GenomicsEnvS3Bucket
+        - !Ref S3Bucket
         - !Ref S3BucketName
   BucketArn:
     Value:
       Fn::If:
         - BucketDoesNotExist
-        - !GetAtt GenomicsEnvS3Bucket.Arn
+        - !GetAtt S3Bucket.Arn
         - !Join [":::", ["arn:aws:s3", !Ref S3BucketName]]
+...
