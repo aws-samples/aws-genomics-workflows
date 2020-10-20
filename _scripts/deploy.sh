@@ -46,7 +46,7 @@ function s3_uri() {
 
 function s3_sync() {
     local source=$1
-    local destination$2
+    local destination=$2
 
     echo "syncing ..."
     echo "   from: $source"
