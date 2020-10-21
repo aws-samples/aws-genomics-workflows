@@ -27,14 +27,14 @@ def declare_variables(variables, macro):
             cfn_url = template
         else:
             s3['object'] = "/".join(
-                filter(None, [s3.get('prefix'), 'templates', template])
+                filter(None, [s3.get('prefix'), 'latest', 'templates', template])
             )
 
             cfn_url = "".join([
                 "https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=",
                 name,
                 "&templateURL=",
-                "https://s3.amazonaws.com/{bucket}/{object}".format(**s3),
+                "https://{bucket}.s3.amazonaws.com/{object}".format(**s3),
             ])
 
         img_src = "/" + "/".join(
