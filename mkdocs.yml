@@ -24,6 +24,8 @@ nav:
     - Nextflow: 
       - Overview: orchestration/nextflow/nextflow-overview.md
       # - Examples: orchestration/nextflow/nextflow-examples.md
+      - Trouble Shooting: orchestration/nextflow/nextflow-trouble-shooting.md
+    - Cost Effective Workflows: orchestration/cost-effective-workflows/cost-effective-workflows.md
 
 extra_css: [extra.css]
 theme: 
