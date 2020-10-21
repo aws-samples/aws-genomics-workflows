@@ -6,13 +6,50 @@ The [AWS Step Functions](https://aws.amazon.com/step-functions/) service allows 
 
 In the context of genomics workflows, the combination of AWS Step Functions with Batch and Lambda constitutes a robust, scalable, and serverless task orchestration solution.
 
-## Prerequisites
+## Requirements
 
 To get started using AWS Step Functions for genomics workflows you'll need the following setup in your AWS account:
 
-* The core set of resources (S3 Bucket, IAM Roles, AWS Batch) described in the [Getting Started](../../../core-env/introduction/) section.
+* A VPC with at least 2 subnets (preferrably ones that are **private**)
+* The Genomics Workflow [Core Environment](../../core-env/introduction.md)
+* Containerized tools for your workflow steps like BWA-MEM, Samtools, BCFtools custom entrypoint scripts that uses AWS Batch supplied environment variables for configuration and data handling
+* A Batch Job Definitions for your tools
+* An IAM Role for AWS Step Functions that allows it to submit AWS Batch jobs
 
-## AWS Step Functions Execution Role
+
+The following will help you deploy these components
+
+### VPC
+
+If you are handling sensitive data in your genomics pipelines, we recommend using at least 2 **private** subnets for AWS Batch compute jobs. EC2 instances launched into **private** subnets do not have public IP addresses, and therefore cannot be directly accessed from the public internet. They can still retain internet access from within the VPC - e.g. to pull source code, retrive public datasets, or install required softwre - if networking is configured appropriately. If the target VPC you want to deploy into already has this, you can skip ahead. If not, you can use the CloudFormation template below, which uses the [AWS VPC Quickstart](https://aws.amazon.com/quickstart/architecture/vpc/), to create one meeting these requirements.
+
+| Name | Description | Source | Launch Stack |
+| -- | -- | :--: | :--: |
+{{ cfn_stack_row("VPC (Optional)", "GenomicsVPC", "https://aws-quickstart.s3.amazonaws.com/quickstart-aws-vpc/templates/aws-vpc.template", "Creates a new Virtual Private Cloud to use for your genomics workflow resources.") }}
+
+### Genomics Workflow Core
+
+To launch the Genomics Workflow Core in your AWS account, use the CloudFormation template below.
+
+| Name | Description | Source | Launch Stack |
+| -- | -- | :--: | :--: |
+{{ cfn_stack_row("Genomics Workflow Core", "GWFCore", "gwfcore/gwfcore-root.template.yaml", "Create EC2 Launch Templates, AWS Batch Job Queues and Compute Environments, a secure Amazon S3 bucket, and IAM policies and roles within an **existing** VPC. _NOTE: You must provide VPC ID, and subnet IDs_.") }}
+
+The core is agnostic of the workflow orchestrator you intended to use, and can be installed multiple times in your account if needed (e.g. for use by different projects). Each installation uses a `Namespace` value to group resources accordingly. By default, the `Namespace` is set to the stack name, which must be unique within an AWS region.
+
+See the [Core Environment](../../core-env/introduction.md) For more details on the core's architecture.
+
+### Step Functions Resources
+
+The the following CloudFormation template will create an AWS Step Functions State Machine that defines an example variant calling workflow using BWA-MEM, Samtools, and BCFtools; container images and AWS Batch Job Definitions for the tooling; and an IAM Role that allows AWS Step Functions to call AWS Batch during State Machine executions:
+
+| Name | Description | Source | Launch Stack |
+| -- | -- | :--: | -- |
+{{ cfn_stack_row("AWS Step Functions Resources", "SfnResources", "step-functions/sfn-resources.template.yaml", "Create a Step Functions State Machine, Batch Job Definitions, and container images to run an example genomics workflow") }}
+
+## Deployment Details
+
+### AWS Step Functions Execution Role
 
 An AWS Step Functions Execution role is an IAM role that allows Step Functions to execute other AWS services via the state machine.
 
@@ -79,11 +116,11 @@ For more complex workflows that use nested workflows or require more complex inp
 !!! note
     All `Resource` values in the policy statements above can be scoped to be more specific if needed.
 
-## Step Functions State Machine
+### Step Functions State Machines
 
 Workflows in AWS Step Functions are built using [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) (ASL), a declarative, JSON-based, structured language used to define a "state-machine".  An AWS Step Functions State-Machine is a collection of states that can do work (Task states), determine which states to transition to next (Choice states), stop an execution with an error (Fail states), and so on.
 
-### Building workflows with AWS Step Functions
+#### Building workflows with AWS Step Functions
 
 The overall structure of a state-machine looks like the following:
 
@@ -136,7 +173,7 @@ ASL supports several task types and simple structures that can be combined to fo
 More detailed coverage of ASL state types and structures is provided in the 
 Step Functions [ASL documentation](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html).
 
-### Batch Job Definitions
+#### Batch Job Definitions
 
 [AWS Batch Job Definitions](https://docs.aws.amazon.com/batch/latest/userguide/job_definitions.html) are used to define compute resource requirements and parameter defaults for an AWS Batch Job.  These are then referenced in state machine `Task` states by their respective ARNs.
 
@@ -223,7 +260,7 @@ There are three key parts of the above definition to take note of.
     Together, **volumes** and **mountPoints** define what you would provide as using a `-v hostpath:containerpath` option to a `docker run` command.  These can be used to map host directories with resources (e.g. data or tools) used by all containers.  In the example above, a `scratch` volume is mapped so that the container can utilize a larger disk on the host.  Also, a version of the AWS CLI installed with `conda` is mapped into the container - enabling the container to have access to it (e.g. so it can transfer data from S3 and back) with out explicitly building in.
 
 
-### State Machine Batch Job Tasks
+#### State Machine Batch Job Tasks
 
 AWS Step Functions has built-in integration with AWS Batch (and [several other services](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-connectors.html)), and provides snippets of code to make developing your state-machine tasks easier.
 
@@ -276,16 +313,7 @@ Inputs to a state machine that uses the above `BwaMemTask` would look like this:
 
 When the Task state completes Step Functions will add information to a new `status` key under `bwa-mem` in the JSON object.  The complete object will be passed on to the next state in the workflow.
 
-## Example state machine
-
-The following CloudFormation template creates container images, AWS Batch Job Definitions, and an AWS Step Functions State Machine for a simple genomics workflow using bwa, samtools, and bcftools.
-
-| Name | Description | Source | Launch Stack |
-| -- | -- | :--: | :--: |
-{{ cfn_stack_row("AWS Step Functions Example", "SfnExample", "step-functions/sfn-workflow.template.yaml", "Create a Step Functions State Machine, Batch Job Definitions, and container images to run an example genomics workflow") }}
-
-!!! note
-    The stack above needs to create several IAM Roles.  You must have administrative privileges in your AWS Account for this to succeed.
+### Example state machine
 
 The example workflow is a simple secondary analysis pipeline that converts raw FASTQ files into VCFs with variants called for a list of chromosomes.  It uses the following open source based tools:
 
