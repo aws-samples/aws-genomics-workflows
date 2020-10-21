@@ -5,13 +5,18 @@ set -e
 bash _scripts/make-dist.sh
 mkdocs build
 
+SITE_BUCKET=s3://docs.opendata.aws/genomics-workflows
 ASSET_BUCKET=s3://aws-genomics-workflows
-ASSET_STAGE=${1:-production}
+ASSET_STAGE=test
 
 PARAMS=""
 while (( "$#" )); do
     case "$1" in
-        --bucket)
+        --site-bucket)
+            SITE_BUCKET=$2
+            shift 2
+            ;;
+        --asset-bucket)
             ASSET_BUCKET=$2
             shift 2
             ;;
@@ -31,6 +36,8 @@ while (( "$#" )); do
 done
 
 eval set -- "$PARAMS"
+
+ASSET_STAGE=${1:-$ASSET_STAGE}
 
 function s3_uri() {
     BUCKET=$1
@@ -65,14 +72,12 @@ function publish() {
     local source=$1
     local destination=$2
 
-    # root level is always "latest"
-    S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH $destination)
-
-    s3_sync $source $S3_URI
-    
     if [[ $USE_RELEASE_TAG && ! -z "$TRAVIS_TAG" ]]; then
         # create explicit pinned versions "latest" and TRAVIS_TAG
-        for version in latest $TRAVIS_TAG; do
+        # pin the TRAVIS_TAG first, since the files are modified inplace
+        # "latest" will inherit the TRAVIS_TAG value
+        echo "PINNED VERSION: $TRAVIS_TAG"
+        for version in $TRAVIS_TAG latest; do
             S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH $version $destination)
 
             if [[ "$destination" == "templates" ]]; then
@@ -83,6 +88,10 @@ function publish() {
 
             s3_sync $source $S3_URI
         done
+    else
+        # root level deploy, this only happens with stage=test (non-tagged builds)
+        S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH $destination)
+        s3_sync $source $S3_URI
     fi
 
 }
@@ -96,7 +105,9 @@ function pin_version() {
     local asset=$2
     local folder=$3
 
+    echo "PINNING VERSIONS"
     for file in `grep -irl "$asset  # dist: pin_version" $folder`; do
+        echo "pinning '$asset' as '$version/$asset' in '$file'"
         sed -i '' -e "s|$asset  # dist: pin_version|$version/$asset  #|g" $file
     done
 }
@@ -124,7 +135,7 @@ function site() {
         --delete \
         --metadata commit=$(git rev-parse HEAD) \
         ./site \
-        s3://docs.opendata.aws/genomics-workflows
+        $SITE_BUCKET
 }
 
 
