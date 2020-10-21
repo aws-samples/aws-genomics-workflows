@@ -108,7 +108,7 @@ function pin_version() {
     echo "PINNING VERSIONS"
     for file in `grep -irl "$asset  # dist: pin_version" $folder`; do
         echo "pinning '$asset' as '$version/$asset' in '$file'"
-        sed -i '' -e "s|$asset  # dist: pin_version|$version/$asset  #|g" $file
+        sed -i'' -e "s|$asset  # dist: pin_version|$version/$asset  #|g" $file
     done
 }
 
