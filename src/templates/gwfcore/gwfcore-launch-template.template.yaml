@@ -58,6 +58,10 @@ Resources:
                 - !Ref Namespace
         
       LaunchTemplateData:
+        # Used in tandem with UserData to check if the instance is provisioned
+        # correctly. It is important to terminate mis-provisioned instances before
+        # jobs are placed on them
+        InstanceInitiatedShutdownBehavior: terminate
         TagSpecifications:
           - ResourceType: instance
             Tags:
@@ -103,6 +107,10 @@ Resources:
                 - curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
                 - unzip -q /tmp/awscliv2.zip -d /tmp
                 - /tmp/aws/install -b /usr/bin
+
+                # check that the aws-cli was actually installed. if not shutdown (terminate) the instance
+                - command -v aws || shutdown -P now
+
                 - mkdir -p /opt/aws-cli/bin
                 - cp -a $(dirname $(find /usr/local/aws-cli -name 'aws' -type f))/. /opt/aws-cli/bin/
 
