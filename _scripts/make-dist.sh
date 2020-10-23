@@ -1,5 +1,29 @@
 #!/bin/bash
 
+echo "checking for dependencies"
+
+DEPENDENCIES=$(cat <<EOF
+curl
+jq
+pip
+tar
+zip
+EOF
+)
+
+for dep in $DEPENDENCIES; do
+    dep_path=`command -v $dep`
+    if [[ $dep_path ]]; then
+        echo "requirement '$dep' found ($dep_path). ok"
+    else
+        echo "requirement '$dep' not found. aborting"
+        exit 1
+    fi
+done
+
+# fail on any error
+set -e
+
 CWD=`pwd`
 SOURCE_PATH=${CWD}/src
 DIST_PATH=${CWD}/dist
@@ -98,6 +122,6 @@ cp -Rv $SOURCE_PATH/templates/. $TEMPLATES_PATH
 
 # cleanup
 echo "removing temp files"
-rm -rvf $TEMP_PATH
+rm -rf $TEMP_PATH
 
 cd $CWD
