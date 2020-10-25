@@ -71,7 +71,7 @@ The CloudFormation template below will create all the AWS resources required - S
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("Genomics Workflow Core", "GWFCore", "gwfcore/gwfcore-root.template.yaml", "Create EC2 Launch Templates, AWS Batch Job Queues and Compute Environments, a secure Amazon S3 bucket, and IAM policies and roles within an **existing** VPC. _NOTE: You must provide VPC ID, and subnet IDs_.") }}
+{{ cfn_stack_row("Genomics Workflow Core", "gwfcore", "gwfcore/gwfcore-root.template.yaml", "Create EC2 Launch Templates, AWS Batch Job Queues and Compute Environments, a secure Amazon S3 bucket, and IAM policies and roles within an **existing** VPC. _NOTE: You must provide VPC ID, and subnet IDs_.") }}
 
 When launching the stack you can supply a `Namespace` as an optional parameter. The core can be installed multiple times in your account if needed (e.g. for use by different projects) grouped by the provided `Namespace`. By default, the `Namespace` is set to the stack name, which must be unique within an AWS region.
 
@@ -87,6 +87,6 @@ The CloudFormation templates below will create resources specific to a workflow 
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("AWS Step Functions", "SfnResources", "step-functions/sfn-resources.template.yaml", "Create a Step Functions State Machine, Batch Job Definitions, and container images to run an example genomics workflow") }}
-{{ cfn_stack_row("Cromwell", "CromwellResources", "cromwell/cromwell-resources.template.yaml", "Create resources needed to run Cromwell on AWS: an RDS Aurora database, an EC2 instance with Cromwell installed as a server, and an IAM instance profile") }}
-{{ cfn_stack_row("Nextflow", "NextflowResources", "nextflow/nextflow-resources.template.yaml", "Create resources needed to run Nextflow on AWS: an S3 Bucket for nextflow logs and metadata, AWS Batch Job Definition for a Nextflow head node, and an IAM role for the nextflow head node job") }}
+{{ cfn_stack_row("AWS Step Functions", "sfn-resources", "step-functions/sfn-resources.template.yaml", "Create a Step Functions State Machine, Batch Job Definitions, and container images to run an example genomics workflow") }}
+{{ cfn_stack_row("Cromwell", "cromwell-resources", "cromwell/cromwell-resources.template.yaml", "Create resources needed to run Cromwell on AWS: an RDS Aurora database, an EC2 instance with Cromwell installed as a server, and an IAM instance profile") }}
+{{ cfn_stack_row("Nextflow", "nextflow-resources", "nextflow/nextflow-resources.template.yaml", "Create resources needed to run Nextflow on AWS: an S3 Bucket for nextflow logs and metadata, AWS Batch Job Definition for a Nextflow head node, and an IAM role for the nextflow head node job") }}
