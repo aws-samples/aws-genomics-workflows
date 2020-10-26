@@ -88,10 +88,21 @@ function publish() {
 
             s3_sync $source $S3_URI
         done
-    else
-        # root level deploy, this only happens with stage=test (non-tagged builds)
+    elif [[ $ASSET_STAGE == "test" ]]; then
+        echo "PINNED VERSION: $ASSET_STAGE"
+        version=$ASSET_STAGE
         S3_URI=$(s3_uri $ASSET_BUCKET $ASSET_STAGE_PATH $destination)
+
+        if [[ "$destination" == "templates" ]]; then
+            # pin distribution template and artifact paths in cfn templates
+            pin_version $version templates $source
+            pin_version $version artifacts $source
+        fi
+
         s3_sync $source $S3_URI
+    else
+        echo "unknown publish target"
+        exit 1
     fi
 
 }
