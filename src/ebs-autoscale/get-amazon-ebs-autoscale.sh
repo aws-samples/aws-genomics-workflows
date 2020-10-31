@@ -161,7 +161,7 @@ function install() {
     
     cp -au /var/lib/docker /var/lib/docker.bk
     rm -rf /var/lib/docker/*
-    sh /opt/amazon-ebs-autoscale/install.sh -f $filesystem -m /var/lib/docker > /var/log/ebs-autoscale-install.log 2>&1
+    sh /opt/amazon-ebs-autoscale/install.sh -d /dev/xvdba -f $filesystem -m /var/lib/docker > /var/log/ebs-autoscale-install.log 2>&1
 
     awk -v docker_storage_options="$docker_storage_options" \
         '{ sub(/DOCKER_STORAGE_OPTIONS=.*/, docker_storage_options); print }' \
