@@ -370,20 +370,20 @@ aws batch submit-job \
 After submitting a workflow, you can monitor the progress of tasks via the AWS Batch console.
 For the "Hello World" workflow above you will see five jobs run in Batch - one for the head node, and one for each `Channel` text as it goes through the `hello` process.
 
-For a more complex example, you can try the following, which will run the [RNASeq workflow](https://nf-co.re/rnaseq) developed by the [NF-Core project](https://nf-co.re/) against data in the [1000 Genomes AWS Public Dataset](https://registry.opendata.aws/1000-genomes/):
+For a more complex example, you can try the following, which will run a demo [RNASeq workflow](https://github.com/nextflow-io/rnaseq-nf) against data in the [1000 Genomes AWS Public Dataset](https://registry.opendata.aws/1000-genomes/):
 
 ```bash
 aws batch submit-job \
     --job-name nf-core-rnaseq \
     --job-queue <queue-name> \
     --job-definition nextflow-<nextflow-stack-namespace> \
-    --container-overrides command=nf-core/rnaseq,\
+    --container-overrides command=rnaseq-nf,\
 "--reads","'s3://1000genomes/phase3/data/HG00243/sequence_read/SRR*_{1,2}.filt.fastq.gz'",\
 "--genome","GRCh37",\
 "--skip_qc"
 ```
 
-For the nf-core example "rnaseq" workflow you will see 11 jobs run in Batch over the course of a couple hours - the head node will last the whole duration of the pipeline while the others will stop once their step is complete. You can look at the CloudWatch logs for the head node job to monitor workflow progress. Note the additional single quotes wrapping the 1000genomes path.
+For the nf-core example "rnaseq" workflow you will see 5 jobs run in Batch over the course of a couple hours - the head node will last the whole duration of the pipeline while the others will stop once their step is complete. You can look at the CloudWatch logs for the head node job to monitor workflow progress. Note the additional single quotes wrapping the 1000genomes path.
 
 In both of the examples above, submitting workflows is an asynchronous task allowing you to quickly move on to other tasks. Importantly, AWS Batch handled scaling up all the compute needed to run workflow jobs, and when the workflow was complete, AWS Batch scaled all compute resources back down.
 
