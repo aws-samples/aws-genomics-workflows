@@ -383,7 +383,7 @@ aws batch submit-job \
 "--skip_qc"
 ```
 
-For the nf-core example "rnaseq" workflow you will see 5 jobs run in Batch over the course of a couple hours - the head node will last the whole duration of the pipeline while the others will stop once their step is complete. You can look at the CloudWatch logs for the head node job to monitor workflow progress. Note the additional single quotes wrapping the 1000genomes path.
+For the example "rnaseq" workflow you will see 5 jobs run in Batch over the course of a couple hours - the head node will last the whole duration of the pipeline while the others will stop once their step is complete. You can look at the CloudWatch logs for the head node job to monitor workflow progress. Note the additional single quotes wrapping the 1000genomes path.
 
 In both of the examples above, submitting workflows is an asynchronous task allowing you to quickly move on to other tasks. Importantly, AWS Batch handled scaling up all the compute needed to run workflow jobs, and when the workflow was complete, AWS Batch scaled all compute resources back down.
 
