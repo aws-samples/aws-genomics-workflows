@@ -58,7 +58,7 @@ function s3_uri() {
     PREFIX_PARTS=(${PREFIX_PARTS[@]})
     PREFIX=$(printf '/%s' "${PREFIX_PARTS[@]%/}")
     
-    echo "s3://${BUCKET%/}/${PREFIX:1}"
+    echo "${BUCKET%/}/${PREFIX:1}"
 }
 
 function s3_sync() {
