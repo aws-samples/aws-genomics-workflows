@@ -35,7 +35,6 @@ Metadata:
           - LatestAmazonLinuxAMI
           - InstanceType
           - InstanceName
-          - KeyName
           - SSHLocation
           - HTTPLocation
 
@@ -62,8 +61,6 @@ Metadata:
         default: "SSH Address Range"
       HTTPLocation:
         default: "HTTP Address Range"
-      KeyName:
-        default: "Key Pair Name"
       S3OpenDataBucketARNs:
         default: "S3 Open Data Bucket ARNs"
       CromwellVersion:
@@ -175,11 +172,6 @@ Parameters:
     Type: String
     Default: cromwell-server
     Description: The name of the instance that is created
-  
-  KeyName:
-    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
-    Type: AWS::EC2::KeyPair::KeyName
-    ConstraintDescription: Must be the name of an existing EC2 KeyPair that is on your local machine.
   
   SSHLocation:
     Description: >-
@@ -616,7 +608,6 @@ Resources:
       ImageId: !Ref LatestAmazonLinuxAMI
       InstanceType: !Ref InstanceType
       IamInstanceProfile: !Ref EC2InstanceProfile
-      KeyName: !Ref KeyName
       Tags:
         - Key: Name
           Value: !Sub ${InstanceName}-${Namespace}
