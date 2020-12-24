@@ -8,6 +8,8 @@ mkdocs build
 SITE_BUCKET=s3://docs.opendata.aws/genomics-workflows
 ASSET_BUCKET=s3://aws-genomics-workflows
 ASSET_STAGE=test
+ASSET_PROFILE=asset-publisher
+DEPLOY_REGION=us-east-1
 
 PARAMS=""
 while (( "$#" )); do
@@ -18,6 +20,14 @@ while (( "$#" )); do
             ;;
         --asset-bucket)
             ASSET_BUCKET=$2
+            shift 2
+            ;;
+        --asset-profile)
+            ASSET_PROFILE=$2
+            shift 2
+            ;;
+        --deploy-region)
+            DEPLOY_REGION=$2
             shift 2
             ;;
         --) # end optional argument parsing
@@ -48,7 +58,7 @@ function s3_uri() {
     PREFIX_PARTS=(${PREFIX_PARTS[@]})
     PREFIX=$(printf '/%s' "${PREFIX_PARTS[@]%/}")
     
-    echo "${BUCKET%/}/${PREFIX:1}"
+    echo "s3://${BUCKET%/}/${PREFIX:1}"
 }
 
 function s3_sync() {
@@ -59,8 +69,8 @@ function s3_sync() {
     echo "   from: $source"
     echo "     to: $destination"
     aws s3 sync \
-        --profile asset-publisher \
-        --region us-east-1 \
+        --profile $ASSET_PROFILE \
+        --region $DEPLOY_REGION \
         --acl public-read \
         --delete \
         --metadata commit=$(git rev-parse HEAD) \
@@ -141,7 +151,7 @@ function templates() {
 function site() {
     echo "publishing site"
     aws s3 sync \
-        --region us-east-1 \
+        --region $DEPLOY_REGION \
         --acl public-read \
         --delete \
         --metadata commit=$(git rev-parse HEAD) \
