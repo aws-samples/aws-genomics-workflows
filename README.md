@@ -26,10 +26,14 @@ Create and deploy a distribution from source
 
 ```bash
 cd aws-genomics-workflows
-bash _scripts/deploy.sh --asset-bucket s3://<dist-bucketname> test
+bash _scripts/deploy.sh --deploy-region <region> --asset-profile <profile-name> --asset-bucket s3://<dist-bucketname> test
 ```
 
 This will create a `dist` folder in the root of the project with subfolders `dist/artifacts` and `dist/templates` that will be uploaded to the S3 bucket you created above.
+
+Use `--asset-profile` option to specify an AWS profile to use to make the deployment.
+
+**Note**: the region set for `--deploy-region` should match the region the bucket `<dist-bucketname>` is created in.
 
 You can now use your deployed distribution to launch stacks using the AWS CLI. For example, to launch the GWFCore stack:
 
