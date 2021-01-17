@@ -222,6 +222,8 @@ Resources:
   Ec2InstanceRole:
     Type: AWS::IAM::Role
     Properties:
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
       Policies:
         - PolicyName: !Sub CromwellServer-BatchQueue-Access-${AWS::Region}
           PolicyDocument:
