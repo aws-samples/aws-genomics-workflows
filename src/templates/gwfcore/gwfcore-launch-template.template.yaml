@@ -121,6 +121,9 @@ Resources:
                 # enable ecs spot instance draining
                 - echo ECS_ENABLE_SPOT_INSTANCE_DRAINING=true >> /etc/ecs/ecs.config
 
+                # pull docker images only if missing
+                - echo ECS_IMAGE_PULL_BEHAVIOR=prefer-cached >> /etc/ecs/ecs.config
+
                 - cd /opt
                 - aws s3 sync $INSTALLED_ARTIFACTS_S3_ROOT_URL/ecs-additions ./ecs-additions
                 - chmod a+x /opt/ecs-additions/provision.sh
