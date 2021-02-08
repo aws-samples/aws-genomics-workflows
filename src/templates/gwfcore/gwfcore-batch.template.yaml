@@ -257,6 +257,12 @@ Resources:
         - Order: 2
           ComputeEnvironment: !Ref OnDemandComputeEnv
 
+  ContainerInstanceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "/aws/ecs/container-instance"
+      RetentionInDays: 7
+
 Outputs:
   DefaultJobQueueArn:
     Value: !Ref DefaultQueue

@@ -94,6 +94,10 @@ Resources:
                 --==BOUNDARY==
                 Content-Type: text/cloud-config; charset="us-ascii"
 
+                #cloud-config
+                repo_update: true
+                repo_upgrade: all
+
                 packages:
                 - jq
                 - btrfs-progs
@@ -101,8 +105,61 @@ Resources:
                 - git
                 - amazon-ssm-agent
                 - unzip
+                - amazon-cloudwatch-agent
 
                 runcmd:
+
+                # create the amazon-cloudwatch-agent config file
+                - |
+                  cat > /opt/aws/amazon-cloudwatch-agent/etc/config.json <<- EOF
+                  {
+                    "agent": {
+                      "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log"
+                    },
+                    "logs": {
+                      "logs_collected": {
+                        "files": {
+                          "collect_list": [
+                            {
+                              "file_path": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log",
+                              "log_group_name": "/aws/ecs/container-instance",
+                              "log_stream_name": "/aws/ecs/container-instance/{instance_id}/amazon-cloudwatch-agent.log"
+                            },
+                            {
+                              "file_path": "/var/log/cloud-init.log",
+                              "log_group_name": "/aws/ecs/container-instance",
+                              "log_stream_name": "/aws/ecs/container-instance/{instance_id}/cloud-init.log"
+                            },
+                            {
+                              "file_path": "/var/log/cloud-init-output.log",
+                              "log_group_name": "/aws/ecs/container-instance",
+                              "log_stream_name": "/aws/ecs/container-instance/{instance_id}/cloud-init-output.log"
+                            },
+                            {
+                              "file_path": "/var/log/ecs/ecs-init.log",
+                              "log_group_name": "/aws/ecs/container-instance",
+                              "log_stream_name": "/aws/ecs/container-instance/{instance_id}/ecs-init.log"
+                            },
+                            {
+                              "file_path": "/var/log/ecs/ecs-agent.log",
+                              "log_group_name": "/aws/ecs/container-instance",
+                              "log_stream_name": "/aws/ecs/container-instance/{instance_id}/ecs-agent.log"
+                            },
+                            {
+                              "file_path": "/var/log/ecs/ecs-volume-plugin.log",
+                              "log_group_name": "/aws/ecs/container-instance",
+                              "log_stream_name": "/aws/ecs/container-instance/{instance_id}/ecs-volume-plugin.log"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                  EOF
+
+                # start the amazon-cloudwatch-agent
+                - /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/config.json
+
                 # install aws-cli v2 and copy the static binary in an easy to find location for bind-mounts into containers
                 - curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
                 - unzip -q /tmp/awscliv2.zip -d /tmp
