@@ -382,6 +382,20 @@ Resources:
               owner: "ec2-user"
               group: "ec2-user"
 
+            "/home/ec2-user/get_cromwell_tools.sh":
+              content: |
+                #!/bin/bash
+                url=$(curl --silent --retry 5 --retry-connrefused https://api.github.com/repos/broadinstitute/cromwell/releases/latest | jq -r .assets[1].browser_download_url)
+                curl --retry 5 --retry-connrefused -LO $url
+
+                curl --retry 5 --retry-connrefused -LO https://raw.githubusercontent.com/broadinstitute/cromshell/master/cromshell
+                chmod +x cromshell
+                sudo mv cromshell /usr/local/bin/
+
+              mode: "000755"
+              owner: "ec2-user"
+              group: "ec2-user"
+
             "/home/ec2-user/cromwell.conf":
               content: !Sub
                 - |
@@ -605,6 +619,16 @@ Resources:
             02_start_cromwell:
               cwd: "/home/ec2-user"
               command: "sudo -u ec2-user /usr/local/bin/supervisord"
+
+        config4:
+          commands:
+            00_get_cromwell_tools:
+              cwd: "/home/ec2-user/"
+              command: "./get_cromwell_tools.sh"
+            
+            01_chown_womtool:
+              cwd: "/home/ec2-user/"
+              command: "chown ec2-user:ec2-user womtool*.jar"
     
     Properties:
       ImageId: !Ref LatestAmazonLinuxAMI
@@ -623,7 +647,7 @@ Resources:
           #!/bin/bash -x
           yum -y update
           yum install -y aws-cfn-bootstrap
-          yum install -y jq awslogs python3 java
+          yum install -y jq awslogs python3 java mailx
 
           amazon-linux-extras install -y nginx1
           pip3 install supervisor

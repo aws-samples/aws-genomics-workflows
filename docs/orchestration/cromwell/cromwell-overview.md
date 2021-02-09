@@ -210,7 +210,9 @@ This value can also be supplied as a Java command line variable.
 
 ### Accessing the Cromwell server
 
-The Cromwell EC2 instance may be accessed using the [AWS Session Manager](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/session-manager.html). Please note that by default this will log you in as user `ec2-user` in the directory `/usr/bin`. You may prefer to become the ec2-user with the command `sudo su - ec2-user` which will switch you to that user's home directory.
+The Cromwell EC2 instance may be accessed using the [AWS Session Manager](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/session-manager.html) via console or in the terminal with the command `aws ssm start-session --target <instance-id>`.
+
+Please note that by default this will log you in as user `ec2-user` in the directory `/usr/bin`. You may prefer to become the ec2-user with the command `sudo su - ec2-user` which will switch you to that user's home directory.
 
 ### Stop / Start / Restart the Cromwell service
 
