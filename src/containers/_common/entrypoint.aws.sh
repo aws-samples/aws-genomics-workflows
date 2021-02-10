@@ -3,6 +3,16 @@
 # that handles data staging of predefined inputs and outputs.
 #
 # Environment Variables
+#   JOB_WORKFLOW_NAME
+#       Optional
+#       Name of the parent workflow for this job.  Used with JOB_WORKFLOW_EXECUTION_ID
+#       to generate a unique prefix for workflow outputs.
+#
+#   JOB_WORKFLOW_EXECUTION_ID
+#       Optional
+#       Unique identifier for the current workflow run.  Used with JOB_WORKFLOW_NAME
+#       to generate a unique prefix for workflow outputs.
+#
 #   JOB_AWS_CLI_PATH
 #       Required if staging data from S3
 #       Default: /opt/miniconda/bin
@@ -44,9 +54,14 @@ if [[ $JOB_VERBOSE ]]; then
     set -x  # enable echo
 fi
 
-DEFAULT_AWS_CLI_PATH=/opt/miniconda/bin
+DEFAULT_AWS_CLI_PATH=/opt/aws-cli/bin
 AWS_CLI_PATH=${JOB_AWS_CLI_PATH:-$DEFAULT_AWS_CLI_PATH}
 PATH=$PATH:$AWS_CLI_PATH
+
+# ensure that JOB_INPUT_PREFIX is fully evaluated if present
+if [[ $JOB_INPUT_PREFIX ]]; then
+    JOB_INPUT_PREFIX=`echo $JOB_INPUT_PREFIX | envsubst`
+fi
 
 if [[ $JOB_DATA_ISOLATION && $JOB_DATA_ISOLATION == 1 ]]; then
     ## AWS Batch places multiple jobs on an instance
@@ -110,12 +125,17 @@ function stage_out() (
         else
             if [[ $JOB_OUTPUT_PREFIX && $JOB_OUTPUT_PREFIX =~ ^s3:// ]]; then
                 local item_key=`basename $item`
+                local output_prefix=$JOB_OUTPUT_PREFIX
 
-                echo "[output] remote: ./$item ==> $JOB_OUTPUT_PREFIX/${item_key}"
+                if [[ $JOB_WORKFLOW_NAME && $JOB_WORKFLOW_EXECUTION_ID ]]; then
+                    local output_prefix=$output_prefix/$JOB_WORKFLOW_NAME/$JOB_WORKFLOW_EXECUTION_ID
+                fi
+
+                echo "[output] remote: ./$item ==> $output_prefix/${item_key}"
 
                 aws s3 cp \
                     --no-progress \
-                    ./$item $JOB_OUTPUT_PREFIX/${item_key}
+                    ./$item $output_prefix/${item_key}
 
             elif [[ $JOB_OUTPUT_PREFIX && ! $JOB_OUTPUT_PREFIX =~ ^s3:// ]]; then
                 echo "[output] ERROR: unsupported remote output destination $JOB_OUTPUT_PREFIX" 1>&2
@@ -139,7 +159,7 @@ printenv
 stage_in $JOB_INPUTS
 
 echo "[command]: $COMMAND"
-$COMMAND
+bash -c "$COMMAND"
 
 
 stage_out $JOB_OUTPUTS

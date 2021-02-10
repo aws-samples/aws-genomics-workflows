@@ -1,6 +1,6 @@
 FROM ubuntu:18.04 AS build
 
-ENV BWA_VERSION=0.7.17
+ARG BWA_VERSION=0.7.17
 
 RUN apt-get update -y \
  && apt-get install -y \

@@ -4,7 +4,7 @@ Description: >-
   (WWPS-GLS-WF-CONTAINER-BUILD) Creates resources for building a Docker container
   image using CodeBuild, storing the image in ECR, and optionally creating a 
   corresponding Batch Job Definition.
-  It is recommended to name this stack "container-{ContainerName}".
+  It is recommended to name this stack "container-{ImageName}".
 
 Mappings:
   TagMap:
@@ -15,8 +15,12 @@ Mappings:
           Value: "genomics-workflows"
       
 Parameters:
-  ContainerName:
-    Description: Name of the container (does not include tag)
+  ImageName:
+    Description: (REQUIRED) Name of the container image (does not include tag). An ECR image repository will be created with this name.
+    Type: String
+  
+  ImageTag:
+    Description: (REQUIRED) Container image tag to use (e.g. the version of the tool you are building). The image will also be tagged "latest".
     Type: String
   
   GitRepoType:
@@ -62,12 +66,33 @@ Parameters:
     AllowedValues:
       - "Yes"
       - "No"
+  
+  BatchJobDefinitionName:
+    Description: >
+      AWS Batch Job Definition name for the container. Defaults to ImageName
+      if not specified.
+    Type: String
+    Default: ""
+  
+  ArtifactBucketName:
+    Type: String
+    Default: aws-genomics-workflows
+    Description: >-
+      S3 Bucket where artifacts and additions scripts are stored
+  ArtifactBucketPrefix:
+    Type: String
+    Default: artifacts
+    Description: >-
+      Prefix in ArtifactBucketName where artifacts and additions scripts are stored
+
 
 Conditions:
   CreateBatchJobDefinitionTrue:
     Fn::Equals:
     - !Ref CreateBatchJobDefinition
     - "Yes"
+  
+  NoBatchJobDefinitionName: !Equals [ !Ref BatchJobDefinitionName, "" ]
 
 Resources:
   IAMCodeBuildRole:
@@ -107,15 +132,27 @@ Resources:
 
               - Effect: Allow
                 Resource:
+                  - !Sub arn:aws:codecommit:*:${AWS::AccountId}:*
+                Action:
+                  - codecommit:GitPull
+
+              - Effect: Allow
+                Resource:
                   # Constructing the ARN manually here since we are using a custom
                   # resource to create the repository
-                  - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ContainerName}"
+                  - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ImageName}"
                 Action:
                   - ecr:BatchCheckLayerAvailability
                   - ecr:CompleteLayerUpload
                   - ecr:InitiateLayerUpload
                   - ecr:PutImage
                   - ecr:UploadLayerPart
+              
+              - Effect: Allow
+                Resource:
+                  - !Sub arn:aws:ecr:*:${AWS::AccountId}:repository/*
+                Action:
+                  - ecr:DescribeRepositories
               
               - Effect: Allow
                 Resource: "*"
@@ -126,7 +163,7 @@ Resources:
     Type: AWS::CodeBuild::Project
     Properties:
       Description: !Sub >-
-        Builds the container image ${ContainerName}
+        Builds the container image ${ImageName}
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
@@ -141,8 +178,11 @@ Resources:
           - Name: REGISTRY
             Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com"
           
-          - Name: CONTAINER_NAME
-            Value: !Ref ContainerName
+          - Name: IMAGE_NAME
+            Value: !Ref ImageName
+          
+          - Name: IMAGE_TAG
+            Value: !Ref ImageTag
           
           - Name: PROJECT_BRANCH
             Value: !Ref ProjectBranch
@@ -183,6 +223,30 @@ Resources:
                   - "codebuild:BatchGetBuilds"
                 Resource: "*"
         
+        - PolicyName: !Sub events-access-${AWS::Region}
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - events:DeleteRule
+                  - events:PutRule
+                  - events:PutTargets
+                  - events:RemoveTargets
+                Resource:
+                  - !Sub arn:aws:events:*:${AWS::AccountId}:rule/*
+        
+        - PolicyName: !Sub lambda-access-${AWS::Region}
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:AddPermission
+                  - lambda:RemovePermission
+                Resource:
+                  - !Sub arn:aws:lambda:*:${AWS::AccountId}:function:*
+
         - PolicyName: !Sub ecr-access-${AWS::Region}
           PolicyDocument:
             Version: 2012-10-17
@@ -197,7 +261,7 @@ Resources:
                   - "ecr:DescribeRepositories"
                   - "ecr:CreateRepository"
               - Effect: Allow
-                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ContainerName}"
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ImageName}"
                 Action:
                   - "ecr:*LifecyclePolicy"
                   - "ecr:DeleteRepository"
@@ -215,35 +279,13 @@ Resources:
   CodeBuildInvocationFunction:
     Type: AWS::Lambda::Function
     Properties:
-      Handler: index.handler
+      Handler: lambda.handler
       Role: !GetAtt IAMLambdaExecutionRole.Arn
       Runtime: python3.7
-      Timeout: 900  # if containers take more than 15m to build, consider using a WaitCondition
+      Timeout: 60
       Code:
-        ZipFile: |
-          from time import sleep
-
-          import boto3
-          import cfnresponse
-
-          def handler(event, context):
-              if event['RequestType'] in ("Create", "Update"):
-                  codebuild = boto3.client('codebuild')
-                  build = codebuild.start_build(
-                      projectName=event["ResourceProperties"]["BuildProject"]
-                  )['build']
-                          
-                  id = build['id']
-                  status = build['buildStatus']
-                  while status == 'IN_PROGRESS':
-                      sleep(10)
-                      build = codebuild.batch_get_builds(ids=[id])['builds'][0]
-                      status = build['buildStatus']
-                  
-                  if status != "SUCCEEDED":
-                      cfnresponse.send(event, context, cfnresponse.FAILED, None)
-              
-              cfnresponse.send(event, context, cfnresponse.SUCCESS, None)
+        S3Bucket: !Ref ArtifactBucketName
+        S3Key: !Sub ${ArtifactBucketPrefix}/lambda-codebuild.zip
   
   # ECR Repositories defined by CloudFormation currently do not support Deletion
   # or UpdateReplace Policies.  This will cause failures when this stack or a 
@@ -258,7 +300,7 @@ Resources:
   # ECRRepository:
   #   Type: "AWS::ECR::Repository"
   #   Properties:
-  #     RepositoryName: !Ref ContainerName
+  #     RepositoryName: !Ref ImageName
   #     LifecyclePolicy:
   #       LifecyclePolicyText: |-
   #         {
@@ -282,7 +324,7 @@ Resources:
     Type: Custom::ECRRepositoryHandler
     Properties:
       ServiceToken: !GetAtt ECRRepositoryHandlerFunction.Arn
-      RepositoryName: !Ref ContainerName
+      RepositoryName: !Ref ImageName
       DeletePolicy: Retain
       UpdateReplacePolicy: Retain
       LifecyclePolicy:
@@ -310,21 +352,25 @@ Resources:
       Handler: index.handler
       Role: !GetAtt IAMLambdaExecutionRole.Arn
       Runtime: python3.7
-      Timeout: 10
+      Timeout: 60
       Code:
+        # Breaking code out to a zip in S3 for code stalls the stack
+        # S3Bucket: !Ref ArtifactBucketName
+        # S3Key: !Sub ${ArtifactBucketPrefix}/lambda-ecr.zip
         ZipFile: |
           from time import sleep
 
           import boto3
           import cfnresponse
 
+
           send, SUCCESS, FAILED = (
               cfnresponse.send, 
               cfnresponse.SUCCESS, 
               cfnresponse.FAILED
           )
-
           ecr = boto3.client('ecr')
+
 
           def wait(repo, until):
               until = until.lower()
@@ -345,13 +391,16 @@ Resources:
                           break
                       except ecr.exceptions.RepositoryNotFoundException:
                           exists = False
-          
+
+
+
           def put_lifecycle_policy(repo, props):
               if props.get("LifecyclePolicy"):
                   ecr.put_lifecycle_policy(
                       repositoryName=repo,
                       lifecyclePolicyText=props["LifecyclePolicy"]["LifecyclePolicyText"]
                   )
+
 
           def create(repo, props, event, context):
               # use existing repository if available, otherwise create
@@ -368,26 +417,26 @@ Resources:
                   send(event, context, FAILED, None)
                   raise(e)
 
+
           def update(repo, props, event, context):
               # use existing repository if available
               update_policy = props.get("UpdateReplacePolicy")
               try:
                   if update_policy and update_policy.lower() == "retain":
                       put_lifecycle_policy(repo, props)
-
                   else:
                       # replace the repo
                       delete(repo, props, event, context)
                       create(repo, props, event, context)
-
               except Exception as e:
                   send(event, context, FAILED, None)
                   raise(e)
 
+
           def delete(repo, props, event, context):
               # retain repository if specified
               # otherwise force delete
-              delete_policy = props.get("DetetePolicy")
+              delete_policy = props.get("DeletePolicy")
               try:
                   if delete_policy and not delete_policy.lower() == "retain":
                       ecr.delete_repository(repositoryName=repo, force=True)
@@ -397,6 +446,7 @@ Resources:
                   send(event, context, FAILED, None)
                   raise(e)
 
+
           def handler(event, context):
               props = event["ResourceProperties"]
               repo = props.get("RepositoryName")
@@ -405,28 +455,30 @@ Resources:
                   action = globals()[event["RequestType"].lower()]
                   action(repo, props, event, context)
                   send(event, context, SUCCESS, None)
-
               else:
                   # unhandled request type
-                  send(event, context, FAILED, None)    
-              
+                  send(event, context, FAILED, None)
    
   BatchJobDef:
     Type: AWS::Batch::JobDefinition
     Condition: CreateBatchJobDefinitionTrue
     Properties:
-      JobDefinitionName: !Ref ContainerName
+      JobDefinitionName:
+        Fn::If:
+          - NoBatchJobDefinitionName
+          - !Ref ImageName
+          - !Ref BatchJobDefinitionName
       Type: container
       ContainerProperties:
-        Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ContainerName}
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ImageName}:${ImageTag}
         Vcpus: 8
         Memory: 16000
         Volumes:
           - Host:
-              SourcePath: /opt/miniconda
+              SourcePath: /opt/aws-cli
             Name: awscli
         MountPoints:
-          - ContainerPath: /opt/miniconda
+          - ContainerPath: /opt/aws-cli
             SourceVolume: awscli
       
 Outputs:  
@@ -441,7 +493,7 @@ Outputs:
       Name: !Sub ${AWS::StackName}-CodeBuildServiceRole
     
   ContainerImage:
-    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ContainerName}
+    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ImageName}
     Export:
       Name: !Sub ${AWS::StackName}-ECRImageRepository
   

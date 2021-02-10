@@ -1,4 +1,3 @@
-.DS_Store
 .idea
 /.idea/markdown-navigator.xml
 /.idea/markdown-navigator/profiles_settings.xml
@@ -59,3 +58,6 @@ publish
 launch.sh
 LICENSE-*
 src/templates/tests
+/aws-genomics-workflows.iml
+_ignore
+dist/

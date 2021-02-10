@@ -1,4 +1,4 @@
-# AWS Batch
+# Core: AWS Batch
 
 [AWS Batch](https://aws.amazon.com/batch/) is a managed service that helps you efficiently run batch computing workloads on the AWS Cloud. Users submit jobs to job queues, specifying the application to be run and the compute resources (CPU and memory) required by the job. AWS Batch is responsible for launching the appropriate quantity and types of instances needed to run your jobs.
 
@@ -46,8 +46,8 @@ A complete AWS Batch environment consists of the following:
 
 1. A Compute Environment that utilizes [EC2 Spot instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances.html) for cost-effective computing
 2. A Compute Environment that utilizes EC2 on-demand (e.g. [public pricing](https://aws.amazon.com/ec2/pricing/on-demand/)) instances for high-priority work that can't risk job interruptions or delays due to insufficient Spot capacity.
-3. A default Job Queue that utilizes the Spot compute environment first, but falls back to the on-demand compute environment if there is spare capacity available.
-4. A high-priority Job Queue that leverages the on-demand and Spot CE's (in that order) and has higher priority than the default queue.
+3. A default Job Queue that utilizes the Spot compute environment first, but spills over to the on-demand compute environment if defined capacity limits (i.e. Max vCPUs) are reached.
+4. A priority Job Queue that leverages the on-demand and Spot CE's (in that order) and has higher priority than the default queue.
 
 ### Automated via CloudFormation
 
@@ -55,7 +55,10 @@ The CloudFormation template below will create all of the above.
 
 | Name | Description | Source | Launch Stack |
 | -- | -- | :--: | :--: |
-{{ cfn_stack_row("AWS Batch", "GWFCore-Batch", "aws-genomics-batch.template.yaml", "Creates AWS Batch Job Queues and Compute Environments. _You will need to provide the details for your Launch Template ID, IAM roles and instance profiles, and the IDs for a VPC and subnets._") }}
+{{ cfn_stack_row("AWS Batch", "GWFCore-Batch", "gwfcore/gwfcore-batch.template.yaml", "Creates AWS Batch Job Queues and Compute Environments. _You will need to provide the details for your Launch Template ID, IAM roles and instance profiles, and the IDs for a VPC and subnets._", enable_cfn_button=False) }}
+
+!!! info
+    The launch button has been disabled above since this template is part of a set of nested templates. It is not recommended to launch it independently of its intended parent stack.
 
 ### Manually via the AWS Console
 
@@ -79,8 +82,9 @@ You can create several compute environments to suit your needs.  Below we'll cre
 7. In the "Instance role" drop down, select the `ecsInstanceRole` you created previously
 8. For "Provisioning model" select "On-Demand"
 9. "Allowed instance types" will be already populated with "optimal" - which is a mixture of M4, C4, and R4 instances.
-10. In the "Launch template" drop down, select the `genomics-workflow-template` you created previously
-11. Set Minimum and Desired vCPUs to 0.
+10. "Allocation strategy" will already be set to `BEST_FIT`. This is recommended for on-demand based compute environments as it ensures the most cost efficiency.
+11. In the "Launch template" drop down, select the `genomics-workflow-template` you created previously
+12. Set Minimum and Desired vCPUs to 0.
 
 !!! info
     **Minimum vCPUs** is the lowest number of active vCPUs (i.e. instances) your compute environment will keep running and available for placing jobs when there are no jobs queued.  Setting this to 0 means that AWS Batch will terminate all instances when all queued jobs are complete.
@@ -108,8 +112,8 @@ Click on "Create"
 6. In the "Service role" drop down, select the `AWSBatchServiceRole` you created previously
 7. In the "Instance role" drop down, select the `ecsInstanceRole` you created previously
 8. For "Provisioning model" select "Spot"
-9. In the "Spot fleet role" drop down, select the `AWSSpotFleetTaggingRole` you created previously
-10. "Allowed instance types" will be already populated with "optimal" - which is a mixture of M4, C4, and R4 instances.
+9. "Allowed instance types" will be already populated with "optimal" - which is a mixture of M4, C4, and R4 instances.
+10. "Allocation strategy" will already be set to `SPOT_CAPACITY_OPTIMIZED`. This is recommended for Spot based compute environments as it ensures the most compute capacity is available for your jobs.
 11. In the "Launch template" drop down, select the `genomics-workflow-template` you created previously
 12. Set Minimum and Desired vCPUs to 0.
 
@@ -158,7 +162,7 @@ Because it primarily leverages Spot instances, it will also be the most cost eff
 
 * Click on "Create Job Queue"
 
-##### Create a "high-priority" job queue
+##### Create a "priority" job queue
 
 This queue is intended for jobs that are urgent and **cannot** handle potential interruption. This queue will schedule jobs to:
 
@@ -170,7 +174,7 @@ in that order.
 * Go to the AWS Batch Console
 * Click on "Job queues"
 * Click on "Create queue"
-* For "Queue name" use "highpriority"
+* For "Queue name" use "priority"
 * Set "Priority" to 100 (higher values mean higher priority)
 * Under "Connected compute environments for this queue", using the drop down menu:
 
