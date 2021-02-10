@@ -45,6 +45,7 @@ workDir = "$NF_WORKDIR"
 process.executor = "awsbatch"
 process.queue = "$NF_JOB_QUEUE"
 aws.batch.cliPath = "$AWS_CLI_PATH"
+env.LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/opt/aws-cli/bin"
 EOF
 
 echo "=== CONFIGURATION ==="
@@ -52,7 +53,7 @@ cat ./nextflow.config
 
 # stage in session cache
 # .nextflow directory holds all session information for the current and past runs.
-# it should be `sync`'d with an s3 uri, so that runs from previous sessions can be 
+# it should be `sync`'d with an s3 uri, so that runs from previous sessions can be
 # resumed
 echo "== Restoring Session Cache =="
 aws s3 sync --no-progress $NF_LOGSDIR/.nextflow .nextflow
