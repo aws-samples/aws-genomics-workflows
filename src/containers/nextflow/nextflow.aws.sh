@@ -45,7 +45,6 @@ workDir = "$NF_WORKDIR"
 process.executor = "awsbatch"
 process.queue = "$NF_JOB_QUEUE"
 aws.batch.cliPath = "$AWS_CLI_PATH"
-env.LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/opt/aws-cli/bin"
 EOF
 
 echo "=== CONFIGURATION ==="
