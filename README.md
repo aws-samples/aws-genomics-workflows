@@ -43,13 +43,15 @@ TEMPLATE_ROOT_URL=https://<dist-bucketname>.s3-<region>.amazonaws.com/test/templ
 aws cloudformation create-stack \
     --region <region> \
     --stack-name <stackname> \
-    --template-url $TEMPLATE_ROOT_URL/gwfcore-root.template.yaml \
+    --template-url $TEMPLATE_ROOT_URL/gwfcore/gwfcore-root.template.yaml \
     --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
     --parameters \
         ParameterKey=VpcId,ParameterValue=<vpc-id> \
         ParameterKey=SubnetIds,ParameterValue=\"<subnet-id-1>,<subnet-id-2>,...\" \
         ParameterKey=ArtifactBucketName,ParameterValue=<dist-bucketname> \
-        ParameterKey=TemplateRootUrl,ParameterValue=$TEMPLATE_ROOT_URL
+        ParameterKey=TemplateRootUrl,ParameterValue=$TEMPLATE_ROOT_URL \
+        ParameterKey=S3BucketName,ParameterValue=<store-buketname> \
+        ParameterKey=ExistingBucket,ParameterValue=false
 
 ```
 

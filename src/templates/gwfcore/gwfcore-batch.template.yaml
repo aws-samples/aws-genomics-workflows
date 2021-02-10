@@ -194,6 +194,8 @@ Resources:
       Type: MANAGED
       State: ENABLED
       ComputeResources:
+        Ec2Configuration:
+          - ImageType: ECS_AL2
         AllocationStrategy: BEST_FIT
         LaunchTemplate:
           LaunchTemplateId: !Ref LaunchTemplateId
