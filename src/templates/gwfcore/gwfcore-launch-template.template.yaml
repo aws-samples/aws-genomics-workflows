@@ -103,6 +103,14 @@ Resources:
                 - unzip
 
                 runcmd:
+                # add 4GB of swap space
+                - dd if=/dev/zero of=/swapfile bs=128M count=32
+                - chmod 600 /swapfile
+                - mkswap /swapfile
+                - swapon /swapfile
+                - swapon -s
+                - echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
+
                 # install aws-cli v2 and copy the static binary in an easy to find location for bind-mounts into containers
                 - curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
                 - unzip -q /tmp/awscliv2.zip -d /tmp
