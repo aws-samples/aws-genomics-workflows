@@ -262,7 +262,7 @@ Resources:
   ContainerInstanceLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: "/aws/ecs/container-instance"
+      LogGroupName: "/aws/ecs/container-instance/${Namespace}"
       RetentionInDays: 7
 
 Outputs:

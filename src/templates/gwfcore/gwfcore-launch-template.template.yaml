@@ -107,55 +107,55 @@ Resources:
                 - unzip
                 - amazon-cloudwatch-agent
 
-                runcmd:
-
-                # create the amazon-cloudwatch-agent config file
-                - |
-                  cat > /opt/aws/amazon-cloudwatch-agent/etc/config.json <<- EOF
-                  {
-                    "agent": {
-                      "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log"
-                    },
-                    "logs": {
-                      "logs_collected": {
-                        "files": {
-                          "collect_list": [
-                            {
-                              "file_path": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log",
-                              "log_group_name": "/aws/ecs/container-instance",
-                              "log_stream_name": "/aws/ecs/container-instance/{instance_id}/amazon-cloudwatch-agent.log"
-                            },
-                            {
-                              "file_path": "/var/log/cloud-init.log",
-                              "log_group_name": "/aws/ecs/container-instance",
-                              "log_stream_name": "/aws/ecs/container-instance/{instance_id}/cloud-init.log"
-                            },
-                            {
-                              "file_path": "/var/log/cloud-init-output.log",
-                              "log_group_name": "/aws/ecs/container-instance",
-                              "log_stream_name": "/aws/ecs/container-instance/{instance_id}/cloud-init-output.log"
-                            },
-                            {
-                              "file_path": "/var/log/ecs/ecs-init.log",
-                              "log_group_name": "/aws/ecs/container-instance",
-                              "log_stream_name": "/aws/ecs/container-instance/{instance_id}/ecs-init.log"
-                            },
-                            {
-                              "file_path": "/var/log/ecs/ecs-agent.log",
-                              "log_group_name": "/aws/ecs/container-instance",
-                              "log_stream_name": "/aws/ecs/container-instance/{instance_id}/ecs-agent.log"
-                            },
-                            {
-                              "file_path": "/var/log/ecs/ecs-volume-plugin.log",
-                              "log_group_name": "/aws/ecs/container-instance",
-                              "log_stream_name": "/aws/ecs/container-instance/{instance_id}/ecs-volume-plugin.log"
-                            }
-                          ]
+                write_files:
+                - permissions: '0644'
+                  path: /opt/aws/amazon-cloudwatch-agent/etc/config.json
+                  content: |
+                    {
+                      "agent": {
+                        "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log"
+                      },
+                      "logs": {
+                        "logs_collected": {
+                          "files": {
+                            "collect_list": [
+                              {
+                                "file_path": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log",
+                                "log_group_name": "/aws/ecs/container-instance/${Namespace}",
+                                "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/amazon-cloudwatch-agent.log"
+                              },
+                              {
+                                "file_path": "/var/log/cloud-init.log",
+                                "log_group_name": "/aws/ecs/container-instance/${Namespace}",
+                                "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/cloud-init.log"
+                              },
+                              {
+                                "file_path": "/var/log/cloud-init-output.log",
+                                "log_group_name": "/aws/ecs/container-instance/${Namespace}",
+                                "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/cloud-init-output.log"
+                              },
+                              {
+                                "file_path": "/var/log/ecs/ecs-init.log",
+                                "log_group_name": "/aws/ecs/container-instance/${Namespace}",
+                                "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/ecs-init.log"
+                              },
+                              {
+                                "file_path": "/var/log/ecs/ecs-agent.log",
+                                "log_group_name": "/aws/ecs/container-instance/${Namespace}",
+                                "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/ecs-agent.log"
+                              },
+                              {
+                                "file_path": "/var/log/ecs/ecs-volume-plugin.log",
+                                "log_group_name": "/aws/ecs/container-instance/${Namespace}",
+                                "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/ecs-volume-plugin.log"
+                              }
+                            ]
+                          }
                         }
                       }
                     }
-                  }
-                  EOF
+
+                runcmd:
 
                 # start the amazon-cloudwatch-agent
                 - /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/config.json
