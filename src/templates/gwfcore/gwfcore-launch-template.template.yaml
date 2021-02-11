@@ -96,7 +96,7 @@ Resources:
 
                 #cloud-config
                 repo_update: true
-                repo_upgrade: all
+                repo_upgrade: security
 
                 packages:
                 - jq
