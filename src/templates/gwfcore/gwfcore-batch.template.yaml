@@ -128,6 +128,8 @@ Resources:
       Type: MANAGED
       State: ENABLED
       ComputeResources:
+        Ec2Configuration:
+          - ImageType: ECS_AL2
         AllocationStrategy: SPOT_CAPACITY_OPTIMIZED
         # Set the Spot price to 100% of on-demand price
         # This is the maximum price for spot instances that Batch will launch.
