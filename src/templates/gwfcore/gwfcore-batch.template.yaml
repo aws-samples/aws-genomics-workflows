@@ -128,6 +128,8 @@ Resources:
       Type: MANAGED
       State: ENABLED
       ComputeResources:
+        Ec2Configuration:
+          - ImageType: ECS_AL2
         AllocationStrategy: SPOT_CAPACITY_OPTIMIZED
         # Set the Spot price to 100% of on-demand price
         # This is the maximum price for spot instances that Batch will launch.
@@ -256,6 +258,12 @@ Resources:
           ComputeEnvironment: !Ref SpotComputeEnv
         - Order: 2
           ComputeEnvironment: !Ref OnDemandComputeEnv
+
+  ContainerInstanceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/ecs/container-instance/${Namespace}"
+      RetentionInDays: 7
 
 Outputs:
   DefaultJobQueueArn:
