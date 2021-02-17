@@ -10,3 +10,10 @@ chmod a+x /opt/ecs-additions/awscli-shim.sh
 mkdir /opt/aws-cli/bin
 cp /opt/ecs-additions/awscli-shim.sh /opt/aws-cli/bin/aws
 
+# add 4GB of swap space
+dd if=/dev/zero of=/swapfile bs=128M count=32
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+swapon -s
+echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
