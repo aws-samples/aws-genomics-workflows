@@ -260,7 +260,7 @@ Resources:
                 Provider: CodeCommit
                 Version: "1"
               Configuration:
-                BranchName: master
+                BranchName: main
                 RepositoryName: !Sub ${RepoEcsAdditions.Name}
                 PollForSourceChanges: false
               OutputArtifacts:
@@ -295,7 +295,7 @@ Resources:
             - referenceCreated
             - referenceUpdated
           referenceName:
-            - master
+            - main
           referenceType:
             - branch
         detail-type:
