@@ -42,7 +42,7 @@ Parameters:
   ProjectBranch:
     Description: branch, tag, or commit to use
     Type: String
-    Default: master
+    Default: main
   
   ProjectPath:
     Description: >
