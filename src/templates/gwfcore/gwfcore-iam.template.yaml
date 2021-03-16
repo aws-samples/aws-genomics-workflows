@@ -129,6 +129,7 @@ Resources:
       - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
       - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
       - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      - "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
   BatchInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:

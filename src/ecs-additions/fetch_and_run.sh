@@ -16,7 +16,6 @@
 # See below for usage instructions.
 
 #PATH="/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/aws-cli/v2/current/dist
 BASENAME="${0##*/}"
 AWS="/usr/local/aws-cli/v2/current/bin/aws"
 

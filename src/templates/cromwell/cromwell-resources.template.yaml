@@ -115,7 +115,6 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
     AllowedValues:
-      #- /aws/service/ami-amazon-linux-latest/amzn-ami-hvm-x86_64-gp2
       - /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
   
   CromwellVersion:
@@ -342,7 +341,7 @@ Resources:
                 state_file = /var/lib/awslogs/agent-state        
                 
                 [cromwell-server]
-                file = /tmp/cromwell-server.log
+                file = /home/ec2-user/cromwell-server.log
                 log_group_name = cromwell-server
                 log_stream_name = %%INSTANCE-ID%%
               mode: 000664
@@ -476,30 +475,30 @@ Resources:
               group: "ec2-user"
               content: |
                 [unix_http_server]
-                file=/tmp/supervisor.sock   ; the path to the socket file
+                file=/home/ec2-user/supervisor.sock   ; the path to the socket file
                 
                 [supervisord]
-                logfile=/tmp/supervisord.log ; main log file; default $CWD/supervisord.log
-                logfile_maxbytes=50MB        ; max main logfile bytes b4 rotation; default 50MB
-                logfile_backups=10           ; # of main logfile backups; 0 means none, default 10
-                loglevel=info                ; log level; default info; others: debug,warn,trace
-                pidfile=/tmp/supervisord.pid ; supervisord pidfile; default supervisord.pid
-                nodaemon=false               ; start in foreground if true; default false
-                minfds=1024                  ; min. avail startup file descriptors; default 1024
-                minprocs=200                 ; min. avail process descriptors;default 200
+                logfile=/home/ec2-user/supervisord.log ; main log file; default $CWD/supervisord.log
+                logfile_maxbytes=50MB                  ; max main logfile bytes b4 rotation; default 50MB
+                logfile_backups=10                     ; # of main logfile backups; 0 means none, default 10
+                loglevel=info                          ; log level; default info; others: debug,warn,trace
+                pidfile=/home/ec2-user/supervisord.pid ; supervisord pidfile; default supervisord.pid
+                nodaemon=false                         ; start in foreground if true; default false
+                minfds=1024                            ; min. avail startup file descriptors; default 1024
+                minprocs=200                           ; min. avail process descriptors;default 200
                 
                 [rpcinterface:supervisor]
                 supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
 
                 [supervisorctl]
-                serverurl=unix:///tmp/supervisor.sock ; use a unix:// URL  for a unix socket
+                serverurl=unix:///home/ec2-user/supervisor.sock ; use a unix:// URL  for a unix socket
 
                 [program:cromwell-server]
                 command=java -Dconfig.file=cromwell.conf -XX:MaxRAMPercentage=85.0 -jar cromwell.jar server  ; the program (relative uses PATH, can take args)
                 directory=/home/ec2-user                                                                     ; directory to cwd to before exec (def no cwd)
                 user=ec2-user                                                                                ; setuid to this UNIX account to run the program
                 redirect_stderr=true                                                                         ; redirect proc stderr to stdout (default false)
-                stdout_logfile=/tmp/cromwell-server.log                                                      ; stdout log path, NONE for none; default AUTO
+                stdout_logfile=/home/ec2-user/cromwell-server.log                                            ; stdout log path, NONE for none; default AUTO
           
             "/etc/nginx/nginx.conf":
               mode: "000644"
@@ -585,6 +584,12 @@ Resources:
                         }
                     }
                 }
+
+            "/home/ec2-user/supervisord.log":
+              content: "\n"
+              mode: "000664"
+              owner: "ec2-user"
+              group: "ec2-user"
 
           commands:
             00_get_instance_id:

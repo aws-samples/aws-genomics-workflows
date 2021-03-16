@@ -1,4 +1,4 @@
-FROM ubuntu:18.04 AS build
+FROM public.ecr.aws/lts/ubuntu:18.04 AS build
 
 ARG BWA_VERSION=0.7.17
 
@@ -19,7 +19,7 @@ RUN wget https://github.com/lh3/bwa/releases/download/v${BWA_VERSION}/bwa-${BWA_
  && cp bwa /opt/src
 
 
-FROM ubuntu:18.04 AS final
+FROM public.ecr.aws/lts/ubuntu:18.04 AS final
 
 RUN apt-get update -y \
  && apt-get install -y \

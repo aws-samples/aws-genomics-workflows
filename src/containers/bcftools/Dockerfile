@@ -1,9 +1,9 @@
-FROM ubuntu:18.04 AS build
+FROM public.ecr.aws/lts/ubuntu:18.04 AS build
 
 ARG VERSION=1.9
 
 # Metadata
-LABEL container.base.image="ubuntu:18.04"
+LABEL container.base.image="public.ecr.aws/lts/ubuntu:18.04"
 LABEL software.name="BCFtools"
 LABEL software.version=${VERSION}
 LABEL software.description="Utilities for variant calling and manipulating files in the Variant Call Format (VCF) and its binary counterpart BCF"
@@ -37,7 +37,7 @@ RUN wget -O /bcftools-${VERSION}.tar.bz2 \
 WORKDIR /bcftools-${VERSION}
 RUN ./configure && make
 
-FROM ubuntu:18.04 AS final
+FROM public.ecr.aws/lts/ubuntu:18.04 AS final
 COPY --from=build /bcftools-*/bcftools /usr/local/bin
 
 RUN apt-get -y update && \
