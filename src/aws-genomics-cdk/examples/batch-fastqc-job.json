@@ -1,0 +1,27 @@
+{
+    "jobName": "fastqc",
+    "jobQueue": "genomics-default-queue",
+    "jobDefinition": "fastqc:1",
+    "containerOverrides": {
+        "vcpus": 2,
+        "memory": 4000,
+        "command": ["fastqc *.gz"],
+        "environment": [{
+                "name": "JOB_INPUTS",
+                "value": "s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq/NIST7035_R1_trim_samp-0p1.fastq.gz s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq/NIST7035_R2_trim_samp-0p1.fastq.gz"
+            },
+            {
+                "name": "JOB_OUTPUTS",
+                "value": "*.html *.zip"
+            },
+            {
+                "name": "JOB_OUTPUT_PREFIX",
+                "value": "s3://[YOUR BUCKET NAME]/[SOME PREFIX]"
+            },
+            {
+                "name": "JOB_AWS_CLI_PATH",
+                "value": "/opt/aws-cli/bin"
+            }
+        ]
+    }
+}

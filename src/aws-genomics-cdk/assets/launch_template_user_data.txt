@@ -1,0 +1,34 @@
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+
+--==BOUNDARY==
+Content-Type: text/cloud-config; charset="us-ascii"
+
+packages:
+- jq
+- btrfs-progs
+- sed
+- git
+- amazon-ssm-agent
+- unzip
+
+runcmd:
+# install aws-cli v2 and copy the static binary in an easy to find location for bind-mounts into containers
+- curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+- unzip -q /tmp/awscliv2.zip -d /tmp
+- /tmp/aws/install -b /usr/bin
+
+# check that the aws-cli was actually installed. if not shutdown (terminate) the instance
+- command -v aws || shutdown -P now
+
+- mkdir -p /opt/aws-cli/bin
+- cp -a $(dirname $(find /usr/local/aws-cli -name 'aws' -type f))/. /opt/aws-cli/bin/
+
+
+# enable ecs spot instance draining
+- echo ECS_ENABLE_SPOT_INSTANCE_DRAINING=true >> /etc/ecs/ecs.config
+
+- systemctl enable amazon-ssm-agent
+- systemctl start amazon-ssm-agent
+
+--==BOUNDARY==--

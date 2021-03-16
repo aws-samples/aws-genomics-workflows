@@ -1,0 +1,63 @@
+{
+  "availability-zones:account=549173009724:region=us-west-2": [
+    "us-west-2a",
+    "us-west-2b",
+    "us-west-2c",
+    "us-west-2d"
+  ],
+  "vpc-provider:account=549173009724:filter.tag:Name=GenomicsPipelineStack/genomics-vpc-stack/genomics-vpc:region=us-west-2:returnAsymmetricSubnets=true": {
+    "vpcId": "vpc-0e12b34b410ce432d",
+    "vpcCidrBlock": "10.0.0.0/16",
+    "availabilityZones": [],
+    "subnetGroups": [
+      {
+        "name": "public",
+        "type": "Public",
+        "subnets": [
+          {
+            "subnetId": "subnet-01f8be5070f8f0c41",
+            "cidr": "10.0.3.0/24",
+            "availabilityZone": "us-west-2a",
+            "routeTableId": "rtb-0db455d5a3da84065"
+          },
+          {
+            "subnetId": "subnet-0c0e2287b8f96dff9",
+            "cidr": "10.0.4.0/24",
+            "availabilityZone": "us-west-2b",
+            "routeTableId": "rtb-0c5cd45dbc8e33ef7"
+          },
+          {
+            "subnetId": "subnet-0c2c15f728465a4c2",
+            "cidr": "10.0.5.0/24",
+            "availabilityZone": "us-west-2c",
+            "routeTableId": "rtb-0c2e59776f577a3b7"
+          }
+        ]
+      },
+      {
+        "name": "private",
+        "type": "Private",
+        "subnets": [
+          {
+            "subnetId": "subnet-0d82fc3969299134f",
+            "cidr": "10.0.0.0/24",
+            "availabilityZone": "us-west-2a",
+            "routeTableId": "rtb-0d6ddf764ea60615b"
+          },
+          {
+            "subnetId": "subnet-095bc96659c1f7af4",
+            "cidr": "10.0.1.0/24",
+            "availabilityZone": "us-west-2b",
+            "routeTableId": "rtb-0de1df34a81474cf1"
+          },
+          {
+            "subnetId": "subnet-013b7a044af9c6542",
+            "cidr": "10.0.2.0/24",
+            "availabilityZone": "us-west-2c",
+            "routeTableId": "rtb-0541671d21b141dc3"
+          }
+        ]
+      }
+    ]
+  }
+}
