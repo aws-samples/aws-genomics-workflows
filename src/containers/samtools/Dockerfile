@@ -1,4 +1,4 @@
-FROM ubuntu:18.04 AS build
+FROM public.ecr.aws/lts/ubuntu:18.04 AS build
 
 ARG VERSION=1.9
 
@@ -37,7 +37,7 @@ RUN wget -O /samtools-${VERSION}.tar.bz2 \
 WORKDIR /samtools-${VERSION}
 RUN ./configure && make
 
-FROM ubuntu:18.04 AS final
+FROM public.ecr.aws/lts/ubuntu:18.04 AS final
 COPY --from=build /samtools-*/samtools /usr/local/bin
 
 RUN apt-get -y update && \
