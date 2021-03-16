@@ -8,7 +8,11 @@ cp /opt/ecs-additions/fetch_and_run.sh /usr/local/bin
 mv /opt/aws-cli/bin /opt/aws-cli/dist
 chmod a+x /opt/ecs-additions/awscli-shim.sh
 mkdir /opt/aws-cli/bin
-cp /opt/ecs-additions/awscli-shim.sh /opt/aws-cli/bin/aws
+cp /opt/ecs-additions/awscli-shim.sh /opt/aws-cli/bin/aws                  # Used in Nextflow
+
+# Remove current symlink
+rm -f /usr/local/aws-cli/v2/current/bin/aws
+cp /opt/ecs-additions/awscli-shim.sh /usr/local/aws-cli/v2/current/bin/aws # Used in Cromwell
 
 # add 4GB of swap space
 dd if=/dev/zero of=/swapfile bs=128M count=32
