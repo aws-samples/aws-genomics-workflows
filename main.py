@@ -24,19 +24,21 @@ def declare_variables(variables, macro):
         s3 = _artifacts['s3']
 
         if template.lower().startswith('http'):
-            cfn_url = template
+            template_url = template
         else:
             s3['object'] = "/".join(
                 filter(None, [s3.get('prefix'), 'latest', 'templates', template])
             )
 
-            cfn_url = "".join([
-                "https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=",
-                name,
-                "&templateURL=",
-                "https://{bucket}.s3.amazonaws.com/{object}".format(**s3),
-            ])
+            template_url = "https://{bucket}.s3.amazonaws.com/{object}".format(**s3)
 
+        cfn_url = "".join([
+            "https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=",
+            name,
+            "&templateURL=",
+            template_url,
+        ])
+        
         img_src = "/" + "/".join(
             filter(None, [s3.get('prefix'), 'images/cloudformation-launch-stack.png'])
         )
