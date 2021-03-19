@@ -2,9 +2,10 @@
 
 set -e
 
-bash _scripts/make-dist.sh
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+bash ${DIR}/make-dist.sh
 mkdocs build
-
+exit
 SITE_BUCKET=s3://docs.opendata.aws/genomics-workflows
 ASSET_BUCKET=s3://aws-genomics-workflows
 ASSET_STAGE=test
@@ -44,7 +45,6 @@ while (( "$#" )); do
             ;;
     esac
 done
-
 eval set -- "$PARAMS"
 
 ASSET_STAGE=${1:-$ASSET_STAGE}
