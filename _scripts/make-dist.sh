@@ -60,7 +60,7 @@ set -e
 
 CWD=`pwd`
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-INSTALL_DIR=`dirname $DIR`
+INSTALL_DIR=$(dirname $DIR)
 SOURCE_PATH=$INSTALL_DIR/src
 DIST_PATH=$INSTALL_DIR/dist
 
@@ -97,20 +97,20 @@ curl --silent -L \
     "https://github.com/awslabs/amazon-ebs-autoscale/archive/${EBS_AUTOSCALE_VERSION}.tar.gz" \
     -o ./amazon-ebs-autoscale.tar.gz 
 
-echo "copying `tar -tzf ./amazon-ebs-autoscale.tar.gz | wc -l` files from ebs-autoscale $EBS_AUTOSCALE_VERSION into tmp/amazon-ebs-autoscale/"
+echo "copying $(tar -tzf ./amazon-ebs-autoscale.tar.gz | wc -l) files from ebs-autoscale $EBS_AUTOSCALE_VERSION into tmp/amazon-ebs-autoscale/"
 tar $VERBOSE -xzf ./amazon-ebs-autoscale.tar.gz
 mv ./amazon-ebs-autoscale*/ ./amazon-ebs-autoscale
 echo $EBS_AUTOSCALE_VERSION > ./amazon-ebs-autoscale/VERSION
 
-echo "copying src/ebs-autoscale with `find $SOURCE_PATH/ebs-autoscale/ -type f | wc -l` files to tmp/"
+echo "copying src/ebs-autoscale with $(find $SOURCE_PATH/ebs-autoscale/ -type f | wc -l) files to tmp/"
 cp $VERBOSE -Rf $SOURCE_PATH/ebs-autoscale .
-echo "copying `find amazon-ebs-autoscale -type f | wc -l` files from tmp/amazon-ebs-autoscale/ to tmp/ebs-autoscale/"
+echo "copying $(find amazon-ebs-autoscale -type f | wc -l) files from tmp/amazon-ebs-autoscale/ to tmp/ebs-autoscale/"
 cp $VERBOSE -Rf ./amazon-ebs-autoscale/* ./ebs-autoscale/
-echo "creating artifacts/aws-ebs-autoscale.tgz with `find ./ebs-autoscale/ -type f | wc -l` files from tmp/ebs-autoscale/"
+echo "creating artifacts/aws-ebs-autoscale.tgz with $(find ./ebs-autoscale/ -type f | wc -l) files from tmp/ebs-autoscale/"
 tar $VERBOSE -czf $ARTIFACT_PATH/aws-ebs-autoscale.tgz ./ebs-autoscale/
 
 # add a copy of the release tarball for naming consistency
-echo "creating artifacts/amazon-ebs-autoscale.tgz with `find ./amazon-ebs-autoscale/ -type f | wc -l` files from tmp/amazon-ebs-autoscale/"
+echo "creating artifacts/amazon-ebs-autoscale.tgz with $(find ./amazon-ebs-autoscale/ -type f | wc -l) files from tmp/amazon-ebs-autoscale/"
 tar $VERBOSE -czf $ARTIFACT_PATH/amazon-ebs-autoscale.tgz ./amazon-ebs-autoscale
 
 # add a retrieval script
@@ -126,7 +126,7 @@ for fn in `ls .`; do
     cd $TEMP_PATH/lambda/$fn
     [ -z $VERBOSE ] && P_QUIET='--quiet' || P_QUIET=''
     pip $P_QUIET install -t . -r requirements.txt
-    echo "creating artifacts/lambda-${fn}.zip with `find . -type f | wc -l` files"
+    echo "creating artifacts/lambda-${fn}.zip with $(find . -type f | wc -l) files"
     [ -z $VERBOSE ] && Z_QUIET='-q' || Z_QUIET=''
     zip $Z_QUIET -r $ARTIFACT_PATH/lambda-$fn.zip .
 done
@@ -151,13 +151,13 @@ zip $Z_QUIET -r $ARTIFACT_PATH/aws-ecs-additions.zip ./*
 
 
 # package container code
-echo "packaging container definitions with `find $SOURCE_PATH/containers -type f | wc -l` files"
+echo "packaging container definitions with $(find $SOURCE_PATH/containers -type f | wc -l) files"
 cd $SOURCE_PATH/containers
 zip $Z_QUIET -r $ARTIFACT_PATH/containers.zip ./*
 
 
 # add templates to dist
-echo "copying `find $SOURCE_PATH/templates/ -type f | wc -l` cloudformation templates"
+echo "copying $(find $SOURCE_PATH/templates/ -type f | wc -l) cloudformation templates"
 cp $VERBOSE -R $SOURCE_PATH/templates/. $TEMPLATES_PATH
 
 

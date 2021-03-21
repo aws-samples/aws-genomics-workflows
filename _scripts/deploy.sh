@@ -1,17 +1,16 @@
 #!/bin/bash
 
+# deploy.sh: Create and deploy distribution artifacts
+
 set -e
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-bash ${DIR}/make-dist.sh
-mkdocs build
-exit
 SITE_BUCKET=s3://docs.opendata.aws/genomics-workflows
 ASSET_BUCKET=s3://aws-genomics-workflows
 ASSET_STAGE=test
 ASSET_PROFILE=asset-publisher
 DEPLOY_REGION=us-east-1
 
+VERBOSE=''
 PARAMS=""
 while (( "$#" )); do
     case "$1" in
@@ -31,6 +30,10 @@ while (( "$#" )); do
             DEPLOY_REGION=$2
             shift 2
             ;;
+        --verbose)
+            VERBOSE='--verbose'
+            shift
+            ;;
         --) # end optional argument parsing
             shift
             break
@@ -48,6 +51,9 @@ done
 eval set -- "$PARAMS"
 
 ASSET_STAGE=${1:-$ASSET_STAGE}
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+bash ${DIR}/make-dist.sh $VERBOSE
 
 function s3_uri() {
     BUCKET=$1
@@ -68,20 +74,23 @@ function s3_sync() {
     echo "syncing ..."
     echo "   from: $source"
     echo "     to: $destination"
-    aws s3 sync \
+    cmd="aws s3 sync \
         --profile $ASSET_PROFILE \
         --region $DEPLOY_REGION \
-        --acl public-read \
         --delete \
         --metadata commit=$(git rev-parse HEAD) \
         $source \
-        $destination
+        $destination"
+    echo $cmd
+    eval $cmd
+    exit
 }
 
 function publish() {
     local source=$1
     local destination=$2
 
+    echo "publish(source: $source, destintation: $destination)"
     if [[ $USE_RELEASE_TAG && ! -z "$TRAVIS_TAG" ]]; then
         # create explicit pinned versions "latest" and TRAVIS_TAG
         # pin the TRAVIS_TAG first, since the files are modified inplace
@@ -149,6 +158,13 @@ function templates() {
 
 
 function site() {
+    echo "building site"
+    if [[ ! `command -v mkdocs` ]]; then
+        echo "requirement mkdocs not found. aborting"
+        exit 1
+    fi
+    mkdocs build
+
     echo "publishing site"
     aws s3 sync \
         --region $DEPLOY_REGION \
@@ -166,6 +182,13 @@ function all() {
     site
 }
 
+# Add 's3://' when missing from bucket names
+for bucketname in ASSET_BUCKET SITE_BUCKET; do
+    if [[ ! $(echo ${!bucketname} | grep 's3://') ]]; then
+        newname="s3://${!bucketname}";
+        eval $bucketname=\$newname;
+    fi
+done
 
 echo "DEPLOYMENT STAGE: $ASSET_STAGE"
 case $ASSET_STAGE in
