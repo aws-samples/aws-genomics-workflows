@@ -28,14 +28,14 @@ before_deploy:
 
 deploy:
   - provider: script
-    script: bash _scripts/deploy.sh production
+    script: bash _scripts/deploy.sh --verbose production
     skip_cleanup: true
     on:
       repo: aws-samples/aws-genomics-workflows
       branch: release
       tags: true
   - provider: script
-    script: bash _scripts/deploy.sh test
+    script: bash _scripts/deploy.sh --verbose test
     skip_cleanup: true
     on:
       repo: aws-samples/aws-genomics-workflows

@@ -77,6 +77,7 @@ function s3_sync() {
     cmd="aws s3 sync \
         --profile $ASSET_PROFILE \
         --region $DEPLOY_REGION \
+        --acl public-read \
         --delete \
         --metadata commit=$(git rev-parse HEAD) \
         $source \
