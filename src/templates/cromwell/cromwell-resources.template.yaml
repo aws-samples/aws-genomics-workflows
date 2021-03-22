@@ -333,6 +333,7 @@ Resources:
             - config1
             - config2
             - config3
+            - config4
 
         config1:
           files:
