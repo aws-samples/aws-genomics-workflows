@@ -92,7 +92,12 @@ done
 echo "packaging amazon-ebs-autoscale"
 cd $TEMP_PATH
 
-EBS_AUTOSCALE_VERSION=$(curl --silent "https://api.github.com/repos/awslabs/amazon-ebs-autoscale/releases/latest" | jq -r .tag_name)
+RESPONSE=$(curl --silent "https://api.github.com/repos/awslabs/amazon-ebs-autoscale/releases/latest")
+EBS_AUTOSCALE_VERSION=$(echo $RESPONSE | jq -r .tag_name)
+if [[ $EBS_AUTOSCALE_VERSION = 'null' ]]; then
+    echo "ERROR: $RESPONSE"
+    exit 1
+fi
 curl --silent -L \
     "https://github.com/awslabs/amazon-ebs-autoscale/archive/${EBS_AUTOSCALE_VERSION}.tar.gz" \
     -o ./amazon-ebs-autoscale.tar.gz 

@@ -10,6 +10,21 @@ ASSET_STAGE=test
 ASSET_PROFILE=asset-publisher
 DEPLOY_REGION=us-east-1
 
+usage() {
+    cat <<EOM
+    Usage:
+    $(basename $0) [--site-bucket BUCKET] [--asset-bucket BUCKET] [--asset-profile PROFILE] [--deploy-region REGION] [--public] [--verbose]
+
+    --site-bucket BUCKET        Deploy documentation site to BUCKET
+    --asset-bucket BUCKET       Deploy assets to BUCKET
+    --asset-profile PROFILE     Use PROFILE for AWS CLI commands
+    --deploy-region REGION      Deploy in region REGION
+    --public                    Deploy to public bucket with '--acl public-read' (Default false)
+    --verbose                   Display more output
+EOM
+}
+
+ACL_PUBLIC_READ=''
 VERBOSE=''
 PARAMS=""
 while (( "$#" )); do
@@ -29,6 +44,14 @@ while (( "$#" )); do
         --deploy-region)
             DEPLOY_REGION=$2
             shift 2
+            ;;
+        --help)
+            usage
+            exit 0
+            ;;
+        --public)
+            ACL_PUBLIC_READ='--acl public-read'
+            shift
             ;;
         --verbose)
             VERBOSE='--verbose'
@@ -77,7 +100,7 @@ function s3_sync() {
     cmd="aws s3 sync \
         --profile $ASSET_PROFILE \
         --region $DEPLOY_REGION \
-        --acl public-read \
+        $ACL_PUBLIC_READ \
         --delete \
         --metadata commit=$(git rev-parse HEAD) \
         $source \
@@ -164,12 +187,14 @@ function site() {
         echo "requirement mkdocs not found. aborting"
         exit 1
     fi
-    mkdocs build
+    [ -z $VERBOSE ] && QUIET='-q' || QUIET=''
+    mkdocs build $QUIET
 
     echo "publishing site"
     aws s3 sync \
+        --profile $ASSET_PROFILE \
         --region $DEPLOY_REGION \
-        --acl public-read \
+        $ACL_PUBLIC_READ \
         --delete \
         --metadata commit=$(git rev-parse HEAD) \
         ./site \
