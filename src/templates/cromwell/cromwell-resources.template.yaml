@@ -44,7 +44,7 @@ Metadata:
           - CromwellVersion
           - CromwellVersionSpecified
           - CromwellJarUrl
-          - S3OpenDataBucketARNs
+          - S3DataBucketARNs
           - DBUsername
           - DBPassword
       
@@ -61,7 +61,7 @@ Metadata:
         default: "SSH Address Range"
       HTTPLocation:
         default: "HTTP Address Range"
-      S3OpenDataBucketARNs:
+      S3DataBucketARNs:
         default: "S3 Open Data Bucket ARNs"
       CromwellVersion:
         default: "Cromwell Version"
@@ -194,9 +194,9 @@ Parameters:
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
 
-  S3OpenDataBucketARNs:
+  S3DataBucketARNs:
     Description: Open datasets on AWS S3 for workflow inputs
-    Type: String
+    Type: CommaDelimitedList
     Default: "arn:aws:s3:::gatk-test-data/*,arn:aws:s3:::broad-references/*"
 
 
@@ -259,9 +259,10 @@ Resources:
                   - "s3:ListBucket"
                   - "s3:ListAllMyBuckets"
               - Effect: Allow
-                Resource: !Split [",", !Ref S3OpenDataBucketARNs]
+                Resource: !Ref S3DataBucketARNs
                 Action:
                   - "s3:GetObject"
+                  - "s3:ListBucket"
         
         - PolicyName: !Sub CromwellServer-CloudWatch-Access-${AWS::Region}
           PolicyDocument:
@@ -332,14 +333,15 @@ Resources:
             - config1
             - config2
             - config3
+            - config4
 
         config1:
           files:
             "/etc/awslogs/awslogs.conf":
               content: |
                 [general]
-                state_file = /var/lib/awslogs/agent-state        
-                
+                state_file = /var/lib/awslogs/agent-state
+
                 [cromwell-server]
                 file = /home/ec2-user/cromwell-server.log
                 log_group_name = cromwell-server
@@ -363,7 +365,11 @@ Resources:
               - |
                 #!/bin/bash
                 url=${DownloadUrl}
-                curl --retry 5 --retry-connrefused -LO $url
+                if [[ $url == s3://* ]]; then
+                  aws s3 cp $url .
+                else
+                  curl --retry 5 --retry-connrefused -LO $url
+                fi
                 ln -s $(find . | grep "cromwell.*\.jar") cromwell.jar
               - DownloadUrl:
                   Fn::If:
