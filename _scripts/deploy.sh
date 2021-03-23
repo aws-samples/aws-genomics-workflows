@@ -107,7 +107,6 @@ function s3_sync() {
         $destination"
     echo $cmd
     eval $cmd
-    exit
 }
 
 function publish() {
@@ -158,11 +157,12 @@ function pin_version() {
     local version=$1
     local asset=$2
     local folder=$3
-
+    
     echo "PINNING VERSIONS"
     for file in `grep -irl "$asset  # dist: pin_version" $folder`; do
         echo "pinning '$asset' as '$version/$asset' in '$file'"
-        sed -i'' -e "s|$asset  # dist: pin_version|$version/$asset  #|g" $file
+        sed -e "s|$asset  # dist: pin_version|$version/$asset  #|g" $file > $file.tmp
+        mv $file.tmp $file
     done
 }
 
