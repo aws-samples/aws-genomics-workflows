@@ -24,18 +24,18 @@ script:
 before_deploy:
 
   - pip install awscli --upgrade
-  - bash _scripts/configure-deploy.sh
+  - bash _scripts/configure-deploy.sh --clobber
 
 deploy:
   - provider: script
-    script: bash _scripts/deploy.sh production
+    script: bash _scripts/deploy.sh --public --verbose production
     skip_cleanup: true
     on:
       repo: aws-samples/aws-genomics-workflows
       branch: release
       tags: true
   - provider: script
-    script: bash _scripts/deploy.sh test
+    script: bash _scripts/deploy.sh --public --verbose test
     skip_cleanup: true
     on:
       repo: aws-samples/aws-genomics-workflows
