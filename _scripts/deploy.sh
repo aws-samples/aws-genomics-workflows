@@ -192,7 +192,6 @@ function site() {
 
     echo "publishing site"
     aws s3 sync \
-        --profile $ASSET_PROFILE \
         --region $DEPLOY_REGION \
         $ACL_PUBLIC_READ \
         --delete \
