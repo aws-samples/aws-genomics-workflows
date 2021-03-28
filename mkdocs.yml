@@ -59,3 +59,5 @@ extra:
     s3:
       bucket: docs.opendata.aws
       prefix: genomics-workflows
+
+use_directory_urls: false

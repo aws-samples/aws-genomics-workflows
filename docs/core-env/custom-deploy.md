@@ -1,4 +1,4 @@
-# Customized Templates and Artifacts
+# Customized Deployment
 
 Deployments of the 'Nextflow on AWS Batch' solution are based on nested CloudFormation templates, and on artifacts comprising scripts, software packages, and configuration files.  The templates and artifacts are stored in S3 buckets, and their S3 URLs are used when launching the top-level template and as parameters to that template's deployment.  
 
