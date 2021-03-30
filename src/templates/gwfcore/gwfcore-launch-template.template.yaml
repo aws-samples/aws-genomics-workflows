@@ -148,6 +148,16 @@ Resources:
                                 "file_path": "/var/log/ecs/ecs-volume-plugin.log",
                                 "log_group_name": "/aws/ecs/container-instance/${Namespace}",
                                 "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/ecs-volume-plugin.log"
+                              },
+                              {
+                                "file_path": "/var/log/ebs-autoscale-install.log",
+                                "log_group_name": "/aws/ecs/container-instance/${Namespace}",
+                                "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/ebs-autoscale-install.log"
+                              },
+                              {
+                                "file_path": "/var/log/ebs-autoscale.log",
+                                "log_group_name": "/aws/ecs/container-instance/${Namespace}",
+                                "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/ebs-autoscale.log"
                               }
                             ]
                           }
