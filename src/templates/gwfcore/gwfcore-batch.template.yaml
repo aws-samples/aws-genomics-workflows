@@ -1,0 +1,273 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  (WWPS-GLS-WF-GWFCORE-BATCH) Deploys resource for a AWS Batch environment that is 
+  suitable for genomics, including default and high-priority JobQueues.
+
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "AWS Batch Environment Config"
+        Parameters:
+        - Namespace
+        - LaunchTemplateId
+        - VpcId
+        - SubnetIds
+        - DefaultCEMinvCpus
+        - DefaultCEMaxvCpus
+        - PriorityCEMinvCpus
+        - PriorityCEMaxvCpus
+        - BatchServiceRoleArn
+        - Ec2InstanceProfileArn
+        - SpotFleetRoleArn
+    ParameterLabels:
+      LaunchTemplateId:
+        default: Launch Template ID
+      VpcId:
+        default: VPC ID
+      SubnetIds:
+        default: VPC Subnet IDs
+      DefaultCEMinvCpus:
+        default: Default Queue Min vCPU count
+      DefaultCEMaxvCpus:
+        default: Default Queue Max vCPU count
+      PriorityCEMinvCpus:
+        default: Priority Queue Min vCPU count
+      PriorityCEMaxvCpus:
+        default: Priority Queue Max vCPU count
+      BatchServiceRoleArn:
+        default: AWS Batch service role ARN
+      Ec2InstanceProfileArn:
+        default: EC2 Instance Profile ARN
+      SpotFleetRoleArn:
+        default: Spot Fleet Role ARN
+
+
+Parameters:
+  Namespace:
+    Type: String
+    Description: Namespace (e.g. project name) to use to label resources
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: 'The VPC to create security groups and deploy AWS Batch to. NOTE: Must be the same VPC as the provided subnet IDs.'
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: 'Subnets you want your batch compute environment to launch in. We recommend private subnets. NOTE: Must be from the VPC provided.'
+  LaunchTemplateId:
+    Type: String
+    Description: Launch Template you want your AWS Batch Compute Environments to use
+  PriorityCEMinvCpus:
+    Type: Number
+    Description: Minimum number of CPUs in the high-priority compute environment. Default 0.
+    Default: 0
+    MinValue: 0
+  PriorityCEMaxvCpus:
+    Type: Number
+    Description: Maximum number of CPUs in the high-priority compute environment. Should be >= than MinCpus
+    Default: 100
+    MinValue: 0
+  DefaultCEMinvCpus:
+    Type: Number
+    Description: Minimum number of CPUs in the default compute environment. Default 0.
+    Default: 0
+    MinValue: 0
+  DefaultCEMaxvCpus:
+    Type: Number
+    Description: Maximum number of CPUs in the default compute environment. Should be >= than MinCpus
+    Default: 100
+    MinValue: 0
+  BatchServiceRoleArn:
+    Type: String
+    Description: The IAM Role ARN for the Batch service
+  SpotFleetRoleArn:
+    Type: String
+    Description: The IAM Role ARN for Batch to call Spot Fleet service
+  Ec2InstanceProfileArn:
+    Type: String
+    Description: The IAM Role ARN for the Batch service
+
+Resources:
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SG for genomics workflows on Batch
+      VpcId:
+        Ref: VpcId
+  SGSSHIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref SecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: 0.0.0.0/0
+  SGAllTcpEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref SecurityGroup
+      IpProtocol: tcp
+      FromPort: 0
+      ToPort: 65535
+      CidrIp: 0.0.0.0/0
+  SGAllTcpSelfIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref SecurityGroup
+      IpProtocol: tcp
+      FromPort: 0
+      ToPort: 65535
+      SourceSecurityGroupId: !Ref SecurityGroup
+
+  SpotComputeEnv:
+    Type: AWS::Batch::ComputeEnvironment
+    Properties:
+      ComputeEnvironmentName: !Sub spot-${Namespace}
+      ServiceRole: !Ref BatchServiceRoleArn
+      Type: MANAGED
+      State: ENABLED
+      ComputeResources:
+        Ec2Configuration:
+          - ImageType: ECS_AL2
+        AllocationStrategy: SPOT_CAPACITY_OPTIMIZED
+        # Set the Spot price to 100% of on-demand price
+        # This is the maximum price for spot instances that Batch will launch.
+        # Lowering this puts a limit on the spot capacity that Batch has available.
+        # Spot instances are terminated when on-demand capacity is needed, regardless of the price set.
+        BidPercentage: 100 
+        # Ec2KeyPair: !Ref Ec2KeyPairName
+        LaunchTemplate:
+          LaunchTemplateId: !Ref LaunchTemplateId
+          Version: $Latest
+        InstanceRole: !Ref Ec2InstanceProfileArn
+        InstanceTypes:
+          - c4.large
+          - m4.large
+          - r4.large
+          - c4.xlarge
+          - m4.xlarge
+          - r4.xlarge
+          - c4.2xlarge
+          - m4.2xlarge
+          - r4.2xlarge
+          - c4.4xlarge
+          - m4.4xlarge
+          - r4.4xlarge
+          - c5.large
+          - m5.large
+          - r5.large
+          - c5.xlarge
+          - m5.xlarge
+          - r5.xlarge
+          - c5.2xlarge
+          - m5.2xlarge
+          - r5.2xlarge
+          - c5.4xlarge
+          - m5.4xlarge
+          - r5.4xlarge
+          - c5n.large
+          - m5n.large
+          - r5n.large
+          - c5n.xlarge
+          - m5n.xlarge
+          - r5n.xlarge
+          - c5n.2xlarge
+          - m5n.2xlarge
+          - r5n.2xlarge
+          - c5n.4xlarge
+          - m5n.4xlarge
+          - r5n.4xlarge
+        MinvCpus: !Ref DefaultCEMinvCpus
+        MaxvCpus: !Ref DefaultCEMaxvCpus
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SpotIamFleetRole: !Ref SpotFleetRoleArn
+        Subnets: !Ref SubnetIds
+        Type: SPOT
+        Tags:
+          Name: !Sub batch-worker-spot-${Namespace}
+
+  OnDemandComputeEnv:
+    Type: AWS::Batch::ComputeEnvironment
+    Properties:
+      ComputeEnvironmentName: !Sub ondemand-${Namespace}
+      ServiceRole: !Ref BatchServiceRoleArn
+      Type: MANAGED
+      State: ENABLED
+      ComputeResources:
+        Ec2Configuration:
+          - ImageType: ECS_AL2
+        AllocationStrategy: BEST_FIT
+        LaunchTemplate:
+          LaunchTemplateId: !Ref LaunchTemplateId
+          Version: $Latest
+        InstanceRole:  !Ref Ec2InstanceProfileArn
+        InstanceTypes:
+          - c5.large
+          - m5.large
+          - r5.large
+          - c5.xlarge
+          - m5.xlarge
+          - r5.xlarge
+          - c5.2xlarge
+          - m5.2xlarge
+          - r5.2xlarge
+          - c5.4xlarge
+          - m5.4xlarge
+          - r5.4xlarge
+          - c5n.large
+          - m5n.large
+          - r5n.large
+          - c5n.xlarge
+          - m5n.xlarge
+          - r5n.xlarge
+          - c5n.2xlarge
+          - m5n.2xlarge
+          - r5n.2xlarge
+          - c5n.4xlarge
+          - m5n.4xlarge
+          - r5n.4xlarge
+        MinvCpus: !Ref PriorityCEMinvCpus
+        MaxvCpus: !Ref PriorityCEMaxvCpus
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        Subnets: !Ref SubnetIds
+        Type: EC2
+        Tags:
+          Name: !Sub batch-worker-ondemand-${Namespace}
+
+  PriorityQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: !Sub priority-${Namespace}
+      Priority: 1000
+      State: ENABLED
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment: !Ref OnDemandComputeEnv
+
+  DefaultQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: !Sub default-${Namespace}
+      Priority: 1
+      State: ENABLED
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment: !Ref SpotComputeEnv
+        - Order: 2
+          ComputeEnvironment: !Ref OnDemandComputeEnv
+
+  ContainerInstanceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/ecs/container-instance/${Namespace}"
+      RetentionInDays: 7
+
+Outputs:
+  DefaultJobQueueArn:
+    Value: !Ref DefaultQueue
+  PriorityJobQueueArn:
+    Value: !Ref PriorityQueue
+...

@@ -1,0 +1,24 @@
+# CodeBuild buildspec file for creating container image for nextflow
+# assumes the following environment variables:
+# - PROJECT_BRANCH: git branch / tag / commit-id to build
+# - PROJECT_PATH: path in the source to navigate to prior to build
+# - REGISTRY: docker image registry (e.g. ECR) to push the container image to
+# - IMAGE_NAME: name of the container image
+# - IMAGE_TAG: tag for the container image (will also push as "latest")
+# - AWS_REGION: (Provided by CodeBuild) region to use for ECR
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - git checkout $PROJECT_BRANCH
+      - cd $PROJECT_PATH
+      - cp -R ../_common .
+  build:
+    commands:
+      - echo "Building container image"
+      - docker build --build-arg VERSION=${IMAGE_TAG} -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest .
+  post_build:
+    commands:
+      - echo "Pushing container image"
+      - chmod +x _common/push.sh
+      - _common/push.sh ${IMAGE_NAME} ${IMAGE_TAG}

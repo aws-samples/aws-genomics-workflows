@@ -1,0 +1,85 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  (WWPS-GLS-WF-GWFCORE-S3) A S3 bucket for storing results from genomics analysis
+
+Mappings:
+  TagMap:
+    default:
+      architecture: "genomics-workflows"
+      solution: "default"
+      tags:
+        - Key: "architecture"
+          Value: "genomics-workflows"
+        - Key: "solution"
+          Value: "default"
+
+Parameters:
+  Namespace:
+    Type: String
+    Description: Namespace (e.g. project name) to use to label resources
+  
+  S3BucketName:
+    Type: String
+    Description: >-
+      A S3 bucket name for storing analysis results.
+      The bucket name must respect the S3 bucket naming conventions 
+      (can contain lowercase letters, numbers, periods and hyphens).
+      If left blank a unique bucket name will be generated.
+    AllowedPattern: "((?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)|(^.{0}$))"
+    ConstraintDescription: "Must respect AWS naming conventions"
+  ExistingBucket:
+    Type: String
+    Description: Does this bucket already exist? If not, it will be created.
+    AllowedValues:
+      - Yes
+      - No
+    Default: No
+
+Conditions:
+  BucketDoesNotExist:
+    Fn::Equals:
+      - !Ref ExistingBucket
+      - No
+  GenerateBucketName:
+    Fn::Equals:
+      - !Ref S3BucketName
+      - ""
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Condition: BucketDoesNotExist
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName:
+        Fn::If:
+          - GenerateBucketName
+          - Fn::Join: 
+            - "-"
+            - - "gwfcore"
+              - !Ref Namespace
+          - !Ref S3BucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+             SSEAlgorithm: AES256
+      Tags:
+        - Key: architecture
+          Value: !FindInMap ["TagMap", "default", "architecture"]
+
+Outputs:
+  BucketName:
+    Value:
+      Fn::If:
+        - BucketDoesNotExist
+        - !Ref S3Bucket
+        - !Ref S3BucketName
+  BucketArn:
+    Value:
+      Fn::If:
+        - BucketDoesNotExist
+        - !GetAtt S3Bucket.Arn
+        - !Join [":::", ["arn:aws:s3", !Ref S3BucketName]]
+...

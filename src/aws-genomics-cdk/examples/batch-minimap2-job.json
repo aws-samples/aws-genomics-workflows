@@ -1,0 +1,27 @@
+{
+    "jobName": "minimap2",
+    "jobQueue": "genomics-default-queue",
+    "jobDefinition": "minimap2:1",
+    "containerOverrides": {
+        "vcpus": 8,
+        "memory": 16000,
+        "command": ["minimap2 -ax map-pb Homo_sapiens_assembly38.fasta NIST7035_R1_trim_samp-0p1.fastq.gz > NIST7035.sam"],
+        "environment": [{
+            "name": "JOB_INPUTS",
+            "value": "s3://broad-references/hg38/v0/Homo_sapiens_assembly38.fasta s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq/NIST7035_R1_trim_samp-0p1.fastq.gz"
+        },
+        {
+            "name": "JOB_OUTPUTS",
+            "value": "*.sam"
+        },
+        {
+            "name": "JOB_OUTPUT_PREFIX",
+            "value": "s3://[YOUR BUCKET NAME]/[SOME PREFIX]"
+        },
+        {
+            "name": "JOB_AWS_CLI_PATH",
+            "value": "/opt/aws-cli/bin"
+        }
+        ]
+    }
+}

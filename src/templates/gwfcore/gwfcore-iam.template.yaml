@@ -1,0 +1,173 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  (WWPS-GLS-WF-GWFCORE-IAM) Creates IAM roles to use with AWS Batch scalable genomics 
+  workflow environment.
+Parameters:
+    Namespace:
+      Type: String
+      Description: Namespace (e.g. project name) to use to label resources
+  
+    S3BucketName:
+      Type: String
+      Description: The name of the S3 bucket which will store the results of genomics analyses.
+Resources:
+  BatchJobRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Policies:
+        - PolicyName: !Sub S3Bucket-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Deny
+                Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName]]
+                Action:
+                  - "s3:Delete*"
+                  - "s3:PutBucket*"
+              - Effect: Allow
+                Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName]]
+                Action:
+                  - "s3:ListBucket*"
+              - Effect: Allow
+                Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+                Action:
+                  - "s3:*"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "ecs-tasks.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+  BatchInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: !Sub S3Bucket-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              ## This block enforces encrypted transfers of results from job 
+              ## instances to S3.  Its use depends on if the orchestration engine
+              ## supports it.
+              # - Sid: S3DenyIncorrectEncryptionHeader
+              #   Effect: Deny
+              #   Action:
+              #     - "s3:PutObject"
+              #   Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+              #   Condition:
+              #     StringNotEquals: { "s3:x-amz-server-side-encryption": "AES256" }
+              # - Sid: S3DenyUnEncryptedObjectUploads
+              #   Effect: Deny
+              #   Action:
+              #     - "s3:PutObject"
+              #   Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+              #   Condition: 
+              #     "Null" : { "s3:x-amz-server-side-encryption": true }
+              - Sid: S3BucketAllowAllObjectOps
+                Effect: Allow
+                Resource: 
+                  - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName]]
+                  - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+                Action:
+                  - "s3:*"
+ 
+        # required for amazon-ebs-autoscale to resize filesystems
+        - PolicyName: !Sub Autoscale-EBS-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              Effect: Allow
+              Action:
+                - "ec2:createTags"
+                - "ec2:createVolume"
+                - "ec2:attachVolume"
+                - "ec2:deleteVolume"
+                - "ec2:modifyInstanceAttribute"
+                - "ec2:describeVolumes"
+              Resource: "*"
+        
+        # enable retrieving provisioning scripts from codecommit
+        - PolicyName: !Sub CodeCommit-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              Effect: Allow
+              Action:
+                - codecommit:GitPull
+              Resource:
+                - !Sub arn:aws:codecommit:*:${AWS::AccountId}:*-${Namespace}
+        
+        # enable reading SSM parameters by provisioning scripts
+        - PolicyName: !Sub SystemsManager-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter*
+                Resource:
+                  - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/gwfcore/${Namespace}/*
+              - Effect: Allow
+                Action:
+                  - ssm:DescribeParameters
+                Resource: "*"
+                
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+      - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+      - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      - "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+  BatchInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - Ref: BatchInstanceRole
+  BatchSpotFleetRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "spotfleet.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole"
+  BatchServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: batch.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole
+Outputs:
+  BatchJobRoleArn:
+    Value: !GetAtt BatchJobRole.Arn
+  BatchServiceRoleArn:
+    Value: !GetAtt BatchServiceRole.Arn
+  BatchSpotFleetRoleArn:
+    Value: !GetAtt BatchSpotFleetRole.Arn
+  BatchInstanceProfileArn:
+    Value: !GetAtt BatchInstanceProfile.Arn
+...

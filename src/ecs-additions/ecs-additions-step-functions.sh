@@ -29,13 +29,13 @@
 #  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #  POSSIBILITY OF SUCH DAMAGE.
 
-yum install -y bzip2 wget
-PREFIX=/opt
+# yum install -y bzip2 wget
+# PREFIX=/opt
 
-wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh -b -f -p $PREFIX/miniconda
-$PREFIX/miniconda/bin/conda install -c conda-forge -y awscli
+# wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+# bash Miniconda3-latest-Linux-x86_64.sh -b -f -p $PREFIX/miniconda
+# $PREFIX/miniconda/bin/conda install -c conda-forge -y awscli
 
-chown -R ec2-user:ec2-user $PREFIX/miniconda
+# chown -R ec2-user:ec2-user $PREFIX/miniconda
 
-rm Miniconda3-latest-Linux-x86_64.sh
+# rm Miniconda3-latest-Linux-x86_64.sh
