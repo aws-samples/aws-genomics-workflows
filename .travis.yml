@@ -31,12 +31,12 @@ deploy:
     script: bash _scripts/deploy.sh --public --verbose production
     skip_cleanup: true
     on:
-      repo: $TRAVIS_REPO_SLUG
+      repo: aws-samples/aws-genomics-workflows
       branch: release
       tags: true
   - provider: script
     script: bash _scripts/deploy.sh --public --verbose test
     skip_cleanup: true
     on:
-      repo: $TRAVIS_REPO_SLUG
+      repo: aws-samples/aws-genomics-workflows
       branch: master
