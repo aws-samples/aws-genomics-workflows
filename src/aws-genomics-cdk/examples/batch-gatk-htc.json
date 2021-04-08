@@ -6,7 +6,7 @@
         "command": ["gatk --java-options \"-Xmx4g\" HaplotypeCaller -R ${REFERENCE_NAME}.fasta -I ${SAMPLE_ID}.bam -O ${SAMPLE_ID}.vcf.gz -bamout ${SAMPLE_ID}.out.bam"],
         "environment": [{
                 "name": "JOB_INPUTS",
-                "value": "s3://genomics-pipelines-840249831562/output/ s3://genomics-pipelines-840249831562/hg38/v0/"
+                "value": "s3://YOUR-BUCKET-NAME/ref s3://YOUR-BUCKET-NAME/samples"
             },
             {
                 "name": "SAMPLE_ID",
@@ -22,7 +22,7 @@
             },
             {
                 "name": "JOB_OUTPUT_PREFIX",
-                "value": "s3://genomics-pipelines-840249831562/output"
+                "value": "s3://YOUR-BUCKET-NAME/output"
             },
             {
                 "name": "JOB_INPUT_S3_COPY_METHOD",

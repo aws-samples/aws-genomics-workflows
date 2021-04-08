@@ -1,12 +1,12 @@
 {
     "jobName": "samtoolsIndex",
     "jobQueue": "genomics-default-queue",
-    "jobDefinition": "samtoolsIndex:2",
+    "jobDefinition": "samtoolsIndex:1",
     "containerOverrides": {
         "command": ["samtools index ${SAMPLE_ID}.bam"],
         "environment": [{
                 "name": "JOB_INPUTS",
-                "value": "s3://genomics-pipelines-840249831562/output/NIST7035.bam"
+                "value": "s3://YOUR-BUCKET-NAME/samples/NIST7035.bam"
             },
             {
                 "name": "SAMPLE_ID",
@@ -18,7 +18,7 @@
             },
             {
                 "name": "JOB_OUTPUT_PREFIX",
-                "value": "s3://genomics-pipelines-840249831562/output"
+                "value": "s3://YOUR-BUCKET-NAME/output"
             }
         ]
     }

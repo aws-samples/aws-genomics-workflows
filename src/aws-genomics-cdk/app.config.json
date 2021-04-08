@@ -1,5 +1,5 @@
 {
-    "accountID": "840249831562",
+    "accountID": "111111111111",
     "region": "us-west-2",
     "projectName": "genomics",
     "tags": [{
@@ -13,7 +13,7 @@
     ],
     "S3": {
         "existingBucket": true,
-        "bucketName": "genomics-pipelines-840249831562"
+        "bucketName": "YOUR-BUCKET-NAME"
     },
     "VPC": {
         "createVPC": true,

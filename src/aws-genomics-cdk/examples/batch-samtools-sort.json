@@ -6,7 +6,7 @@
         "command": ["samtools sort -@ 4 -o ${SAMPLE_ID}.bam ${SAMPLE_ID}.sam"],
         "environment": [{
                 "name": "JOB_INPUTS",
-                "value": "s3://genomics-pipelines-840249831562/output/NIST7035.sam"
+                "value": "s3://YOUR-BUCKET-NAME/samples/NIST7035.sam"
             },
             {
                 "name": "SAMPLE_ID",
@@ -18,7 +18,7 @@
             },
             {
                 "name": "JOB_OUTPUT_PREFIX",
-                "value": "s3://genomics-pipelines-840249831562/output"
+                "value": "s3://YOUR-BUCKET-NAME/output"
             }
         ]
     }

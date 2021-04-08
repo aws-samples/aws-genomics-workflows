@@ -1,7 +1,7 @@
 {
     "jobName": "fastqc",
     "jobQueue": "genomics-default-queue",
-    "jobDefinition": "fastqc:3",
+    "jobDefinition": "fastqc:1",
     "containerOverrides": {
         "command": ["fastqc *.gz"],
         "environment": [{
@@ -14,7 +14,7 @@
             },
             {
                 "name": "JOB_OUTPUT_PREFIX",
-                "value": "s3://genomics-pipelines-840249831562/output"
+                "value": "s3://YOUR-BUCKET-NAME/output"
             }
         ]
     }
