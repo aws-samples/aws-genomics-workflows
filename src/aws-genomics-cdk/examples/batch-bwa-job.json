@@ -1,0 +1,33 @@
+{
+    "jobName": "bwa",
+    "jobQueue": "genomics-default-queue",
+    "jobDefinition": "bwa:3",
+    "containerOverrides": {
+        "command": ["bwa mem -t 8 -p -o ${SAMPLE_ID}.sam ${REFERENCE_NAME}.fasta ${SAMPLE_ID}_*1*.fastq.gz"],
+        "environment": [{
+                "name": "JOB_INPUTS",
+                "value": "s3://genomics-pipelines-840249831562/sample/ s3://genomics-pipelines-840249831562/hg38/v0/"
+            },
+            {
+                "name": "SAMPLE_ID",
+                "value": "NIST7035"
+            },
+            {
+                "name": "REFERENCE_NAME",
+                "value": "Homo_sapiens_assembly38"
+            },
+            {
+                "name": "JOB_OUTPUTS",
+                "value": "*.sam"
+            },
+            {
+                "name": "JOB_OUTPUT_PREFIX",
+                "value": "s3://genomics-pipelines-840249831562/output"
+            },
+            {
+                "name": "JOB_INPUT_S3_COPY_METHOD",
+                "value": "s3sync"
+            }
+        ]
+    }
+}

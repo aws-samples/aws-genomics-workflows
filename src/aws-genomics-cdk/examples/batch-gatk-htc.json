@@ -1,0 +1,33 @@
+{
+    "jobName": "gatkHaploTypeCaller",
+    "jobQueue": "genomics-default-queue",
+    "jobDefinition": "gatkHaplotypeCaller:1",
+    "containerOverrides": {
+        "command": ["gatk --java-options \"-Xmx4g\" HaplotypeCaller -R ${REFERENCE_NAME}.fasta -I ${SAMPLE_ID}.bam -O ${SAMPLE_ID}.vcf.gz -bamout ${SAMPLE_ID}.out.bam"],
+        "environment": [{
+                "name": "JOB_INPUTS",
+                "value": "s3://genomics-pipelines-840249831562/output/ s3://genomics-pipelines-840249831562/hg38/v0/"
+            },
+            {
+                "name": "SAMPLE_ID",
+                "value": "NIST7035"
+            },
+            {
+                "name": "REFERENCE_NAME",
+                "value": "Homo_sapiens_assembly38"
+            },
+            {
+                "name": "JOB_OUTPUTS",
+                "value": "*.out.bam *.vcf.gz"
+            },
+            {
+                "name": "JOB_OUTPUT_PREFIX",
+                "value": "s3://genomics-pipelines-840249831562/output"
+            },
+            {
+                "name": "JOB_INPUT_S3_COPY_METHOD",
+                "value": "s3sync"
+            }
+        ]
+    }
+}

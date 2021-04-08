@@ -32,14 +32,14 @@ export default class GenomicsBatchStack extends cdk.Stack {
       account: env.account as string
     }
     
-    const genomicsIam = new GenomicsIam(this, "genomics-iam", genomicsIamProps);
+    const genomicsIam = new GenomicsIam(this, `${config.projectName}-iam`, genomicsIamProps);
     this.taskRole = genomicsIam.taskRole;
     
     
     
     // Create a EC2 Launch Template to be used by AWS Batch
     const launchTemplateProps = {
-      launchTemplateName: "genomics-launch-template",
+      launchTemplateName: `${config.projectName}-launch-template`,
       volumeSize: config.batch.defaultVolumeSize
     };
     
@@ -54,7 +54,7 @@ export default class GenomicsBatchStack extends cdk.Stack {
     
     // Create spot compute environment for the genomics pipeline using SPOT instances
     const spotComputeEnvironmentProps = {
-      computeEnvironmentName: "genomics-spot-compute-environment",
+      computeEnvironmentName: `${config.projectName}-spot-compute-environment`,
       vpc: props.vpc,
       instanceTypes: envInstanceType,
       maxvCpus: config.batch.spotMaxVCPUs,
@@ -71,7 +71,7 @@ export default class GenomicsBatchStack extends cdk.Stack {
     
     // Create on demand compute environment using on demand instances
     const onDemandComputeEnvironmentProps = {
-      computeEnvironmentName: "genomics-on-demand-compute-environment",
+      computeEnvironmentName: `${config.projectName}-on-demand-compute-environment`,
       computeResourcesType: batch.ComputeResourceType.ON_DEMAND,
       allocationStrategy: batch.AllocationStrategy.BEST_FIT,
       vpc: props.vpc,
@@ -92,10 +92,9 @@ export default class GenomicsBatchStack extends cdk.Stack {
     // Create default queue, using spot first and then on-demand instances
     const defaultQueueProps = {
       computeEnvironments: [
-        spotComputeEnvironment.computeEnvironment, 
-        onDemandComputeEnvironment.computeEnvironment
+        spotComputeEnvironment.computeEnvironment
       ],
-      jobQueueName: "genomics-default-queue",
+      jobQueueName: `${config.projectName}-default-queue`,
       priority: 100
     };
     
@@ -110,7 +109,7 @@ export default class GenomicsBatchStack extends cdk.Stack {
         spotComputeEnvironment.computeEnvironment
         
       ],
-      jobQueueName: "genomics-high-priority-queue",
+      jobQueueName: `${config.projectName}-high-priority-queue`,
       priority: 1000
     }
     

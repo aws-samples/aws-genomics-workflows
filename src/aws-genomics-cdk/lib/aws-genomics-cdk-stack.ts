@@ -4,7 +4,10 @@ import * as s3 from "@aws-cdk/aws-s3";
 import * as config from "../app.config.json";
 import GenomicsVpcStack from "./vpc/vpc-stack";
 import GenomicsBatchStack from "./batch/batch-stack";
-import GenomicsStateMachineProps from "./step-functions/genomics-state-machine-stack";
+
+//Workflows
+import { WorkflowConfig } from "./workflows/workflow-config";
+import VariantCallingStateMachine from "./workflows/variant-calling-stack";
 
 export class AwsGenomicsCdkStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props: cdk.StackProps) {
@@ -13,11 +16,11 @@ export class AwsGenomicsCdkStack extends cdk.Stack {
     // Create a new VPC or use an existing one
     let vpc: ec2.Vpc;
     if (config.VPC.createVPC) {
-      vpc = new GenomicsVpcStack(this, "genomics-vpc", props).vpc;
+      vpc = new GenomicsVpcStack(this, config.VPC.VPCName, props).vpc;
     } else {
-      vpc = ec2.Vpc.fromLookup(this, "genomics-vpc-lookup", {
-        vpcName: config.VPC.existingVPCName,
-      }) as ec2.Vpc
+      vpc = ec2.Vpc.fromLookup(this, `${config.projectName}-vpc-lookup`, {
+        vpcName: config.VPC.VPCName,
+      }) as ec2.Vpc;
     }
 
     // Create a new bucket if set in the config
@@ -38,17 +41,34 @@ export class AwsGenomicsCdkStack extends cdk.Stack {
       bucket: config.S3.bucketName,
     };
 
-    const batch = new GenomicsBatchStack(this, "genomics-batch", batchProps);
-    
-    if(config.stepFunctions.launchDemoPipeline === true){
-      const genomicsDemoProps = {
-        genomicsDefaultQueue: batch.genomicsDefaultQueue,
-        genomicsHighPriorityQueue: batch.genomicsHighPriorityQueue,
-        env: props.env as cdk.ResourceEnvironment,
-        taskRole: batch.taskRole
-      };
-      
-      new GenomicsStateMachineProps(this, "genomics-demo-pipeline", genomicsDemoProps)
+    const batch = new GenomicsBatchStack(
+      this,
+      `${config.projectName}-batch`,
+      batchProps
+    );
+
+    // loop throgh the app.config workflows file and set infrastructure for
+    // the provided workflows
+    let workflow: WorkflowConfig;
+    for (let i = 0; i < config.workflows.length; i++) {
+      workflow = config.workflows[i] as WorkflowConfig;
+
+      switch (workflow.name) {
+        case "variantCalling":
+          new VariantCallingStateMachine(
+            this,
+            `${config.projectName}-${workflow.name}`,
+            {
+              stackProps: props,
+              batchQueue:
+                workflow.spot === true
+                  ? batch.genomicsDefaultQueue
+                  : batch.genomicsHighPriorityQueue,
+              taskRole: batch.taskRole,
+            }
+          );
+          break;
+      }
     }
   }
 }

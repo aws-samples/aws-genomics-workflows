@@ -1,13 +1,23 @@
 {
-    "accountID": "111111111111",
+    "accountID": "840249831562",
     "region": "us-west-2",
+    "projectName": "genomics",
+    "tags": [{
+            "name": "Environment",
+            "value": "production"
+        },
+        {
+            "name": "Project",
+            "value": "genomics-pipeline"
+        }
+    ],
     "S3": {
         "existingBucket": true,
-        "bucketName": ""
+        "bucketName": "genomics-pipelines-840249831562"
     },
     "VPC": {
         "createVPC": true,
-        "existingVPCName": "",
+        "VPCName": "genomics-vpc",
         "maxAZs": 2,
         "cidr": "10.0.0.0/16",
         "cidrMask": 24
@@ -32,25 +42,8 @@
             "c5.24xlarge"
         ]
     },
-    "stepFunctions": {
-        "launchDemoPipeline": true,
-        "jobDefinitions": {
-            "fastqc": {
-                "repository": "genomics/fastqc",
-                "memoryLimit": 8000,
-                "vcpus": 4,
-                "spot": true,
-                "retryAttempts":1,
-                "timeout": 600
-            },
-            "minimap2": {
-                "repository": "genomics/minimap2",
-                "memoryLimit": 16000,
-                "vcpus": 8,
-                "spot": true,
-                "retryAttempts":1,
-                "timeout": 3600
-            }
-        }
-    }
+    "workflows": [{
+        "name": "variantCalling",
+        "spot": true
+    }]
 }

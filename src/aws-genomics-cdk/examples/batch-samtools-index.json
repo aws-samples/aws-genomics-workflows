@@ -1,16 +1,20 @@
 {
-    "jobName": "fastqc",
+    "jobName": "samtoolsIndex",
     "jobQueue": "genomics-default-queue",
-    "jobDefinition": "fastqc:3",
+    "jobDefinition": "samtoolsIndex:2",
     "containerOverrides": {
-        "command": ["fastqc *.gz"],
+        "command": ["samtools index ${SAMPLE_ID}.bam"],
         "environment": [{
                 "name": "JOB_INPUTS",
-                "value": "s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq/NIST7035_R*.fastq.gz"
+                "value": "s3://genomics-pipelines-840249831562/output/NIST7035.bam"
+            },
+            {
+                "name": "SAMPLE_ID",
+                "value": "NIST7035"
             },
             {
                 "name": "JOB_OUTPUTS",
-                "value": "*.html *.zip"
+                "value": "*.bam *.bai"
             },
             {
                 "name": "JOB_OUTPUT_PREFIX",
