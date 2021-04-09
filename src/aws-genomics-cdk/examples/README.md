@@ -1,50 +1,31 @@
 # Bioinformatics tools examples
 
-You can test the bioinfomatics tools with AWS Batch directly or start a full Step Functions pipeline.
+After [deploying the CDK genomics pipeline project](GITHUB URL) you could test 
+the genomics tools directly with AWS Batch or start a Step Functions pipeline.
 
-**jobName** - A name for the job, this will appear in the AWS Batch Job list  
-**jobQueue** - The name of the queue you want to use in AWS Batch. You can get this name from the AWS Batch console > 
-Job queues.  
-**jobDefinition** - The AWS Batch job definition including a version number. You can get this name from the AWS Batch console > 
-Job definitions.  
-**containerOverrides.vcpus** - The desired amount of vcpus to run this job.  
-**containerOverrides.memory** - The number of MiB of memory reserved for the job.  
-**containerOverrides.command** - The command to be executed.  
-**containerOverrides.environment** - Environment variables to send to the container. Refer to the special environment 
-variables in the [containers readme file](../README.md). 
 
-Change the "JOB_OUTPUT_PREFIX" parameter to an existing bucket and choose a prefix (e.g., s3://mybucketname/test).
-
-### FastQC
-To run the command, cd to the examples directory (e.g., ``cd src/aws-genomics-cdk/examples``) and run the following 
-command ``aws batch submit-job --cli-input-json file://batch-fastqc-job.json``  
-If the job finish successfully you should see new html and zip files in the S3 location you configured.
-
+### Testing bioinformatics tools using AWS Batch
+Create a file named batch-TOOL_NANE.json.
 ```
-batch-fastqc-job.json
 {
-    "jobName": "fastqc",
-    "jobQueue": "genomics-default-job-queue",
-    "jobDefinition": "genomics-fastqc:1",
+    "jobName": "",
+    "jobQueue": "",
+    "jobDefinition": "",
     "containerOverrides": {
-        "vcpus": 2,
-        "memory": 4000,
-        "command": ["fastqc *.gz"],
+        "vcpus": 1,
+        "memory": 1000,
+        "command": [""],
         "environment": [{
                 "name": "JOB_INPUTS",
-                "value": "s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq/NIST7035_R1_trim_samp-0p1.fastq.gz s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq/NIST7035_R2_trim_samp-0p1.fastq.gz"
+                "value": ""
             },
             {
                 "name": "JOB_OUTPUTS",
-                "value": "*.html *.zip"
+                "value": ""
             },
             {
                 "name": "JOB_OUTPUT_PREFIX",
-                "value": "s3://[YOUR BUCKET NAME]/[SOME PREFIX]"
-            },
-            {
-                "name": "JOB_AWS_CLI_PATH",
-                "value": "/opt/aws-cli/bin"
+                "value": ""
             }
         ]
     }
@@ -52,65 +33,116 @@ batch-fastqc-job.json
 
 ```
 
+**jobName** (string)  
+The name of the job. The first character must be alphanumeric, and up to 128 
+letters (uppercase and lowercase), numbers, hyphens, and underscores are 
+allowed.
 
-### Minimap2
-To run the command, cd to the examples directory (e.g., ``cd src/aws-genomics-cdk/examples``) and run the following 
-command ``aws batch submit-job --cli-input-json file://batch-minimap2-job.json``  
-If the job finish successfully you should see new sam files in the S3 location you configured.
+**jobQueue** (string)  
+The [job queue](https://docs.aws.amazon.com/batch/latest/userguide/job_queues.html) 
+into which the job is submitted. You can specify either the name or the Amazon 
+Resource Name (ARN) of the queue.
+
+**jobDefinition** (string)  
+The [job definition](https://docs.aws.amazon.com/batch/latest/userguide/job_definitions.html) 
+used by this job. This value can be one of name , name:revision , or the Amazon 
+Resource Name (ARN) for the job definition. If name is specified without 
+a revision then the latest active revision is used.
+
+**containerOverrides.vcpus** (integer optional)  
+The number of vCPUs to reserve for the container. This value overrides the 
+value set in the job definition.
+
+**containerOverrides.memory** (integer optional)  
+The number of MiB of memory reserved for the job. This value overrides the 
+value set in the job definition.
+
+**containerOverrides.command** (list)  
+The command to send to the container that overrides the default command from 
+the Docker image or the job definition.
+
+**containerOverrides.environment** (list)  
+The environment variables to send to the container. You can add new environment 
+variables, which are added to the container at launch, or you can override the 
+existing environment variables from the Docker image or the job definition.  
+(structure)  
+A key-value pair object.  
+**name** (string)  
+The name of the key-value pair. For environment variables, this is the name of 
+the environment variable.  
+**value** (string)  
+The value of the key-value pair. For environment variables, this is the value 
+of the environment variable.
+
+Example for a `batch-fastqc.json`
 ```
-batch-minimap2-job.json
 {
-    "jobName": "minimap2",
+    "jobName": "fastqc",
     "jobQueue": "genomics-default-queue",
-    "jobDefinition": "minimap2:1",
+    "jobDefinition": "genomics-fastqc:1",
     "containerOverrides": {
-        "vcpus": 8,
-        "memory": 16000,
-        "command": ["minimap2 -ax map-pb Homo_sapiens_assembly38.fasta NIST7035_R1_trim_samp-0p1.fastq.gz > NIST7035.sam"],
+        "vcpus": 1,
+        "memory": 1000,
+        "command": ["fastqc *.gz"],
         "environment": [{
-            "name": "JOB_INPUTS",
-            "value": "s3://broad-references/hg38/v0/Homo_sapiens_assembly38.fasta s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq/NIST7035_R1_trim_samp-0p1.fastq.gz"
-        },
-        {
-            "name": "JOB_OUTPUTS",
-            "value": "*.sam"
-        },
-        {
-            "name": "JOB_OUTPUT_PREFIX",
-            "value": "s3://[YOUR BUCKET NAME]/[SOME PREFIX]"
-        },
-        {
-            "name": "JOB_AWS_CLI_PATH",
-            "value": "/opt/aws-cli/bin"
-        }
+                "name": "JOB_INPUTS",
+                "value": "s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq/NIST7035_R*.fastq.gz"
+            },
+            {
+                "name": "JOB_OUTPUTS",
+                "value": "*.html *.zip"
+            },
+            {
+                "name": "JOB_OUTPUT_PREFIX",
+                "value": "s3://my-genomics-bucket-name/some-folder-name"
+            }
         ]
     }
 }
+
 ```
+In this example we are running the FastQC tools that will take fastq files and 
+generate a report. It will output zip and html files which we will save to an 
+S3 bucket.  
+**jobName** - "fastqc". A name that describe the job to be run.  
+**jobQueue** - "genomics-default-queue". A valid name of a job queue. This 
+could be found in the AWS web console > Batch > Job queues.  
+**jobDefinition** - "genomics-fastqc:1". A valid and active job definition and 
+it's version. This could be found in the AWS web console > Batch > Job 
+definitions.  
+**containerOverrides.vcpus** - 1. Request a machine that has at least 1 core.  
+**containerOverrides.memory** - 1000. Request a machine that has at least 
+1000MiB of RAM.  
+**containerOverrides.command** - ["fastqc *.gz"]. Run the fastq command on all 
+the .gz files in the working directory.  
+**containerOverrides.environment** - A list of key-value pairs.
+
+**name**: JOB_INPUTS.  
+**value**: fastq files from a source S3 bucket
+
+**name**: JOB_OUTPUTS.  
+**value**: "*.html *.zip". Copy all html and zip files from a local directory 
+to an S3 bucket.
+
+**name**: JOB_OUTPUT_PREFIX.  
+**value**: An S3 bucket and a prefix (folder) to copy the output files into.
 
 
-### A demo pipeline that runs FasqQC and then Minimap2
+There are several examples under the `examples` directory. To run an example, 
+edit the example file you want to run (e.g., `examples/batch-fastqc-job.json`),
+update the `JOB_INPUTS` to a valid source of your sample fastq files, or leave 
+the default value to use a demo sample. Update the `JOB_OUTPUT_PREFIX` to a 
+valid s3 bucket and a subfolder where you want the output zip and html files 
+to be saved to.
 
-Logon to the AWS console, navigate to Step Functions and click on the "genomics-pipelines-state-machine" state machine.  
-Click on the "Start execution" button and use the following json content for the input section. Change the 
-"JOB_OUTPUT_PREFIX" parameter to an existing bucket and choose a prefix (e.g., s3://mybucketname/test).
+Change directory to the examples directory and then submit the job to Batch.
+
 ```
-{
-  "params": {
-	"environment": {
-		"JOB_OUTPUT_PREFIX": "[YOUR BUCKET NAME]/[SOME PREFIX]"
-	},
-	"fastqc": {
-		"input": "s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq/NIST7035_R1_trim_samp-0p1.fastq.gz s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq/NIST7035_R2_trim_samp-0p1.fastq.gz",
-		"output": "*.html *.zip"
-	},
-	"minimap2": {
-		"input": "s3://broad-references/hg38/v0/Homo_sapiens_assembly38.fasta s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq/NIST7035_R1_trim_samp-0p1.fastq.gz",
-		"fastaFileName": "Homo_sapiens_assembly38.fasta",
-		"fastqFiles": "NIST7035_R1_trim_samp-0p1.fastq.gz",
-		"samOutput": "hg38-NIST7035.sam",
-		"output": "*.sam"
-	}
-  }
-}
+cd examples
+aws batch submit-job --cli-input-json file://batch-fastqc-job.json
 ```
+
+Navigate to the Batch jobs page (AWS console -> AWS Batch -> Jobs -> select the 
+job queue you used (e.g., `genomics-default-queue`) to track the progress of 
+the job. You can click on the job name and them click on the Log stream name 
+link to track the stdout on the running task.

@@ -23,10 +23,10 @@ export default class GenomicsVpcStack extends cdk.Stack {
 
     const vpcProp = {
       cidr: config.VPC.cidr,
-      max_azs: config.VPC.maxAZs,
+      maxAZs: config.VPC.maxAZs,
       subnetConfiguration: subnetConf
     };
 
-    this.vpc = new ec2.Vpc(this, "genomics-vpc", vpcProp);
+    this.vpc = new ec2.Vpc(this, config.VPC.VPCName, vpcProp);
   }
 }

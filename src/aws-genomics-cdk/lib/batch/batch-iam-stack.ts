@@ -2,6 +2,7 @@ import * as cdk from "@aws-cdk/core";
 import * as iam from "@aws-cdk/aws-iam";
 import * as path from "path";
 import * as fs from "fs";
+import * as config from "../../app.config.json";
 
 export interface GenomicsIamProps {
     readonly bucketName: string;
@@ -19,7 +20,7 @@ export default class GenomicsIam extends cdk.Stack {
         
         // Create a task role to be used by AWS batch container
         const taskRoleProps = {
-            roleName: "genomics-ecs-task-role",
+            roleName: `${config.projectName}-ecs-task-role`,
             assumedBy: new iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
             description: "allow ecs task to assume a role for the genomics pipleine",
             managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonS3ReadOnlyAccess")]
@@ -30,7 +31,7 @@ export default class GenomicsIam extends cdk.Stack {
         
         // Create an instance role for the EC2 host machine for AWS Batch
         const instanceRoleProps = {
-            roleName: "genomics-batch-instance-role",
+            roleName: `${config.projectName}-batch-instance-role`,
             assumedBy: new iam.ServicePrincipal("ec2.amazonaws.com"),
             description: "allow ec2 instance to assume a role for the genomics pipleine",
             managedPolicies: [
@@ -45,7 +46,7 @@ export default class GenomicsIam extends cdk.Stack {
         
         // Create a spot fleet role to be used by AWS Batch when launching spot instances
         const fleetRoleProps = {
-            roleName: "genomics-spot-fleet-role",
+            roleName: `${config.projectName}-spot-fleet-role`,
             assumedBy: new iam.ServicePrincipal("ec2.amazonaws.com"),
             description: "allow ec2 instance to assume a role for the genomics pipleine",
             managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AmazonEC2SpotFleetTaggingRole")]
@@ -56,7 +57,7 @@ export default class GenomicsIam extends cdk.Stack {
         
         // Create a service role for AWS Batch so it can assume other roles for the genomics pipeline
         const batchServiceRoleProps = {
-            roleName: "genomics-batch-service-role",
+            roleName: `${config.projectName}-batch-service-role`,
             assumedBy: new iam.ServicePrincipal("batch.amazonaws.com"),
             description: "allow batch to assume a role for the genomics pipleine",
             managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSBatchServiceRole")]
@@ -70,7 +71,7 @@ export default class GenomicsIam extends cdk.Stack {
         const bucketPolicy = fs.readFileSync(filePath, {encoding: "utf-8"}).replace(/BUCKET_NAME/g, props.bucketName);
         
         const policyProps = {
-            policyName: "genomics-policy-s3",
+            policyName: `${config.projectName}-policy-s3`,
             document: iam.PolicyDocument.fromJson(JSON.parse(bucketPolicy)),
             force: true,
             roles: [this.taskRole, instanceRole]
@@ -81,7 +82,7 @@ export default class GenomicsIam extends cdk.Stack {
         // Create an instance profile to be used by AWS Batch compute environment
         const instanceProfileProps = {
           roles: [instanceRoleProps.roleName],
-          instanceProfileName: "genomics-batch-instance-profile"
+          instanceProfileName: `${config.projectName}-batch-instance-profile`
         };
         const instanceProfile = new iam.CfnInstanceProfile(this, instanceProfileProps.instanceProfileName, instanceProfileProps);
         this.instanceProfileArn = `arn:aws:iam::${props.account}:instance-profile/${instanceProfileProps.instanceProfileName}`;

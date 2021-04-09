@@ -3,6 +3,7 @@ import * as batch from "@aws-cdk/aws-batch";
 import * as ec2 from "@aws-cdk/aws-ec2";
 import * as ecs from "@aws-cdk/aws-ecs";
 import * as iam from "@aws-cdk/aws-iam";
+import * as config from "../../app.config.json";
 
 export class GenomicsComputeEnvironmentProps {
   readonly computeResourcesType?: batch.ComputeResourceType;
@@ -35,8 +36,7 @@ export default class GenomicsComputeEnvironment extends cdk.Construct {
         props.allocationStrategy ??
         batch.AllocationStrategy.SPOT_CAPACITY_OPTIMIZED,
       computeResourcesTags: props.computeResourcesTags ?? {
-        Name: "genomics-instance",
-        Environment: "production",
+        Name: `${config.projectName}-instance`
       },
       image: ecs.EcsOptimizedImage.amazonLinux2(),
       instanceRole: props.instanceProfileArn,
