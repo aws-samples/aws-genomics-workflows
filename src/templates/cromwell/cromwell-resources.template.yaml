@@ -411,6 +411,15 @@ Resources:
                     port = 8000
                   }
 
+                  akka {
+                    http {
+                      server {
+                        request-timeout = 300s
+                        idle-timeout = 300s
+                      }
+                    }
+                  }
+
                   system {
                     job-rate-control {
                       jobs = 1
