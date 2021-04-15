@@ -1,0 +1,268 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  (WWPS-GLS-WF-NEXTFLOW-AIO) Creates the complete set of resources needed to run
+  genomics workflows using Nextflow on AWS Batch
+
+
+Mappings:
+  TagMap:
+    default:
+      architecture: "genomics-workflows"
+      solution: "nextflow"
+      tags:
+        - Key: "architecture"
+          Value: "genomics-workflows"
+        - Key: "solution"
+          Value: "nextflow"
+
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "VPC"
+        Parameters:
+          - VpcId
+          - SubnetIds
+      - Label:
+          default: "Data Storage"
+        Parameters:
+          - S3DataBucketName
+          - ExistingDataBucket
+      - Label:
+          default: "AWS Batch"
+        Parameters:
+          - DefaultCEMinvCpus
+          - DefaultCEMaxvCpus
+          - PriorityCEMinvCpus
+          - PriorityCEMaxvCpus
+      - Label:
+          default: "Nextflow Resources"
+        Parameters:
+          - S3NextflowPrefix
+          - S3LogsDirPrefix
+          - S3WorkDirPrefix
+          - NextflowVersion
+          - NextflowVersionSpecified
+
+    ParameterLabels:
+      VpcId:
+        default: VPC ID
+      SubnetIds:
+        default: VPC Subnet IDs
+      S3DataBucketName:
+        default: S3 Data Bucket Name
+      ExistingDataBucket:
+        default: Existing Data Bucket?
+      DefaultCEMinvCpus:
+        default: Default Min vCPU
+      DefaultCEMaxvCpus:
+        default: Default Max vCPU
+      PriorityCEMinvCpus:
+        default: High Priority Min vCPU
+      PriorityCEMaxvCpus:
+        default: High Priority Max vCPU
+      S3NextflowPrefix:
+        default: S3 Nextflow Prefix
+      S3LogsDirPrefix:
+        default: S3 Logs Dir Prefix
+      S3WorkDirPrefix:
+        default: S3 Work Dir Prefix
+      NextflowVersion:
+        default: Nextflow Version
+      NextflowVersionSpecified:
+        default: Nextflow Version Specified?
+      TemplateRootUrl:
+        default: Template Root URL
+
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: 'The VPC to create security groups and deploy AWS Batch to. NOTE: Must be the same VPC as the provided subnet IDs.'
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: 'Subnets you want your batch compute environment to launch in. We recommend private subnets. NOTE: Must be from the VPC provided.'
+
+  S3DataBucketName:
+    Description: >-
+      A S3 bucket name for storing analysis results
+      The bucket name must respect the S3 bucket naming conventions 
+      (can contain lowercase letters, numbers, periods and hyphens).
+      If left blank a unique bucket name will be generated.
+
+    Type: String
+    Default: ""
+    AllowedPattern: "((?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)|(^.{0}$))"
+    ConstraintDescription: "Must respect S3 bucket naming conventions"
+
+  ExistingDataBucket:
+    Description: Does this data bucket already exist?
+    Type: String
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+  DefaultCEMinvCpus:
+    Description: The minimum number of CPUs for the default Batch Compute Environment
+    Type: Number
+    Default: 0
+  DefaultCEMaxvCpus:
+    Description: The maximum number of CPUs for the default Batch Compute Environment
+    Type: Number
+    Default: 100
+  PriorityCEMinvCpus:
+    Description: The minimum number of CPUs for the high-priority Batch Compute Environment
+    Type: Number
+    Default: 0
+  PriorityCEMaxvCpus:
+    Description: The maximum number of CPUs for the high-priority Batch Compute Environment
+    Type: Number
+    Default: 100
+  
+  S3NextflowPrefix:
+    Type: String
+    Description: >-
+      (Optional) Parent folder in the GWFCore bucket for metadata folders.
+    Default: _nextflow
+  S3LogsDirPrefix:
+    Type: String
+    Description: >-
+      (Optional) Folder in the GWFCore bucket under the {Nextflow Prefix}
+      for session cache and logs.
+    Default: logs
+  S3WorkDirPrefix:
+    Type: String
+    Description: >-
+      (Optional) Folder in the GWFCore bucket under the {Nextflow Prefix}
+      that contains workflow intermediate results
+    Default: runs
+  NextflowVersion:
+    Type: String
+    Default: latest
+    AllowedValues:
+      - latest
+      - specify ...
+    Description: >-
+      Version of Nextflow to use. Select "specify ..." to provide a specific version.
+  NextflowVersionSpecified:
+    Type: String
+    Description: >-
+      Specific version of Nextflow to use. Must match a released version number - e.g. "20.04.1".
+    Default: ""
+
+  ArtifactBucketName:
+    Type: String
+    Default: aws-genomics-workflows
+    Description: >-
+      S3 Bucket where distrubution artifacts and additions scripts are stored
+  ArtifactBucketPrefix:
+    Type: String
+    Default: artifacts  # dist: pin_version
+    Description: >-
+      Prefix in ArtifactBucketName where distribution artifacts and additions scripts are stored
+
+  TemplateRootUrl:
+    Type: String
+    Description: >-
+      Root URL for where nested templates are stored
+    Default: https://aws-genomics-workflows.s3.amazonaws.com/templates
+    ConstraintDescription: >-
+      Must be a valid S3 URL
+    AllowedPattern: "https://[a-z0-9-./]{0,}s3([a-z0-9-.]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
+
+
+Resources:
+  GenomicsWorkflowStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  !Sub ${TemplateRootUrl}/gwfcore/gwfcore-root.template.yaml
+      Parameters:
+        Namespace: !Sub ${AWS::StackName}-gwfcore
+        VpcId: !Ref VpcId
+        SubnetIds: !Join [",", !Ref SubnetIds ]
+        S3BucketName: !Ref S3DataBucketName
+        ExistingBucket: !Ref ExistingDataBucket
+        DefaultCEMinvCpus: !Ref DefaultCEMinvCpus
+        DefaultCEMaxvCpus: !Ref DefaultCEMaxvCpus
+        PriorityCEMinvCpus: !Ref PriorityCEMinvCpus
+        PriorityCEMaxvCpus: !Ref PriorityCEMaxvCpus
+        ArtifactBucketName: !Ref ArtifactBucketName
+        ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
+        TemplateRootUrl: !Ref TemplateRootUrl
+      Tags: !FindInMap ["TagMap", "default", "tags"]
+
+  NextflowStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: GenomicsWorkflowStack
+    Properties:
+      TemplateURL:  !Sub ${TemplateRootUrl}/nextflow/nextflow-resources.template.yaml
+      Parameters:
+        Namespace: !Sub ${AWS::StackName}-nextflow
+        GWFCoreNamespace: !Sub "${AWS::StackName}-gwfcore"
+        S3NextflowPrefix: !Ref S3NextflowPrefix
+        S3LogsDirPrefix: !Ref S3LogsDirPrefix
+        S3WorkDirPrefix: !Ref S3WorkDirPrefix
+        NextflowVersion: !Ref NextflowVersion
+        NextflowVersionSpecified: !Ref NextflowVersionSpecified
+        TemplateRootUrl: !Ref TemplateRootUrl
+      Tags: !FindInMap ["TagMap", "default", "tags"]
+
+
+Outputs:
+  NextflowContainerImage:
+    Value: !GetAtt NextflowStack.Outputs.NextflowContainerImage
+    Export:
+      Name: !Sub "${AWS::StackName}-NextflowContainerImage"
+    
+  NextflowJobDefinition:
+    Value: !GetAtt NextflowStack.Outputs.NextflowJobDefinition
+    Export:
+      Name: !Sub "${AWS::StackName}-NextflowJobDefinition"
+    Description: >-
+      Batch Job Definition that creates a nextflow head node for running workflows
+  
+  S3NextFlowBucket:
+    Value: !GetAtt NextflowStack.Outputs.NextflowBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-NextflowBucket"
+    Description: >-
+      S3 Bucket used to store Nextflow metadata (session cache, logs, and intermediate results)
+  S3NextflowLogsDir:
+    Value: !GetAtt NextflowStack.Outputs.LogsDir
+    Export:
+      Name: !Sub "${AWS::StackName}-NextflowLogsDir"
+    Description: >-
+      S3 URI where nextflow session cache and logs are stored.
+  S3NextflowWorkDir:
+    Value: !GetAtt NextflowStack.Outputs.WorkDir
+    Export:
+      Name: !Sub "${AWS::StackName}-NextflowWorkDir"
+    Description: >-
+      S3 URI where workflow intermediate results are stored.
+  
+  VpcId:
+    Description: >-
+      The VPC created for your Nextflow stack.
+    Value: !Ref VpcId
+  S3DataBucket:
+    Value: !GetAtt 'GenomicsWorkflowStack.Outputs.S3BucketName'
+    Export:
+      Name: !Sub "${AWS::StackName}-DataBucket"
+    Description: >-
+      S3 bucket for storing genomics workflow input and output data
+  BatchDefaultQueue:
+    Value: !GetAtt 'GenomicsWorkflowStack.Outputs.DefaultJobQueueArn'
+    Export:
+      Name: !Sub "${AWS::StackName}-DefaultJobQueue"
+    Description: >-
+      The default AWS Batch job queue for workflow jobs, based on EC2 SPOT instances
+  BatchPriorityQueue:
+    Value: !GetAtt 'GenomicsWorkflowStack.Outputs.PriorityJobQueueArn'
+    Export:
+      Name: !Sub "${AWS::StackName}-PriorityJobQueue"
+    Description: >-
+      AWS Batch job queue for high priority workflow jobs, based on EC2 On-Demand
+      instances
+...
