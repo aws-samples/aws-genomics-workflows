@@ -23,6 +23,7 @@ Metadata:
       - Label:
           default: "VPC"
         Parameters:
+          - Namespace
           - VpcId
           - SubnetIds
       - Label:
@@ -47,6 +48,8 @@ Metadata:
           - NextflowVersionSpecified
 
     ParameterLabels:
+      Namespace:
+        default: Namespace
       VpcId:
         default: VPC ID
       SubnetIds:
@@ -78,6 +81,13 @@ Metadata:
 
 
 Parameters:
+  Namespace:
+    Type: String
+    Description: Namespace (e.g. project name) to use to label resources. Between 4-20 letters, digits, and '-', starting with a letter.
+    AllowedPattern: "^[a-zA-Z]{1}[a-zA-Z0-9\\-]{3,19}$"
+    ConstraintDescription: "Between 4-20 letters, digits, '-', starting with a letter"
+    Default: "nextflow"
+
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: 'The VPC to create security groups and deploy AWS Batch to. NOTE: Must be the same VPC as the provided subnet IDs.'
@@ -179,7 +189,7 @@ Resources:
     Properties:
       TemplateURL:  !Sub ${TemplateRootUrl}/gwfcore/gwfcore-root.template.yaml
       Parameters:
-        Namespace: !Sub ${AWS::StackName}-gwfcore
+        Namespace: !Sub ${Namespace}-gwfcore
         VpcId: !Ref VpcId
         SubnetIds: !Join [",", !Ref SubnetIds ]
         S3BucketName: !Ref S3DataBucketName
@@ -199,8 +209,8 @@ Resources:
     Properties:
       TemplateURL:  !Sub ${TemplateRootUrl}/nextflow/nextflow-resources.template.yaml
       Parameters:
-        Namespace: !Sub ${AWS::StackName}-nextflow
-        GWFCoreNamespace: !Sub "${AWS::StackName}-gwfcore"
+        Namespace: !Sub ${Namespace}-nextflow
+        GWFCoreNamespace: !Sub "${Namespace}-gwfcore"
         S3NextflowPrefix: !Ref S3NextflowPrefix
         S3LogsDirPrefix: !Ref S3LogsDirPrefix
         S3WorkDirPrefix: !Ref S3WorkDirPrefix
@@ -214,31 +224,31 @@ Outputs:
   NextflowContainerImage:
     Value: !GetAtt NextflowStack.Outputs.NextflowContainerImage
     Export:
-      Name: !Sub "${AWS::StackName}-NextflowContainerImage"
+      Name: !Sub "${Namespace}-NextflowContainerImage"
     
   NextflowJobDefinition:
     Value: !GetAtt NextflowStack.Outputs.NextflowJobDefinition
     Export:
-      Name: !Sub "${AWS::StackName}-NextflowJobDefinition"
+      Name: !Sub "${Namespace}-NextflowJobDefinition"
     Description: >-
       Batch Job Definition that creates a nextflow head node for running workflows
   
   S3NextFlowBucket:
     Value: !GetAtt NextflowStack.Outputs.NextflowBucket
     Export:
-      Name: !Sub "${AWS::StackName}-NextflowBucket"
+      Name: !Sub "${Namespace}-NextflowBucket"
     Description: >-
       S3 Bucket used to store Nextflow metadata (session cache, logs, and intermediate results)
   S3NextflowLogsDir:
     Value: !GetAtt NextflowStack.Outputs.LogsDir
     Export:
-      Name: !Sub "${AWS::StackName}-NextflowLogsDir"
+      Name: !Sub "${Namespace}-NextflowLogsDir"
     Description: >-
       S3 URI where nextflow session cache and logs are stored.
   S3NextflowWorkDir:
     Value: !GetAtt NextflowStack.Outputs.WorkDir
     Export:
-      Name: !Sub "${AWS::StackName}-NextflowWorkDir"
+      Name: !Sub "${Namespace}-NextflowWorkDir"
     Description: >-
       S3 URI where workflow intermediate results are stored.
   
@@ -249,19 +259,19 @@ Outputs:
   S3DataBucket:
     Value: !GetAtt 'GenomicsWorkflowStack.Outputs.S3BucketName'
     Export:
-      Name: !Sub "${AWS::StackName}-DataBucket"
+      Name: !Sub "${Namespace}-DataBucket"
     Description: >-
       S3 bucket for storing genomics workflow input and output data
   BatchDefaultQueue:
     Value: !GetAtt 'GenomicsWorkflowStack.Outputs.DefaultJobQueueArn'
     Export:
-      Name: !Sub "${AWS::StackName}-DefaultJobQueue"
+      Name: !Sub "${Namespace}-DefaultJobQueue"
     Description: >-
       The default AWS Batch job queue for workflow jobs, based on EC2 SPOT instances
   BatchPriorityQueue:
     Value: !GetAtt 'GenomicsWorkflowStack.Outputs.PriorityJobQueueArn'
     Export:
-      Name: !Sub "${AWS::StackName}-PriorityJobQueue"
+      Name: !Sub "${Namespace}-PriorityJobQueue"
     Description: >-
       AWS Batch job queue for high priority workflow jobs, based on EC2 On-Demand
       instances
