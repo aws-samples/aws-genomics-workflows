@@ -1,0 +1,21 @@
+{
+    "jobName": "gatk-create-dictionary",
+    "jobQueue": "genomics-default-queue",
+    "jobDefinition": "gatkCreateSequenceDictionary:1",
+    "containerOverrides": {
+        "command": ["java -jar /usr/app/picard.jar CreateSequenceDictionary R=Homo_sapiens_assembly38.fasta O=Homo_sapiens_assembly38.dict"],
+        "environment": [{
+                "name": "JOB_INPUTS",
+                "value": "s3://broad-references/hg38/v0/Homo_sapiens_assembly38.fasta"
+            },
+            {
+                "name": "JOB_OUTPUTS",
+                "value": "*.dict"
+            },
+            {
+                "name": "JOB_OUTPUT_PREFIX",
+                "value": "s3://YOUR-BUCKET-NAME/ref"
+            }
+        ]
+    }
+}

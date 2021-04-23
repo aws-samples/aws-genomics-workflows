@@ -1,0 +1,29 @@
+{
+    "jobName": "picard-add-missing-groups",
+    "jobQueue": "genomics-default-queue",
+    "jobDefinition": "picardAddMissingGroups:1",
+    "containerOverrides": {
+        "command": ["java -jar /usr/picard/picard.jar AddOrReplaceReadGroups",
+            " -I ${SAMPLE_ID}.bam -O ${SAMPLE_ID}.rg.bam -RGID 4 --RGLB lib1 ",
+            " --RGPL ILLUMINA --RGPU unit1 --RGSM 20;",
+            " mv ${SAMPLE_ID}.rg.bam ${SAMPLE_ID}.bam;"
+        ],
+        "environment": [{
+                "name": "JOB_INPUTS",
+                "value": "s3://YOUR-BUCKET-NAME/samples/NIST7035.bam"
+            },
+            {
+                "name": "SAMPLE_ID",
+                "value": "NIST7035"
+            },
+            {
+                "name": "JOB_OUTPUTS",
+                "value": "*.bam"
+            },
+            {
+                "name": "JOB_OUTPUT_PREFIX",
+                "value": "s3://YOUR-BUCKET-NAME/output"
+            }
+        ]
+    }
+}
