@@ -40,7 +40,7 @@ Conditions:
   BucketDoesNotExist:
     Fn::Equals:
       - !Ref ExistingBucket
-      - No
+      - "No"
   GenerateBucketName:
     Fn::Equals:
       - !Ref S3BucketName
