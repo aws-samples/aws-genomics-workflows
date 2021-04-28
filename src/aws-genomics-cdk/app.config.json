@@ -1,0 +1,49 @@
+{
+    "accountID": "111111111111",
+    "region": "us-west-2",
+    "projectName": "genomics",
+    "tags": [{
+            "name": "Environment",
+            "value": "production"
+        },
+        {
+            "name": "Project",
+            "value": "genomics-pipeline"
+        }
+    ],
+    "S3": {
+        "existingBucket": true,
+        "bucketName": "YOUR-BUCKET-NAME"
+    },
+    "VPC": {
+        "createVPC": true,
+        "VPCName": "genomics-vpc",
+        "maxAZs": 2,
+        "cidr": "10.0.0.0/16",
+        "cidrMask": 24
+    },
+    "batch": {
+        "defaultVolumeSize": 100,
+        "spotMaxVCPUs": 128,
+        "onDemendMaxVCPUs": 128,
+        "instanceTypes": [
+            "c4.large",
+            "c4.xlarge",
+            "c4.2xlarge",
+            "c4.4xlarge",
+            "c4.8xlarge",
+            "c5.large",
+            "c5.xlarge",
+            "c5.2xlarge",
+            "c5.4xlarge",
+            "c5.9xlarge",
+            "c5.12xlarge",
+            "c5.18xlarge",
+            "c5.24xlarge"
+        ]
+    },
+    "workflows": [{
+        "name": "variantCalling",
+        "spot": true
+    }]
+}

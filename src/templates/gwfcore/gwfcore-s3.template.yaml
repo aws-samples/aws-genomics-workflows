@@ -32,15 +32,15 @@ Parameters:
     Type: String
     Description: Does this bucket already exist? If not, it will be created.
     AllowedValues:
-      - Yes
-      - No
-    Default: No
+      - "Yes"
+      - "No"
+    Default: "No"
 
 Conditions:
   BucketDoesNotExist:
     Fn::Equals:
       - !Ref ExistingBucket
-      - No
+      - "No"
   GenerateBucketName:
     Fn::Equals:
       - !Ref S3BucketName

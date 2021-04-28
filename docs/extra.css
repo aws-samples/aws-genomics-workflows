@@ -58,3 +58,9 @@
   .md-header, .md-footer, .md-footer-nav, .md-footer-meta {
     background-color: #232f3e !important;
   }
+
+  .screenshot {
+    style: "float: left";
+    margin: 10px;
+    border: 1px solid lightgrey;
+  }

@@ -78,9 +78,9 @@ Parameters:
     Description: Does this bucket already exist?
     Type: String
     AllowedValues:
-      - Yes
-      - No
-    Default: No
+      - "Yes"
+      - "No"
+    Default: "No"
   DefaultCEMinvCpus:
     Description: The minimum number of CPUs for the default Batch Compute Environment
     Type: Number

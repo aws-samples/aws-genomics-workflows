@@ -46,8 +46,8 @@ A complete AWS Batch environment consists of the following:
 
 1. A Compute Environment that utilizes [EC2 Spot instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances.html) for cost-effective computing
 2. A Compute Environment that utilizes EC2 on-demand (e.g. [public pricing](https://aws.amazon.com/ec2/pricing/on-demand/)) instances for high-priority work that can't risk job interruptions or delays due to insufficient Spot capacity.
-3. A default Job Queue that utilizes the Spot compute environment first, but spills over to the on-demand compute environment if defined capacity limits (i.e. Max vCPUs) are reached.
-4. A priority Job Queue that leverages the on-demand and Spot CE's (in that order) and has higher priority than the default queue.
+3. A default Job Queue that solely utilizes the Spot compute environment. This is for jobs where timeliness isn't a constraint, and can wait for the right instances to become available, as well has handle interruption. It also ensures the most cost savings.
+4. A priority Job Queue that leverages the on-demand, and optionally Spot, CE's (in that order) and has higher priority than the default queue. This is for jobs that cannot handle interruption, and need to be executed immediately.
 
 ### Automated via CloudFormation
 
@@ -81,7 +81,7 @@ You can create several compute environments to suit your needs.  Below we'll cre
 6. In the "Service role" drop down, select the `AWSBatchServiceRole` you created previously
 7. In the "Instance role" drop down, select the `ecsInstanceRole` you created previously
 8. For "Provisioning model" select "On-Demand"
-9. "Allowed instance types" will be already populated with "optimal" - which is a mixture of M4, C4, and R4 instances.
+9. "Allowed instance types" will be already populated with "optimal" - which is a mixture of M4, C4, and R4 instances. This should be sufficient for demonstration purposes. In a production setting, it is recommended to specify the instance famimlies and sizes most apprioriate for the jobs the CE will support. For the On-Demand CE, selecting newer instance types is beneficial as they tend to have better price per performance.
 10. "Allocation strategy" will already be set to `BEST_FIT`. This is recommended for on-demand based compute environments as it ensures the most cost efficiency.
 11. In the "Launch template" drop down, select the `genomics-workflow-template` you created previously
 12. Set Minimum and Desired vCPUs to 0.
@@ -112,7 +112,7 @@ Click on "Create"
 6. In the "Service role" drop down, select the `AWSBatchServiceRole` you created previously
 7. In the "Instance role" drop down, select the `ecsInstanceRole` you created previously
 8. For "Provisioning model" select "Spot"
-9. "Allowed instance types" will be already populated with "optimal" - which is a mixture of M4, C4, and R4 instances.
+9. "Allowed instance types" will be already populated with "optimal" - which is a mixture of M4, C4, and R4 instances. This should be sufficient for demonstration purposes. In a production setting, it is recommended to specify the instance families and sizes most appropriate for the jobs the CE will support. For the SPOT CE a wider diversity of instance types is recommended to maximize the pools from which capacity can be drawn from. Limiting the size of instances is also recommended to avoid scheduling too many jobs on a SPOT instance that could be interrupted.
 10. "Allocation strategy" will already be set to `SPOT_CAPACITY_OPTIMIZED`. This is recommended for Spot based compute environments as it ensures the most compute capacity is available for your jobs.
 11. In the "Launch template" drop down, select the `genomics-workflow-template` you created previously
 12. Set Minimum and Desired vCPUs to 0.
@@ -135,20 +135,18 @@ Job queues can be associated with one or more compute environments in a preferre
 Below we'll create two job queues:
 
  * A "Default" job queue
- * A "High Priority" job queue
+ * A "Priority" job queue
 
 Both job queues will use both compute environments you created previously.
 
 ##### Create a "default" job queue
 
-This queue is intended for jobs that do not require urgent completion, and can handle potential interruption. This queue will schedule jobs to:
+This queue is intended for jobs that do not require urgent completion, and can handle potential interruption. This queue will schedule jobs to only the "spot" compute environment.
 
-1. The "spot" compute environment
-2. The "ondemand" compute environment
+!!! note
+    It is not recommended to configure a job queue to "spillover" from Spot to On-Demand. Doing so could lead Insufficient Capacity Errors, resulting in Batch unable to schedule jobs, leaving them stuck in "RUNNABLE"
 
-in that order.
-
-Because it primarily leverages Spot instances, it will also be the most cost effective job queue.
+Because it leverages Spot instances, it will also be the most cost effective job queue.
 
 * Go to the AWS Batch Console
 * Click on "Job queues"
@@ -157,8 +155,7 @@ Because it primarily leverages Spot instances, it will also be the most cost eff
 * Set "Priority" to 1
 * Under "Connected compute environments for this queue", using the drop down menu:
 
-    1. Select the "spot" compute environment you created previously, then
-    2. Select the "ondemand" compute environment you created previously
+    1. Select the "spot" compute environment you created previously
 
 * Click on "Create Job Queue"
 
@@ -169,7 +166,7 @@ This queue is intended for jobs that are urgent and **cannot** handle potential 
 1. The "ondemand" compute environment
 2. The "spot" compute environment
 
-in that order.
+in that order. In this queue configuration, Batch will schedule jobs to the "ondemand" compute environment first. When the number of Max vCPUs for that environment is reached, Batch will begin scheduling jobs to the "spot" compute environment. The use of the "spot" compute environment is optional, and is used to help drain pending jobs from the queue faster.
 
 * Go to the AWS Batch Console
 * Click on "Job queues"

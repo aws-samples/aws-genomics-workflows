@@ -9,6 +9,8 @@ nav:
     - Permissions: core-env/create-iam-roles.md
     - Compute Resources: core-env/create-custom-compute-resources.md
     - AWS Batch: core-env/setup-aws-batch.md
+    - Customized Deployment: core-env/custom-deploy.md
+    - Building a Custom Distribution: core-env/build-custom-distribution.md
   # - Containerized Tooling:
   #   - Introduction: containers/container-introduction.md
   #   - Examples: containers/container-examples.md
@@ -57,3 +59,5 @@ extra:
     s3:
       bucket: docs.opendata.aws
       prefix: genomics-workflows
+
+use_directory_urls: false

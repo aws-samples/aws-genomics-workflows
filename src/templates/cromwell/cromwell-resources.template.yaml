@@ -411,6 +411,15 @@ Resources:
                     port = 8000
                   }
 
+                  akka {
+                    http {
+                      server {
+                        request-timeout = 300s
+                        idle-timeout = 300s
+                      }
+                    }
+                  }
+
                   system {
                     job-rate-control {
                       jobs = 1
@@ -594,6 +603,15 @@ Resources:
             "/home/ec2-user/supervisord.log":
               content: "\n"
               mode: "000664"
+              owner: "ec2-user"
+              group: "ec2-user"
+
+            "/home/ec2-user/.aws/config":
+              content: !Sub |
+                [default]
+                region = ${AWS::Region}
+
+              mode: "000644"
               owner: "ec2-user"
               group: "ec2-user"
 

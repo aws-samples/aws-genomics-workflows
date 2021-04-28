@@ -1,0 +1,25 @@
+{
+    "jobName": "samtoolsSort",
+    "jobQueue": "genomics-default-queue",
+    "jobDefinition": "samtoolsSort:1",
+    "containerOverrides": {
+        "command": ["samtools sort -@ 4 -o ${SAMPLE_ID}.bam ${SAMPLE_ID}.sam"],
+        "environment": [{
+                "name": "JOB_INPUTS",
+                "value": "s3://YOUR-BUCKET-NAME/samples/NIST7035.sam"
+            },
+            {
+                "name": "SAMPLE_ID",
+                "value": "NIST7035"
+            },
+            {
+                "name": "JOB_OUTPUTS",
+                "value": "*.bam"
+            },
+            {
+                "name": "JOB_OUTPUT_PREFIX",
+                "value": "s3://YOUR-BUCKET-NAME/output"
+            }
+        ]
+    }
+}
