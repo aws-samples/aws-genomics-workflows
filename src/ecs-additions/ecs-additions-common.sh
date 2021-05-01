@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# ecs config options
+# graceful shutdown of jobs on spot instances if spot is terminated
+echo ECS_ENABLE_SPOT_INSTANCE_DRAINING=true >> /etc/ecs/ecs.config
+# cache already pulled container images and reduce network traffic
+echo ECS_IMAGE_PULL_BEHAVIOR=prefer-cached >> /etc/ecs/ecs.config
+
 # add fetch and run batch helper script
 chmod a+x /opt/ecs-additions/fetch_and_run.sh
 cp /opt/ecs-additions/fetch_and_run.sh /usr/local/bin
