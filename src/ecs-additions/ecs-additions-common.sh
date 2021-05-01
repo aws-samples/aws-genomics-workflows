@@ -5,6 +5,8 @@
 echo ECS_ENABLE_SPOT_INSTANCE_DRAINING=true >> /etc/ecs/ecs.config
 # cache already pulled container images and reduce network traffic
 echo ECS_IMAGE_PULL_BEHAVIOR=prefer-cached >> /etc/ecs/ecs.config
+# increase docker stop timeout so that containers can perform cleanup actions
+echo ECS_CONTAINER_STOP_TIMEOUT=60 >> /etc/ecs/ecs.config
 
 # add fetch and run batch helper script
 chmod a+x /opt/ecs-additions/fetch_and_run.sh
