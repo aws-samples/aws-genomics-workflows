@@ -40,8 +40,8 @@ export default class GenomicsTask extends cdk.Construct {
         };
         const taskProps = {
             jobName: props.taskName,
-            jobDefinition: props.jobDefinition,
-            jobQueue: props.queue,
+            jobDefinitionArn: props.jobDefinition.jobDefinitionArn,
+            jobQueueArn: props.queue.jobQueueArn,
             containerOverrides: taskContainerProps,
             inputPath: "$",
             resultPath: "$.result"
