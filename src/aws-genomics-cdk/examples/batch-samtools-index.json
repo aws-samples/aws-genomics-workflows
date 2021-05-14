@@ -6,11 +6,11 @@
         "command": ["samtools index ${SAMPLE_ID}.bam"],
         "environment": [{
                 "name": "JOB_INPUTS",
-                "value": "s3://YOUR-BUCKET-NAME/samples/NIST7035.bam"
+                "value": "s3://YOUR-BUCKET-NAME/samples/SRR014820.bam"
             },
             {
                 "name": "SAMPLE_ID",
-                "value": "NIST7035"
+                "value": "SRR014820"
             },
             {
                 "name": "JOB_OUTPUTS",
