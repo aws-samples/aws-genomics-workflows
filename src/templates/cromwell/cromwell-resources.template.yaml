@@ -281,7 +281,7 @@ Resources:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
-                Resource: "arn:aws:secretsmanager:*:*:*"
+                Resource: "*"
                 Action:
                   - "secretsmanager:PutSecretValue"
                   - "secretsmanager:CreateSecret"
