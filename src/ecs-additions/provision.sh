@@ -71,6 +71,22 @@ ARTIFACT_S3_ROOT_URL=$(\
         --output text \
 )
 
+ORCHESTRATOR_EXIST=$(\
+    aws ssm describe-parameters \
+        --filters "Key=name,Values=/gwfcore/${GWFCORE_NAMESPACE}/orchestrator" \
+        | \
+        jq '.SecretList \| length > 0')
+
+if [[ "$ORCHESTRATOR_EXIST" = true ]]
+then
+    WORKFLOW_ORCHESTRATOR=$(\
+        aws ssm get-parameter \
+            --name /gwfcore/${GWFCORE_NAMESPACE}/orchestrator \
+            --query 'Parameter.Value' \
+            --output text
+    )
+fi
+
 # retrieve and install amazon-ebs-autoscale
 cd /opt
 sh $BASEDIR/get-amazon-ebs-autoscale.sh \

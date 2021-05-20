@@ -275,6 +275,17 @@ Resources:
                 - "logs:CreateLogStream"
                 - "logs:PutLogEvents"
                 - "logs:DescribeLogStreams"
+        - PolicyName: !Sub CromwellSecretManager-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Resource: "arn:aws:secretsmanager:*:*:*"
+                Action:
+                  - "secretsmanager:PutSecretValue"
+                  - "secretsmanager:CreateSecret"
+                  - "secretsmanager:UpdateSecret"
+                  - "secretsmanager:ListSecrets"
 
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -757,6 +768,14 @@ Resources:
           Value: !FindInMap ["TagMap", "default", "architecture"]
         - Key: solution
           Value: !FindInMap ["TagMap", "default", "solution"]
+
+  ParamOrchestrator:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: !Sub /gwfcore/${GWFCoreNamespace}/orchestrator
+      Type: String
+      Value: "cromwell"
+      Description: GWFCore orchestartor name
 
 Outputs:
   CromwellVersion:
