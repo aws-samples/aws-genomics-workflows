@@ -275,7 +275,8 @@ Resources:
                 - "logs:CreateLogStream"
                 - "logs:PutLogEvents"
                 - "logs:DescribeLogStreams"
-        - PolicyName: !Sub CromwellSecretManager-${AWS::Region}
+
+        - PolicyName: !Sub CromwellSecretManager-Access-${AWS::Region}
           PolicyDocument:
             Version: 2012-10-17
             Statement:
