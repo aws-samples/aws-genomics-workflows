@@ -73,9 +73,7 @@ ARTIFACT_S3_ROOT_URL=$(\
 
 ORCHESTRATOR_EXIST=$(\
     aws ssm describe-parameters \
-        --filters "Key=name,Values=/gwfcore/${GWFCORE_NAMESPACE}/orchestrator" \
-        | \
-        jq '.SecretList \| length > 0')
+        --filters "Key=Name,Values=/gwfcore/${GWFCORE_NAMESPACE}/orchestrator" | jq '.Parameters | length > 0')
 
 if [[ "$ORCHESTRATOR_EXIST" = true ]]
 then
@@ -83,8 +81,7 @@ then
         aws ssm get-parameter \
             --name /gwfcore/${GWFCORE_NAMESPACE}/orchestrator \
             --query 'Parameter.Value' \
-            --output text
-    )
+            --output text)
 fi
 
 # retrieve and install amazon-ebs-autoscale
