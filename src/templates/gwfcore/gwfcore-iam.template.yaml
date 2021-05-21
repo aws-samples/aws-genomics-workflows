@@ -41,7 +41,7 @@ Resources:
                 Action:
                   - secretsmanager:GetSecretValue
                 Resource:
-                  - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/gwfcore/${Namespace}/*
+                  - !Sub arn:aws:secretsmanager:*:${AWS::AccountId}:*
               - Effect: Allow
                 Action:
                   - secretsmanager:ListSecrets
@@ -145,7 +145,7 @@ Resources:
                 Action:
                   - secretsmanager:GetSecretValue
                 Resource:
-                  - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/gwfcore/${Namespace}/*
+                  - !Sub arn:aws:secretsmanager:*:${AWS::AccountId}:*
               - Effect: Allow
                 Action:
                   - secretsmanager:ListSecrets
