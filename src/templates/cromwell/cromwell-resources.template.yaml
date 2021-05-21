@@ -283,10 +283,13 @@ Resources:
               - Effect: Allow
                 Resource: "*"
                 Action:
+                  - "secretsmanager:ListSecrets"
+              - Effect: Allow
+                Resource: !Sub arn:aws:secretsmanager:*:${AWS::AccountId}:*
+                Action:
                   - "secretsmanager:PutSecretValue"
                   - "secretsmanager:CreateSecret"
                   - "secretsmanager:UpdateSecret"
-                  - "secretsmanager:ListSecrets"
 
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
