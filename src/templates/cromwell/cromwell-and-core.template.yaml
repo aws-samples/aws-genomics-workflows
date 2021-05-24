@@ -91,8 +91,6 @@ Parameters:
   Namespace:
     Type: String
     Description: Namespace (e.g. project name) to use to label resources. Between 4-20 letters, digits, and '-', starting with a letter.
-    # AllowedPattern: "^[a-zA-Z]{1}[a-zA-Z0-9\\-]{3,19}$"
-    # ConstraintDescription: "Between 4-20 letters, digits, '-', starting with a letter"
     Default: ""
 
   VpcId:
@@ -252,15 +250,15 @@ Resources:
             - NoNamespace
             - !Sub ${AWS::StackName}
             - !Ref Namespace
+        VpcId: !Ref VpcId
         ServerSubnetID:  !Ref ServerSubnetID
         CromwellVersion: !Ref CromwellVersion
         CromwellVersionSpecified: !Ref CromwellVersionSpecified
         CromwellJarUrl: !Ref CromwellJarUrl
-        S3DataBucketARNs: !Ref S3DataBucketARNs
+        S3DataBucketARNs: !Join [",", !Ref S3DataBucketARNs]
         DBUsername: !Ref DBUsername
         DBPassword: !Ref DBPassword
-        DBSubnetIDs: !Ref DBSubnetIDs
-        TemplateRootUrl: !Ref TemplateRootUrl
+        DBSubnetIDs: !Join [",", !Ref DBSubnetIDs]
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
 
