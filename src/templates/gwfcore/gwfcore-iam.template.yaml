@@ -41,7 +41,7 @@ Resources:
                 Action:
                   - secretsmanager:GetSecretValue
                 Resource:
-                  - !Sub arn:aws:secretsmanager:*:${AWS::AccountId}:*
+                  - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:cromwell/credentials/*
               - Effect: Allow
                 Action:
                   - secretsmanager:ListSecrets
@@ -145,7 +145,7 @@ Resources:
                 Action:
                   - secretsmanager:GetSecretValue
                 Resource:
-                  - !Sub arn:aws:secretsmanager:*:${AWS::AccountId}:*
+                  - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:cromwell/credentials/*
               - Effect: Allow
                 Action:
                   - secretsmanager:ListSecrets
