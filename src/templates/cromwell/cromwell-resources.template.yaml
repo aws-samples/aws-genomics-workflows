@@ -276,6 +276,21 @@ Resources:
                 - "logs:PutLogEvents"
                 - "logs:DescribeLogStreams"
 
+        - PolicyName: !Sub CromwellSecretManager-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Resource: "*"
+                Action:
+                  - "secretsmanager:ListSecrets"
+              - Effect: Allow
+                Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:cromwell/credentials/*
+                Action:
+                  - "secretsmanager:PutSecretValue"
+                  - "secretsmanager:CreateSecret"
+                  - "secretsmanager:UpdateSecret"
+
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -757,6 +772,14 @@ Resources:
           Value: !FindInMap ["TagMap", "default", "architecture"]
         - Key: solution
           Value: !FindInMap ["TagMap", "default", "solution"]
+
+  ParamOrchestrator:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: !Sub /gwfcore/${GWFCoreNamespace}/orchestrator
+      Type: String
+      Value: "cromwell"
+      Description: GWFCore orchestartor name
 
 Outputs:
   CromwellVersion:
