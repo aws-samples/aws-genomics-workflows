@@ -31,6 +31,7 @@ Metadata:
         Parameters:
           - S3DataBucketName
           - ExistingDataBucket
+          - CreateEFS
       - Label:
           default: "AWS Batch"
         Parameters:
@@ -58,6 +59,8 @@ Metadata:
         default: S3 Data Bucket Name
       ExistingDataBucket:
         default: Existing Data Bucket?
+      CreateEFS:
+        default: Create Amazon EFS File System
       DefaultCEMinvCpus:
         default: Default Min vCPU
       DefaultCEMaxvCpus:
@@ -114,23 +117,37 @@ Parameters:
       - "Yes"
       - "No"
     Default: "No"
+  CreateEFS:
+    Description: Create Amazon EFS File System, eg for shared data. Mounts to each subnet specified.
+    Type: String
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+  NumberOfSubnets:
+    Type: String
+    Description: Number of subnets to launch into. Should correspond to the length of Subnet Ids
+    AllowedValues: [1-4]
   DefaultCEMinvCpus:
     Description: The minimum number of CPUs for the default Batch Compute Environment
-    Type: Number
+    Type: String
     Default: 0
+    AllowedPattern: [0-9]+
   DefaultCEMaxvCpus:
     Description: The maximum number of CPUs for the default Batch Compute Environment
-    Type: Number
+    Type: String
     Default: 100
+    AllowedPattern: [0-9]+
   PriorityCEMinvCpus:
     Description: The minimum number of CPUs for the high-priority Batch Compute Environment
-    Type: Number
+    Type: String
     Default: 0
+    AllowedPattern: [0-9]+
   PriorityCEMaxvCpus:
     Description: The maximum number of CPUs for the high-priority Batch Compute Environment
-    Type: Number
-    Default: 100
-  
+    Type: String
+    Default: 100 
+    AllowedPattern: [0-9]+
   S3NextflowPrefix:
     Type: String
     Description: >-
@@ -194,6 +211,8 @@ Resources:
         SubnetIds: !Join [",", !Ref SubnetIds ]
         S3BucketName: !Ref S3DataBucketName
         ExistingBucket: !Ref ExistingDataBucket
+        CreateEFS: !Ref CreateEFS
+        NumberOfSubnets: !Ref NumberOfSubnets
         DefaultCEMinvCpus: !Ref DefaultCEMinvCpus
         DefaultCEMaxvCpus: !Ref DefaultCEMaxvCpus
         PriorityCEMinvCpus: !Ref PriorityCEMinvCpus

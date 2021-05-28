@@ -238,7 +238,6 @@ Resources:
                 - - !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
                   - !Ref S3NextflowPrefix
                   - !Ref S3WorkDirPrefix
-
       JobDefinitionName: !Sub nextflow-${Namespace}
 
 

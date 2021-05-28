@@ -24,9 +24,13 @@ Parameters:
     Default: gwfcore
     Description: Name of the launch template. This will be made unique using the Stack ID.
   DockerStorageVolumeSize:
-    Type: Number
+    Type: String
     Default: 100
     Description: The initial size of the volume Docker will use for image and metadata storage (GB)
+    AllowedPattern: [1-9][0-9]+
+  EfsId:
+    Type: String
+    Description: EFS File System Id
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -40,9 +44,11 @@ Metadata:
         Parameters:
           - LaunchTemplateNamePrefix
           - DockerStorageVolumeSize
+          - EfsId
 
 Conditions:
   NoNamespace: !Equals [ !Ref Namespace, "" ]
+  NoEfs: !Equals [ !Ref EfsId, "" ]
 
 Resources:
   EC2LaunchTemplate:
@@ -87,116 +93,128 @@ Resources:
             DeviceName: /dev/xvdba
         UserData:
           Fn::Base64:
-            Fn::Sub: |
-                MIME-Version: 1.0
-                Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+            Fn::Sub: 
+            - |
+              MIME-Version: 1.0
+              Content-Type: multipart/mixed; boundary="==BOUNDARY=="
 
-                --==BOUNDARY==
-                Content-Type: text/cloud-config; charset="us-ascii"
+              --==BOUNDARY==
+              Content-Type: text/cloud-config; charset="us-ascii"
 
-                #cloud-config
-                repo_update: true
-                repo_upgrade: security
+              #cloud-config
+              repo_update: true
+              repo_upgrade: security
 
-                packages:
-                - jq
-                - btrfs-progs
-                - sed
-                - git
-                - amazon-ssm-agent
-                - unzip
-                - amazon-cloudwatch-agent
+              packages:
+              - jq
+              - btrfs-progs
+              - sed
+              - git
+              - amazon-ssm-agent
+              - unzip
+              - amazon-cloudwatch-agent
 
-                write_files:
-                - permissions: '0644'
-                  path: /opt/aws/amazon-cloudwatch-agent/etc/config.json
-                  content: |
-                    {
-                      "agent": {
-                        "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log"
-                      },
-                      "logs": {
-                        "logs_collected": {
-                          "files": {
-                            "collect_list": [
-                              {
-                                "file_path": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log",
-                                "log_group_name": "/aws/ecs/container-instance/${Namespace}",
-                                "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/amazon-cloudwatch-agent.log"
-                              },
-                              {
-                                "file_path": "/var/log/cloud-init.log",
-                                "log_group_name": "/aws/ecs/container-instance/${Namespace}",
-                                "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/cloud-init.log"
-                              },
-                              {
-                                "file_path": "/var/log/cloud-init-output.log",
-                                "log_group_name": "/aws/ecs/container-instance/${Namespace}",
-                                "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/cloud-init-output.log"
-                              },
-                              {
-                                "file_path": "/var/log/ecs/ecs-init.log",
-                                "log_group_name": "/aws/ecs/container-instance/${Namespace}",
-                                "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/ecs-init.log"
-                              },
-                              {
-                                "file_path": "/var/log/ecs/ecs-agent.log",
-                                "log_group_name": "/aws/ecs/container-instance/${Namespace}",
-                                "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/ecs-agent.log"
-                              },
-                              {
-                                "file_path": "/var/log/ecs/ecs-volume-plugin.log",
-                                "log_group_name": "/aws/ecs/container-instance/${Namespace}",
-                                "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/ecs-volume-plugin.log"
-                              },
-                              {
-                                "file_path": "/var/log/ebs-autoscale-install.log",
-                                "log_group_name": "/aws/ecs/container-instance/${Namespace}",
-                                "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/ebs-autoscale-install.log"
-                              },
-                              {
-                                "file_path": "/var/log/ebs-autoscale.log",
-                                "log_group_name": "/aws/ecs/container-instance/${Namespace}",
-                                "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/ebs-autoscale.log"
-                              }
-                            ]
-                          }
+              write_files:
+              - permissions: '0644'
+                path: /opt/aws/amazon-cloudwatch-agent/etc/config.json
+                content: |
+                  {
+                    "agent": {
+                      "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log"
+                    },
+                    "logs": {
+                      "logs_collected": {
+                        "files": {
+                          "collect_list": [
+                            {
+                              "file_path": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log",
+                              "log_group_name": "/aws/ecs/container-instance/${Namespace}",
+                              "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/amazon-cloudwatch-agent.log"
+                            },
+                            {
+                              "file_path": "/var/log/cloud-init.log",
+                              "log_group_name": "/aws/ecs/container-instance/${Namespace}",
+                              "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/cloud-init.log"
+                            },
+                            {
+                              "file_path": "/var/log/cloud-init-output.log",
+                              "log_group_name": "/aws/ecs/container-instance/${Namespace}",
+                              "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/cloud-init-output.log"
+                            },
+                            {
+                              "file_path": "/var/log/ecs/ecs-init.log",
+                              "log_group_name": "/aws/ecs/container-instance/${Namespace}",
+                              "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/ecs-init.log"
+                            },
+                            {
+                              "file_path": "/var/log/ecs/ecs-agent.log",
+                              "log_group_name": "/aws/ecs/container-instance/${Namespace}",
+                              "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/ecs-agent.log"
+                            },
+                            {
+                              "file_path": "/var/log/ecs/ecs-volume-plugin.log",
+                              "log_group_name": "/aws/ecs/container-instance/${Namespace}",
+                              "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/ecs-volume-plugin.log"
+                            },
+                            {
+                              "file_path": "/var/log/ebs-autoscale-install.log",
+                              "log_group_name": "/aws/ecs/container-instance/${Namespace}",
+                              "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/ebs-autoscale-install.log"
+                            },
+                            {
+                              "file_path": "/var/log/ebs-autoscale.log",
+                              "log_group_name": "/aws/ecs/container-instance/${Namespace}",
+                              "log_stream_name": "/aws/ecs/container-instance/${Namespace}/{instance_id}/ebs-autoscale.log"
+                            }
+                          ]
                         }
                       }
                     }
+                  }
 
-                runcmd:
+              runcmd:
 
-                # start the amazon-cloudwatch-agent
-                - /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/config.json
+              # start the amazon-cloudwatch-agent
+              - /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/config.json
 
-                # install aws-cli v2 and copy the static binary in an easy to find location for bind-mounts into containers
-                - curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
-                - unzip -q /tmp/awscliv2.zip -d /tmp
-                - /tmp/aws/install -b /usr/bin
+              # install aws-cli v2 and copy the static binary in an easy to find location for bind-mounts into containers
+              - curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+              - unzip -q /tmp/awscliv2.zip -d /tmp
+              - /tmp/aws/install -b /usr/bin
 
-                # check that the aws-cli was actually installed. if not shutdown (terminate) the instance
-                - command -v aws || shutdown -P now
+              # check that the aws-cli was actually installed. if not shutdown (terminate) the instance
+              - command -v aws || shutdown -P now
 
-                - mkdir -p /opt/aws-cli/bin
-                - cp -a $(dirname $(find /usr/local/aws-cli -name 'aws' -type f))/. /opt/aws-cli/bin/
+              - mkdir -p /opt/aws-cli/bin
+              - cp -a $(dirname $(find /usr/local/aws-cli -name 'aws' -type f))/. /opt/aws-cli/bin/
 
-                # set environment variables for provisioning
-                - export GWFCORE_NAMESPACE=${Namespace}
-                - export INSTALLED_ARTIFACTS_S3_ROOT_URL=$(aws ssm get-parameter --name /gwfcore/${Namespace}/installed-artifacts/s3-root-url --query 'Parameter.Value' --output text)
+              # set environment variables for provisioning
+              - export GWFCORE_NAMESPACE=${Namespace}
+              - export INSTALLED_ARTIFACTS_S3_ROOT_URL=$(aws ssm get-parameter --name /gwfcore/${Namespace}/installed-artifacts/s3-root-url --query 'Parameter.Value' --output text)
 
-                # enable ecs spot instance draining
-                - echo ECS_ENABLE_SPOT_INSTANCE_DRAINING=true >> /etc/ecs/ecs.config
+              # enable ecs spot instance draining
+              - echo ECS_ENABLE_SPOT_INSTANCE_DRAINING=true >> /etc/ecs/ecs.config
 
-                # pull docker images only if missing
-                - echo ECS_IMAGE_PULL_BEHAVIOR=prefer-cached >> /etc/ecs/ecs.config
+              # pull docker images only if missing
+              - echo ECS_IMAGE_PULL_BEHAVIOR=prefer-cached >> /etc/ecs/ecs.config
 
-                - cd /opt
-                - aws s3 sync $INSTALLED_ARTIFACTS_S3_ROOT_URL/ecs-additions ./ecs-additions
-                - chmod a+x /opt/ecs-additions/provision.sh
-                - /opt/ecs-additions/provision.sh
+              - cd /opt
+              - aws s3 sync $INSTALLED_ARTIFACTS_S3_ROOT_URL/ecs-additions ./ecs-additions
+              - chmod a+x /opt/ecs-additions/provision.sh
+              - /opt/ecs-additions/provision.sh
 
-                --==BOUNDARY==--
+              # optional EFS mount
+              ${EfsMount}
+
+              --==BOUNDARY==--
+
+            - EfsMount: !If
+              - !Condition NoEfs
+              - ""
+              - !Sub |
+                - mkdir -p /mnt/efs
+                - echo "${SharedDataFileSystem}:/ /mnt/efs efs tls,_netdev" >> /etc/fstab
+                - mount -a -t efs defaults
 
 Outputs:
   LaunchTemplateId:

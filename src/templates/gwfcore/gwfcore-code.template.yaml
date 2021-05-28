@@ -36,9 +36,7 @@ Mappings:
           Value: "default"
 
 # Conditions:
-  
 Resources:
-
   IAMCodeBuildRole:
     Type: AWS::IAM::Role
     Properties:
@@ -204,7 +202,6 @@ Resources:
       RepositoryName: !Sub ecs-additions-${Namespace}
       RepositoryDescription: |
         Provisioning scripts for Batch instances
-      
       Code:
         S3:
           Bucket: !Ref ArtifactBucketName

@@ -21,16 +21,16 @@ Resources:
             Version: 2012-10-17
             Statement:
               - Effect: Deny
-                Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName]]
+                Resource: !Sub "arn:aws:s3:::${S3BucketName}"
                 Action:
                   - "s3:Delete*"
                   - "s3:PutBucket*"
               - Effect: Allow
-                Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName]]
+                Resource: !Sub "arn:aws:s3:::${S3BucketName}"
                 Action:
                   - "s3:ListBucket*"
               - Effect: Allow
-                Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+                Resource: !Sub "arn:aws:s3:::${S3BucketName}/*"
                 Action:
                   - "s3:*"
       AssumeRolePolicyDocument:
@@ -79,8 +79,8 @@ Resources:
               - Sid: S3BucketAllowAllObjectOps
                 Effect: Allow
                 Resource: 
-                  - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName]]
-                  - !Join ["", ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+                  - !Sub "arn:aws:s3:::${S3BucketName}"
+                  - !Sub "arn:aws:s3:::${S3BucketName}/*"
                 Action:
                   - "s3:*"
  

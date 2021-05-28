@@ -37,14 +37,8 @@ Parameters:
     Default: "No"
 
 Conditions:
-  BucketDoesNotExist:
-    Fn::Equals:
-      - !Ref ExistingBucket
-      - "No"
-  GenerateBucketName:
-    Fn::Equals:
-      - !Ref S3BucketName
-      - ""
+  BucketDoesNotExist: !Equals [ !Ref ExistingBucket, "No" ]
+  GenerateBucketName: !Equals [ !Ref S3BucketName, "" ]
 
 Resources:
   S3Bucket:
@@ -56,10 +50,7 @@ Resources:
       BucketName:
         Fn::If:
           - GenerateBucketName
-          - Fn::Join: 
-            - "-"
-            - - "gwfcore"
-              - !Ref Namespace
+          - !Sub gwfcore-${Namespace}
           - !Ref S3BucketName
       BucketEncryption:
         ServerSideEncryptionConfiguration:
@@ -81,5 +72,5 @@ Outputs:
       Fn::If:
         - BucketDoesNotExist
         - !GetAtt S3Bucket.Arn
-        - !Join [":::", ["arn:aws:s3", !Ref S3BucketName]]
+        - !Sub arn:aws:s3:::${S3BucketName}
 ...
