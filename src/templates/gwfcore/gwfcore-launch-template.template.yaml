@@ -77,19 +77,19 @@ Resources:
           - Ebs:
               DeleteOnTermination: True
               VolumeSize: 50
-              VolumeType: gp2
+              VolumeType: gp3
             DeviceName: /dev/xvda
           - Ebs:
               Encrypted: True
               DeleteOnTermination: True
               VolumeSize: 22
-              VolumeType: gp2
+              VolumeType: gp3
             DeviceName: /dev/xvdcz
           - Ebs:
               Encrypted: True
               DeleteOnTermination: True
               VolumeSize: !Ref DockerStorageVolumeSize
-              VolumeType: gp2
+              VolumeType: gp3
             DeviceName: /dev/xvdba
         UserData:
           Fn::Base64:
