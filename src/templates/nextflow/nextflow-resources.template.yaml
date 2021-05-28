@@ -32,6 +32,7 @@ Metadata:
           - S3NextflowPrefix
           - S3LogsDirPrefix
           - S3WorkDirPrefix
+          - MountEfs
       - Label:
           default: "Distribution Configuration"
         Parameters:
@@ -69,6 +70,15 @@ Parameters:
       that contains workflow intermediate results
     Default: runs
 
+  MountEfs:
+    Type: String
+    Description: >-
+      (Optional) Whether the launch template you have created in gwfcore contains an EFS file system. Default is "No".
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+
   NextflowVersion:
     Type: String
     Default: latest
@@ -98,6 +108,7 @@ Conditions:
     Fn::Equals:
       - !Ref NextflowVersion
       - latest
+  NoEfsCondition: !Equals [ !Ref MountEfs, "No" ]
 
 Resources:
   ContainerSource:
@@ -238,6 +249,12 @@ Resources:
                 - - !Sub "s3://{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
                   - !Ref S3NextflowPrefix
                   - !Ref S3WorkDirPrefix
+          - Name: "EFS_MOUNT"
+            Value:
+              Fn::If:
+                - !Condition NoEfsCondition
+                - ""
+                - "/mnt/efs"
       JobDefinitionName: !Sub nextflow-${Namespace}
 
 

@@ -46,8 +46,12 @@ workDir = "$NF_WORKDIR"
 process.executor = "awsbatch"
 process.queue = "$NF_JOB_QUEUE"
 aws.batch.cliPath = "$AWS_CLI_PATH"
-aws.batch.volumes = ["/tmp", "/mnt/efs"]
 EOF
+
+if [[ "$EFS_MOUNT" != "" ]]
+then
+    echo aws.batch.volumes = [\"/tmp\", \"/mnt/efs\"] >> $NF_CONFIG
+fi
 
 echo "=== CONFIGURATION ==="
 cat ./nextflow.config

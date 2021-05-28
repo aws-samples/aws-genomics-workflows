@@ -83,6 +83,12 @@ Resources:
                   - !Sub "arn:aws:s3:::${S3BucketName}/*"
                 Action:
                   - "s3:*"
+              - Sid: DenyDeleteBucket
+                Effect: Deny
+                Resource: !Sub "arn:aws:s3:::${S3BucketName}"
+                Action:
+                - "s3:DeleteBucket*"
+                - "s3:CreateBucket"
  
         # required for amazon-ebs-autoscale to resize filesystems
         - PolicyName: !Sub Autoscale-EBS-${AWS::Region}

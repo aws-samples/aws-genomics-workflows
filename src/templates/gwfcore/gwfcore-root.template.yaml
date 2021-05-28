@@ -109,7 +109,7 @@ Parameters:
     Default: 100
     AllowedPattern: [0-9]+
   CreateEFS:
-    Description: Create Amazon EFS File System, eg for shared data. Mounts to each subnet specified.
+    Description: Create Amazon EFS File System, eg for shared data. Mounts to each subnet specified. Default is No.
     Type: String
     AllowedValues:
       - "Yes"

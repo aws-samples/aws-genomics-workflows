@@ -230,6 +230,7 @@ Resources:
       Parameters:
         Namespace: !Sub ${Namespace}-nextflow
         GWFCoreNamespace: !Sub "${Namespace}-gwfcore"
+        MountEfs: !Ref CreateEFS
         S3NextflowPrefix: !Ref S3NextflowPrefix
         S3LogsDirPrefix: !Ref S3LogsDirPrefix
         S3WorkDirPrefix: !Ref S3WorkDirPrefix
