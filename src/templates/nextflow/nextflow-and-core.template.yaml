@@ -132,22 +132,22 @@ Parameters:
     Description: The minimum number of CPUs for the default Batch Compute Environment
     Type: String
     Default: 0
-    AllowedPattern: [0-9]+
+    AllowedPattern: "[0-9]+"
   DefaultCEMaxvCpus:
     Description: The maximum number of CPUs for the default Batch Compute Environment
     Type: String
     Default: 100
-    AllowedPattern: [0-9]+
+    AllowedPattern: "[0-9]+"
   PriorityCEMinvCpus:
     Description: The minimum number of CPUs for the high-priority Batch Compute Environment
     Type: String
     Default: 0
-    AllowedPattern: [0-9]+
+    AllowedPattern: "[0-9]+"
   PriorityCEMaxvCpus:
     Description: The maximum number of CPUs for the high-priority Batch Compute Environment
     Type: String
     Default: 100 
-    AllowedPattern: [0-9]+
+    AllowedPattern: "[0-9]+"
   S3NextflowPrefix:
     Type: String
     Description: >-

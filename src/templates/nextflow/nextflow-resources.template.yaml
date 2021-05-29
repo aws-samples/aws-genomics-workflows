@@ -252,7 +252,7 @@ Resources:
           - Name: "EFS_MOUNT"
             Value:
               Fn::If:
-                - !Condition NoEfsCondition
+                - NoEfsCondition
                 - ""
                 - "/mnt/efs"
       JobDefinitionName: !Sub nextflow-${Namespace}

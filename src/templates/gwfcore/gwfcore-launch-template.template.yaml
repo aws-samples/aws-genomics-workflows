@@ -27,7 +27,7 @@ Parameters:
     Type: String
     Default: 100
     Description: The initial size of the volume Docker will use for image and metadata storage (GB)
-    AllowedPattern: [1-9][0-9]+
+    AllowedPattern: "[1-9][0-9]+"
   EfsId:
     Type: String
     Description: EFS File System Id
@@ -209,11 +209,11 @@ Resources:
               --==BOUNDARY==--
 
             - EfsMount: !If
-              - !Condition NoEfs
+              - NoEfs
               - ""
               - !Sub |
                 - mkdir -p /mnt/efs
-                - echo "${SharedDataFileSystem}:/ /mnt/efs efs tls,_netdev" >> /etc/fstab
+                - echo "${EfsId}:/ /mnt/efs efs tls,_netdev" >> /etc/fstab
                 - mount -a -t efs defaults
 
 Outputs:

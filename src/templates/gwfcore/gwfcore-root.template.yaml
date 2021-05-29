@@ -93,7 +93,7 @@ Parameters:
     Description: The minimum number of CPUs for the default Batch Compute Environment
     Type: String
     Default: 0
-    AllowedPattern: [0-9]+
+    AllowedPattern: "[0-9]+"
   DefaultCEMaxvCpus:
     Description: The maximum number of CPUs for the default Batch Compute Environment
     Type: Number
@@ -102,12 +102,12 @@ Parameters:
     Description: The minimum number of CPUs for the high-priority Batch Compute Environment
     Type: String
     Default: 0
-    AllowedPattern: [0-9]+
+    AllowedPattern: "[0-9]+"
   PriorityCEMaxvCpus:
     Description: The maximum number of CPUs for the high-priority Batch Compute Environment
     Type: String
     Default: 100
-    AllowedPattern: [0-9]+
+    AllowedPattern: "[0-9]+"
   CreateEFS:
     Description: Create Amazon EFS File System, eg for shared data. Mounts to each subnet specified. Default is No.
     Type: String

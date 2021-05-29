@@ -62,22 +62,22 @@ Parameters:
     Type: String
     Description: Minimum number of CPUs in the high-priority compute environment. Default 0.
     Default: 0
-    AllowedPattern: [0-9]+
+    AllowedPattern: "[0-9]+"
   PriorityCEMaxvCpus:
     Type: String
     Description: Maximum number of CPUs in the high-priority compute environment. Should be >= than MinCpus
     Default: 100
-    AllowedPattern: [0-9]+
+    AllowedPattern: "[0-9]+"
   DefaultCEMinvCpus:
     Type: String
     Description: Minimum number of CPUs in the default compute environment. Default 0.
     Default: 0
-    AllowedPattern: [0-9]+
+    AllowedPattern: "[0-9]+"
   DefaultCEMaxvCpus:
     Type: String
     Description: Maximum number of CPUs in the default compute environment. Should be >= than MinCpus
     Default: 100
-    AllowedPattern: [0-9]+
+    AllowedPattern: "[0-9]+"
   BatchServiceRoleArn:
     Type: String
     Description: The IAM Role ARN for the Batch service
