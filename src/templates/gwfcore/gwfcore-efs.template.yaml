@@ -1,0 +1,87 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  (WWPS-GLS-WF-GWFCORE) Creates EFS file system and mount targets to a list of subnets
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: 'The VPC to create security groups and deploy AWS Batch to. NOTE: Must be the same VPC as the provided subnet IDs.'
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: 'Subnets you want your batch compute environment to launch in. We recommend private subnets. NOTE: Must be from the VPC provided.'
+  NumberOfSubnets:
+    Type: String
+    Description: Number of subnets to launch into. Should correspond to the length of Subnet Ids
+    AllowedPattern: '[1-4]'
+
+Conditions:
+  2SubnetCondition: !Or
+    - !Equals [!Ref 'NumberOfSubnets', '2']
+    - !Condition '3SubnetCondition'
+  3SubnetCondition: !Or
+    - !Equals [!Ref 'NumberOfSubnets', '3']
+    - !Condition '4SubnetCondition'
+  4SubnetCondition: !Equals [!Ref NumberOfSubnets, '4']
+
+Resources:
+  SharedDataFileSystem:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      PerformanceMode: generalPurpose
+      Encrypted: true
+      FileSystemTags:
+      - Key: Name
+        Value: SharedDataGenomics
+
+  MountTargetSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VpcId
+      GroupDescription: Security group for mount target
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '2049'
+        ToPort: '2049'
+        CidrIp: 0.0.0.0/0
+
+  MountTargetSubnet1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref SharedDataFileSystem
+      SubnetId: !Select [0, !Ref SubnetIds]
+      SecurityGroups: 
+      - !Ref MountTargetSecurityGroup
+
+  MountTargetSubnet2:
+    Type: AWS::EFS::MountTarget
+    Condition: 2SubnetCondition
+    Properties:
+      FileSystemId: !Ref SharedDataFileSystem
+      SubnetId: !Select [1, !Ref SubnetIds]
+      SecurityGroups: 
+      - !Ref MountTargetSecurityGroup
+
+  MountTargetSubnet3:
+    Type: AWS::EFS::MountTarget
+    Condition: 3SubnetCondition
+    Properties:
+      FileSystemId: !Ref SharedDataFileSystem
+      SubnetId: !Select [2, !Ref SubnetIds]
+      SecurityGroups: 
+      - !Ref MountTargetSecurityGroup
+
+  MountTargetSubnet4:
+    Type: AWS::EFS::MountTarget
+    Condition: 4SubnetCondition
+    Properties:
+      FileSystemId: !Ref SharedDataFileSystem
+      SubnetId: !Select [3, !Ref SubnetIds]
+      SecurityGroups: 
+      - !Ref MountTargetSecurityGroup
+
+Outputs:
+  EfsId:
+    Value: !Ref SharedDataFileSystem
+    Description: EFS ID
+

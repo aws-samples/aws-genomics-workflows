@@ -73,7 +73,7 @@ Parameters:
   NumberOfSubnets:
     Type: String
     Description: Number of subnets to launch into. Should correspond to the length of Subnet Ids
-    AllowedValues: [1-4]
+    AllowedPattern: '[1-4]'
   S3BucketName:
     Description: >-
       A S3 bucket name for storing analysis results.

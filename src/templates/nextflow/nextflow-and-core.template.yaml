@@ -26,6 +26,7 @@ Metadata:
           - Namespace
           - VpcId
           - SubnetIds
+          - NumberOfSubnets
       - Label:
           default: "Data Storage"
         Parameters:
@@ -55,6 +56,8 @@ Metadata:
         default: VPC ID
       SubnetIds:
         default: VPC Subnet IDs
+      NumberOfSubnets:
+        default: Number of Subnets
       S3DataBucketName:
         default: S3 Data Bucket Name
       ExistingDataBucket:
@@ -127,7 +130,7 @@ Parameters:
   NumberOfSubnets:
     Type: String
     Description: Number of subnets to launch into. Should correspond to the length of Subnet Ids
-    AllowedValues: [1-4]
+    AllowedPattern: '[1-4]'
   DefaultCEMinvCpus:
     Description: The minimum number of CPUs for the default Batch Compute Environment
     Type: String
