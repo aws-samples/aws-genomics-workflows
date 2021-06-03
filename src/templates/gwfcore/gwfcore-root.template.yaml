@@ -23,6 +23,7 @@ Metadata:
           - PriorityCEMinvCpus
           - PriorityCEMaxvCpus
           - CreateEFS
+          - ExistingEFS
       - Label:
           default: Distribution Configuration
         Parameters:
@@ -51,6 +52,8 @@ Metadata:
         default: High Priority Max vCPU
       CreateEFS:
         default: Create Amazon EFS File System
+      ExistingEFS:
+        default: Existing Amazon EFS File System.
       ArtifactBucketName:
         default: Artifact S3 Bucket Name
       ArtifactBucketPrefix:
@@ -115,6 +118,10 @@ Parameters:
       - "Yes"
       - "No"
     Default: "No"
+  ExistingEFS:
+    Description: Specify existing EFS File System, eg for shared data. You should already have EFS Mounts to each subnet specified. If you select to create a new EFS file system, this parameter will be ignored.
+    Type: String
+    Default: ""
   ArtifactBucketName:
     Type: String
     Default: aws-genomics-workflows
@@ -137,6 +144,7 @@ Parameters:
 Conditions:
   NoNamespace: !Equals [ !Ref Namespace, "" ]
   EfsCondition: !Equals [ !Ref CreateEFS, "Yes"]
+  ExistingEfsCondition: !And [ !Not [ !Equals [ !Ref ExistingEFS, "" ] ], !Not [ !Condition EfsCondition ] ]
 
 Resources:
   S3Stack:
@@ -201,7 +209,7 @@ Resources:
             - NoNamespace
             - !Sub ${AWS::StackName}
             - !Ref Namespace
-        EfsId: !If [ EfsCondition, !GetAtt EfsStack.Outputs.EfsId, '' ]
+        EfsId: !If [ EfsCondition, !GetAtt EfsStack.Outputs.EfsId, !If [ ExistingEfsCondition, !Ref ExistingEFS , '' ] ]
 
   BatchStack:
     Type: AWS::CloudFormation::Stack
