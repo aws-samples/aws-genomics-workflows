@@ -3,14 +3,15 @@
     "jobQueue": "genomics-default-queue",
     "jobDefinition": "bwa:1",
     "containerOverrides": {
-        "command": ["bwa mem -t 8 -p -o ${SAMPLE_ID}.sam ${REFERENCE_NAME}.fasta ${SAMPLE_ID}_*1*.fastq.gz"],
+        "command": ["bwa mem -t 8 -p -o ${SAMPLE_ID}.sam ${REFERENCE_NAME}.fasta ${SAMPLE_ID}_1*.fastq.gz"],
+        "memory": 32000,
         "environment": [{
                 "name": "JOB_INPUTS",
-                "value": "s3://aws-batch-genomics-shared/secondary-analysis/example-files/fastq/NIST7035* s3://broad-references/hg38/v0/Homo_sapiens_assembly38.fasta*"
+                "value": "s3://1000genomes/pilot_data/data/NA12878/pilot3_unrecal/SRR014820_*.fastq.gz s3://broad-references/hg38/v0/Homo_sapiens_assembly38.fasta*"
             },
             {
                 "name": "SAMPLE_ID",
-                "value": "NIST7035"
+                "value": "SRR014820"
             },
             {
                 "name": "REFERENCE_NAME",

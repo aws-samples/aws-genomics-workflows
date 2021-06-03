@@ -88,8 +88,9 @@ function show_log() {
 }
 
 function cleanup() {
-    set -e
+    set +e
     wait $NEXTFLOW_PID
+    set -e
     echo "=== Running Cleanup ==="
 
     show_log
@@ -106,12 +107,13 @@ function cancel() {
     echo "=== !! CANCELLING WORKFLOW !! ==="
     echo "stopping nextflow pid: $NEXTFLOW_PID"
     kill -TERM "$NEXTFLOW_PID"
+    echo "waiting .."
     wait $NEXTFLOW_PID
     echo "=== !! cancellation complete !! ==="
     set -e
 }
 
-trap "cancel" TERM
+trap "cancel; cleanup" TERM
 trap "cleanup" EXIT
 
 # stage workflow definition
@@ -129,4 +131,5 @@ nextflow run $NEXTFLOW_PROJECT $NEXTFLOW_PARAMS &
 NEXTFLOW_PID=$!
 echo "nextflow pid: $NEXTFLOW_PID"
 jobs
+echo "waiting .."
 wait $NEXTFLOW_PID

@@ -33,6 +33,19 @@ Resources:
                 Resource: !Sub "arn:aws:s3:::${S3BucketName}/*"
                 Action:
                   - "s3:*"
+        - PolicyName: !Sub SecretManager-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:cromwell/credentials/*
+              - Effect: Allow
+                Action:
+                  - secretsmanager:ListSecrets
+                Resource: "*"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -129,6 +142,19 @@ Resources:
               - Effect: Allow
                 Action:
                   - ssm:DescribeParameters
+                Resource: "*"
+        - PolicyName: !Sub SecretManager-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:cromwell/credentials/*
+              - Effect: Allow
+                Action:
+                  - secretsmanager:ListSecrets
                 Resource: "*"
                 
       ManagedPolicyArns:
