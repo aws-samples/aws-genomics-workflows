@@ -6,11 +6,11 @@
         "command": ["samtools sort -@ 4 -o ${SAMPLE_ID}.bam ${SAMPLE_ID}.sam"],
         "environment": [{
                 "name": "JOB_INPUTS",
-                "value": "s3://YOUR-BUCKET-NAME/samples/NIST7035.sam"
+                "value": "s3://YOUR-BUCKET-NAME/samples/SRR014820.sam"
             },
             {
                 "name": "SAMPLE_ID",
-                "value": "NIST7035"
+                "value": "SRR014820"
             },
             {
                 "name": "JOB_OUTPUTS",
