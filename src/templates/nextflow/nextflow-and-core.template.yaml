@@ -222,6 +222,7 @@ Resources:
         S3BucketName: !Ref S3DataBucketName
         ExistingBucket: !Ref ExistingDataBucket
         CreateEFS: !Ref CreateEFS
+        ExistingEFS: !Ref ExistingEFS
         NumberOfSubnets: !Ref NumberOfSubnets
         DefaultCEMinvCpus: !Ref DefaultCEMinvCpus
         DefaultCEMaxvCpus: !Ref DefaultCEMaxvCpus
