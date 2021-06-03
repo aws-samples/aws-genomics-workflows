@@ -33,6 +33,7 @@ Metadata:
           - S3DataBucketName
           - ExistingDataBucket
           - CreateEFS
+          - ExistingEFS
       - Label:
           default: "AWS Batch"
         Parameters:
@@ -64,6 +65,8 @@ Metadata:
         default: Existing Data Bucket?
       CreateEFS:
         default: Create Amazon EFS File System
+      ExistingEFS:
+        default: Existing Amazon EFS File System.
       DefaultCEMinvCpus:
         default: Default Min vCPU
       DefaultCEMaxvCpus:
@@ -127,6 +130,10 @@ Parameters:
       - "Yes"
       - "No"
     Default: "No"
+  ExistingEFS:
+    Description: Specify existing EFS File System, eg for shared data. You should already have EFS Mounts to each subnet specified. If you select to create a new EFS file system, this parameter will be ignored.
+    Type: String
+    Default: ""
   NumberOfSubnets:
     Type: String
     Description: Number of subnets to launch into. Should correspond to the length of Subnet Ids
