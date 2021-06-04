@@ -41,7 +41,6 @@ Metadata:
         Parameters:
           - LaunchTemplateNamePrefix
           - DockerStorageVolumeSize
-          - EfsId
 
 Conditions:
   NoNamespace: !Equals [ !Ref Namespace, "" ]
@@ -170,7 +169,6 @@ Resources:
                   }
 
               runcmd:
-
               # start the amazon-cloudwatch-agent
               - /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/config.json
 
@@ -188,12 +186,6 @@ Resources:
               # set environment variables for provisioning
               - export GWFCORE_NAMESPACE=${Namespace}
               - export INSTALLED_ARTIFACTS_S3_ROOT_URL=$(aws ssm get-parameter --name /gwfcore/${Namespace}/installed-artifacts/s3-root-url --query 'Parameter.Value' --output text)
-
-              # enable ecs spot instance draining
-              - echo ECS_ENABLE_SPOT_INSTANCE_DRAINING=true >> /etc/ecs/ecs.config
-
-              # pull docker images only if missing
-              - echo ECS_IMAGE_PULL_BEHAVIOR=prefer-cached >> /etc/ecs/ecs.config
 
               - cd /opt
               - aws s3 sync $INSTALLED_ARTIFACTS_S3_ROOT_URL/ecs-additions ./ecs-additions
