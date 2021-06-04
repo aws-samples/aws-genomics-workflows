@@ -59,25 +59,25 @@ Parameters:
     Type: String
     Description: Launch Template you want your AWS Batch Compute Environments to use
   PriorityCEMinvCpus:
-    Type: String
+    Type: Number
     Description: Minimum number of CPUs in the high-priority compute environment. Default 0.
     Default: 0
-    AllowedPattern: "[0-9]+"
+    MinValue: 0
   PriorityCEMaxvCpus:
-    Type: String
+    Type: Number
     Description: Maximum number of CPUs in the high-priority compute environment. Should be >= than MinCpus
     Default: 100
-    AllowedPattern: "[0-9]+"
+    MinValue: 0
   DefaultCEMinvCpus:
-    Type: String
+    Type: Number
     Description: Minimum number of CPUs in the default compute environment. Default 0.
     Default: 0
-    AllowedPattern: "[0-9]+"
+    MinValue: 0
   DefaultCEMaxvCpus:
-    Type: String
+    Type: Number
     Description: Maximum number of CPUs in the default compute environment. Should be >= than MinCpus
     Default: 100
-    AllowedPattern: "[0-9]+"
+    MinValue: 0
   BatchServiceRoleArn:
     Type: String
     Description: The IAM Role ARN for the Batch service

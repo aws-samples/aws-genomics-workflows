@@ -50,7 +50,6 @@ EOF
 
 if [[ "$EFS_MOUNT" != "" ]]
 then
-   # echo aws.batch.volumes = [\"/tmp\", \"/mnt/efs\"] >> $NF_CONFIG
     echo aws.batch.volumes = [\"/mnt/efs\"] >> $NF_CONFIG
 fi
 

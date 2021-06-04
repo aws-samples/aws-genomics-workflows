@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  (WWPS-GLS-WF-GWFCORE) Creates EFS file system and mount targets to a list of subnets
+  (WWPS-GLS-WF-GWFCORE-EFS) Creates EFS file system and mount targets to a list of subnets
 
 Parameters:
   VpcId:
@@ -11,9 +11,10 @@ Parameters:
     Type: List<AWS::EC2::Subnet::Id>
     Description: 'Subnets you want your batch compute environment to launch in. We recommend private subnets. NOTE: Must be from the VPC provided.'
   NumberOfSubnets:
-    Type: String
+    Type: Number
     Description: Number of subnets to launch into. Should correspond to the length of Subnet Ids
-    AllowedPattern: '[1-4]'
+    MinValue: 1
+    MaxValue: 6
 
 Conditions:
   2SubnetCondition: !Or
@@ -22,7 +23,13 @@ Conditions:
   3SubnetCondition: !Or
     - !Equals [!Ref 'NumberOfSubnets', '3']
     - !Condition '4SubnetCondition'
-  4SubnetCondition: !Equals [!Ref NumberOfSubnets, '4']
+  4SubnetCondition: !Or
+    - !Equals [!Ref 'NumberOfSubnets', '4']
+    - !Condition '5SubnetCondition'
+  5SubnetCondition: !Or
+    - !Equals [!Ref 'NumberOfSubnets', '5']
+    - !Condition '6SubnetCondition'
+  6SubnetCondition: !Equals [!Ref NumberOfSubnets, '4']
 
 Resources:
   SharedDataFileSystem:
@@ -77,6 +84,24 @@ Resources:
     Properties:
       FileSystemId: !Ref SharedDataFileSystem
       SubnetId: !Select [3, !Ref SubnetIds]
+      SecurityGroups: 
+      - !Ref MountTargetSecurityGroup
+
+  MountTargetSubnet5:
+    Type: AWS::EFS::MountTarget
+    Condition: 5SubnetCondition
+    Properties:
+      FileSystemId: !Ref SharedDataFileSystem
+      SubnetId: !Select [4, !Ref SubnetIds]
+      SecurityGroups: 
+      - !Ref MountTargetSecurityGroup
+
+  MountTargetSubnet6:
+    Type: AWS::EFS::MountTarget
+    Condition: 6SubnetCondition
+    Properties:
+      FileSystemId: !Ref SharedDataFileSystem
+      SubnetId: !Select [5, !Ref SubnetIds]
       SecurityGroups: 
       - !Ref MountTargetSecurityGroup
 

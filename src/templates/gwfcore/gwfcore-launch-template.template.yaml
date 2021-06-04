@@ -24,13 +24,10 @@ Parameters:
     Default: gwfcore
     Description: Name of the launch template. This will be made unique using the Stack ID.
   DockerStorageVolumeSize:
-    Type: String
+    Type: Number
     Default: 100
     Description: The initial size of the volume Docker will use for image and metadata storage (GB)
-    AllowedPattern: "[1-9][0-9]+"
-  EfsId:
-    Type: String
-    Description: EFS File System Id
+    MinValue: 0
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -48,7 +45,7 @@ Metadata:
 
 Conditions:
   NoNamespace: !Equals [ !Ref Namespace, "" ]
-  NoEfs: !Equals [ !Ref EfsId, "" ]
+  NoEfs: !Equals [ !Sub '{{resolve:ssm:/gwfcore/${Namespace}/s3-bucket}}', "" ]
 
 Resources:
   EC2LaunchTemplate:
@@ -214,7 +211,7 @@ Resources:
               - ""
               - !Sub |
                 - mkdir -p /mnt/efs
-                - echo "${EfsId}:/ /mnt/efs efs tls,_netdev" >> /etc/fstab
+                - echo "{{resolve:ssm:/gwfcore/${Namespace}/s3-bucket}}:/ /mnt/efs efs tls,_netdev" >> /etc/fstab
                 - mount -a -t efs defaults
 
 Outputs:

@@ -94,23 +94,24 @@ Parameters:
     Default: "No"
   DefaultCEMinvCpus:
     Description: The minimum number of CPUs for the default Batch Compute Environment
-    Type: String
+    Type: Number
     Default: 0
-    AllowedPattern: "[0-9]+"
+    MinValue: 0
   DefaultCEMaxvCpus:
     Description: The maximum number of CPUs for the default Batch Compute Environment
     Type: Number
     Default: 100
+    MinValue: 0
   PriorityCEMinvCpus:
     Description: The minimum number of CPUs for the high-priority Batch Compute Environment
-    Type: String
+    Type: Number
     Default: 0
-    AllowedPattern: "[0-9]+"
+    MinValue: 0
   PriorityCEMaxvCpus:
     Description: The maximum number of CPUs for the high-priority Batch Compute Environment
-    Type: String
+    Type: Number
     Default: 100
-    AllowedPattern: "[0-9]+"
+    MinValue: 0
   CreateEFS:
     Description: Create Amazon EFS File System, eg for shared data. Mounts to each subnet specified. Default is No.
     Type: String
@@ -201,6 +202,7 @@ Resources:
 
   LaunchTplStack:
     Type: AWS::CloudFormation::Stack
+    DependsOn: ParamEfsFileSystem
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/gwfcore/gwfcore-launch-template.template.yaml
       Parameters:
@@ -209,8 +211,7 @@ Resources:
             - NoNamespace
             - !Sub ${AWS::StackName}
             - !Ref Namespace
-        EfsId: !If [ EfsCondition, !GetAtt EfsStack.Outputs.EfsId, !If [ ExistingEfsCondition, !Ref ExistingEFS , '' ] ]
-
+        
   BatchStack:
     Type: AWS::CloudFormation::Stack
     DependsOn:
@@ -253,7 +254,6 @@ Resources:
   
   ParamEfsFileSystem:
     Type: "AWS::SSM::Parameter"
-    Condition: EfsCondition
     Properties:
       Name:
         Fn::Sub:
@@ -264,7 +264,7 @@ Resources:
                 - !Sub ${AWS::StackName}
                 - !Ref Namespace
       Type: String #required
-      Value: !Sub ${EfsStack.Outputs.EfsId} #required
+      Value: !If [ EfsCondition, !GetAtt EfsStack.Outputs.EfsId, !If [ ExistingEfsCondition, !Ref ExistingEFS , '' ] ] # required
       Description: GWFCore EFS Shared File System
 
   ParamDefaultJobQueue:
