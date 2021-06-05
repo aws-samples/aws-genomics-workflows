@@ -264,7 +264,7 @@ Resources:
                 - !Sub ${AWS::StackName}
                 - !Ref Namespace
       Type: String #required
-      Value: !If [ EfsCondition, !GetAtt EfsStack.Outputs.EfsId, !If [ ExistingEfsCondition, !Ref ExistingEFS , '' ] ] # required
+      Value: !If [ EfsCondition, !GetAtt EfsStack.Outputs.EfsId, !If [ ExistingEfsCondition, !Ref ExistingEFS , 'none' ] ] # required
       Description: GWFCore EFS Shared File System
 
   ParamDefaultJobQueue:

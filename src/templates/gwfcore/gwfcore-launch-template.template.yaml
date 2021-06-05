@@ -44,7 +44,6 @@ Metadata:
 
 Conditions:
   NoNamespace: !Equals [ !Ref Namespace, "" ]
-  NoEfs: !Equals [ !Sub '{{resolve:ssm:/gwfcore/${Namespace}/s3-bucket}}', "" ]
 
 Resources:
   EC2LaunchTemplate:
@@ -89,8 +88,7 @@ Resources:
             DeviceName: /dev/xvdba
         UserData:
           Fn::Base64:
-            Fn::Sub: 
-            - |
+            Fn::Sub: |
               MIME-Version: 1.0
               Content-Type: multipart/mixed; boundary="==BOUNDARY=="
 
@@ -193,18 +191,16 @@ Resources:
               - /opt/ecs-additions/provision.sh
 
               # optional EFS mount
-              ${EfsMount}
+              - USEEFS=`aws ssm get-parameter --name /gwfcore/${Namespace}/efs-shared-file-system --query 'Parameter.Value' --output text`
+              - if [[ $USEEFS != "none" ]]
+              - then
+              - mkdir -p /mnt/efs
+              - echo $USEEFS:/ /mnt/efs efs tls,_netdev >> /etc/fstab
+              - mount -a -t efs defaults
+              - fi
 
               --==BOUNDARY==--
 
-
-            - EfsMount: !If
-              - NoEfs
-              - ""
-              - !Sub |
-                - mkdir -p /mnt/efs
-                - echo "{{resolve:ssm:/gwfcore/${Namespace}/s3-bucket}}:/ /mnt/efs efs tls,_netdev" >> /etc/fstab
-                - mount -a -t efs defaults
 
 Outputs:
   LaunchTemplateId:
