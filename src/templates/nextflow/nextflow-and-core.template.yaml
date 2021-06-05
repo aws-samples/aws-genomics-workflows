@@ -26,11 +26,14 @@ Metadata:
           - Namespace
           - VpcId
           - SubnetIds
+          - NumberOfSubnets
       - Label:
           default: "Data Storage"
         Parameters:
           - S3DataBucketName
           - ExistingDataBucket
+          - CreateEFS
+          - ExistingEFS
       - Label:
           default: "AWS Batch"
         Parameters:
@@ -54,10 +57,16 @@ Metadata:
         default: VPC ID
       SubnetIds:
         default: VPC Subnet IDs
+      NumberOfSubnets:
+        default: Number of Subnets
       S3DataBucketName:
         default: S3 Data Bucket Name
       ExistingDataBucket:
         default: Existing Data Bucket?
+      CreateEFS:
+        default: Create Amazon EFS File System
+      ExistingEFS:
+        default: Existing Amazon EFS File System.
       DefaultCEMinvCpus:
         default: Default Min vCPU
       DefaultCEMaxvCpus:
@@ -114,23 +123,42 @@ Parameters:
       - "Yes"
       - "No"
     Default: "No"
+  CreateEFS:
+    Description: Create Amazon EFS File System, eg for shared data. Mounts to each subnet specified.
+    Type: String
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+  ExistingEFS:
+    Description: Specify existing EFS File System, eg for shared data. You should already have EFS Mounts to each subnet specified. If you select to create a new EFS file system, this parameter will be ignored.
+    Type: String
+    Default: ""
+  NumberOfSubnets:
+    Type: Number
+    Description: Number of subnets to launch into. Should correspond to the length of Subnet Ids
+    MinValue: 1
+    MaxValue: 6
   DefaultCEMinvCpus:
     Description: The minimum number of CPUs for the default Batch Compute Environment
     Type: Number
     Default: 0
+    MinValue: 0
   DefaultCEMaxvCpus:
     Description: The maximum number of CPUs for the default Batch Compute Environment
     Type: Number
     Default: 100
+    MinValue: 0
   PriorityCEMinvCpus:
     Description: The minimum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
     Default: 0
+    MinValue: 0
   PriorityCEMaxvCpus:
     Description: The maximum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
-    Default: 100
-  
+    Default: 100 
+    MinValue: 0
   S3NextflowPrefix:
     Type: String
     Description: >-
@@ -194,6 +222,9 @@ Resources:
         SubnetIds: !Join [",", !Ref SubnetIds ]
         S3BucketName: !Ref S3DataBucketName
         ExistingBucket: !Ref ExistingDataBucket
+        CreateEFS: !Ref CreateEFS
+        ExistingEFS: !Ref ExistingEFS
+        NumberOfSubnets: !Ref NumberOfSubnets
         DefaultCEMinvCpus: !Ref DefaultCEMinvCpus
         DefaultCEMaxvCpus: !Ref DefaultCEMaxvCpus
         PriorityCEMinvCpus: !Ref PriorityCEMinvCpus
@@ -211,6 +242,7 @@ Resources:
       Parameters:
         Namespace: !Sub ${Namespace}-nextflow
         GWFCoreNamespace: !Sub "${Namespace}-gwfcore"
+        MountEfs: !Ref CreateEFS
         S3NextflowPrefix: !Ref S3NextflowPrefix
         S3LogsDirPrefix: !Ref S3LogsDirPrefix
         S3WorkDirPrefix: !Ref S3WorkDirPrefix

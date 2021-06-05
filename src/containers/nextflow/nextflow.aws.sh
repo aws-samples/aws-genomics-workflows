@@ -40,12 +40,18 @@ cd /opt/work/$GUID
 NF_CONFIG=./nextflow.config
 echo "Creating config file: $NF_CONFIG"
 
+# To figure out - batch volumes 
 cat << EOF > $NF_CONFIG
 workDir = "$NF_WORKDIR"
 process.executor = "awsbatch"
 process.queue = "$NF_JOB_QUEUE"
 aws.batch.cliPath = "$AWS_CLI_PATH"
 EOF
+
+if [[ "$EFS_MOUNT" != "" ]]
+then
+    echo aws.batch.volumes = [\"/mnt/efs\"] >> $NF_CONFIG
+fi
 
 echo "=== CONFIGURATION ==="
 cat ./nextflow.config

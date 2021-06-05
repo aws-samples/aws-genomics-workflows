@@ -3,7 +3,6 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
   (WWPS-GLS-WF-GWFCORE) Genomics workflow core execution environment
 
-
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -14,6 +13,7 @@ Metadata:
           - ExistingBucket
           - VpcId
           - SubnetIds
+          - NumberOfSubnets
       - Label:
           default: Optional
         Parameters:
@@ -22,6 +22,8 @@ Metadata:
           - DefaultCEMaxvCpus
           - PriorityCEMinvCpus
           - PriorityCEMaxvCpus
+          - CreateEFS
+          - ExistingEFS
       - Label:
           default: Distribution Configuration
         Parameters:
@@ -38,6 +40,8 @@ Metadata:
         default: VPC ID
       SubnetIds:
         default: VPC Subnet IDs
+      NumberOfSubnets:
+        default: Number of Subnets
       DefaultCEMinvCpus:
         default: Default Min vCPU
       DefaultCEMaxvCpus:
@@ -46,6 +50,10 @@ Metadata:
         default: High Priority Min vCPU
       PriorityCEMaxvCpus:
         default: High Priority Max vCPU
+      CreateEFS:
+        default: Create Amazon EFS File System
+      ExistingEFS:
+        default: Existing Amazon EFS File System.
       ArtifactBucketName:
         default: Artifact S3 Bucket Name
       ArtifactBucketPrefix:
@@ -59,13 +67,17 @@ Parameters:
     Type: String
     Description: Optional namespace (e.g. project name) to use to label resources. If not specified the stack-name will be used.
     Default: ""
-
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: 'The VPC to create security groups and deploy AWS Batch to. NOTE: Must be the same VPC as the provided subnet IDs.'
   SubnetIds:
     Type: List<AWS::EC2::Subnet::Id>
     Description: 'Subnets you want your batch compute environment to launch in. We recommend private subnets. NOTE: Must be from the VPC provided.'
+  NumberOfSubnets:
+    Type: Number
+    Description: Number of subnets to launch into. Should correspond to the length of Subnet Ids
+    MinValue: 1
+    MaxValue: 6
   S3BucketName:
     Description: >-
       A S3 bucket name for storing analysis results.
@@ -87,18 +99,33 @@ Parameters:
     Description: The minimum number of CPUs for the default Batch Compute Environment
     Type: Number
     Default: 0
+    MinValue: 0
   DefaultCEMaxvCpus:
     Description: The maximum number of CPUs for the default Batch Compute Environment
     Type: Number
     Default: 100
+    MinValue: 0
   PriorityCEMinvCpus:
     Description: The minimum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
     Default: 0
+    MinValue: 0
   PriorityCEMaxvCpus:
     Description: The maximum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
     Default: 100
+    MinValue: 0
+  CreateEFS:
+    Description: Create Amazon EFS File System, eg for shared data. Mounts to each subnet specified. Default is No.
+    Type: String
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+  ExistingEFS:
+    Description: Specify existing EFS File System, eg for shared data. You should already have EFS Mounts to each subnet specified. If you select to create a new EFS file system, this parameter will be ignored.
+    Type: String
+    Default: ""
   ArtifactBucketName:
     Type: String
     Default: aws-genomics-workflows
@@ -120,6 +147,8 @@ Parameters:
 
 Conditions:
   NoNamespace: !Equals [ !Ref Namespace, "" ]
+  EfsCondition: !Equals [ !Ref CreateEFS, "Yes"]
+  ExistingEfsCondition: !And [ !Not [ !Equals [ !Ref ExistingEFS, "" ] ], !Not [ !Condition EfsCondition ] ]
 
 Resources:
   S3Stack:
@@ -164,8 +193,19 @@ Resources:
         ArtifactBucketName: !Ref ArtifactBucketName
         ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
 
+  EfsStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: EfsCondition
+    Properties:
+      TemplateURL: !Sub ${TemplateRootUrl}/gwfcore/gwfcore-efs.template.yaml
+      Parameters:
+        VpcId: !Ref VpcId
+        SubnetIds: !Join [",", !Ref SubnetIds ]
+        NumberOfSubnets: !Ref NumberOfSubnets
+
   LaunchTplStack:
     Type: AWS::CloudFormation::Stack
+    DependsOn: ParamEfsFileSystem
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/gwfcore/gwfcore-launch-template.template.yaml
       Parameters:
@@ -174,7 +214,7 @@ Resources:
             - NoNamespace
             - !Sub ${AWS::StackName}
             - !Ref Namespace
-  
+        
   BatchStack:
     Type: AWS::CloudFormation::Stack
     DependsOn:
@@ -215,6 +255,21 @@ Resources:
       Value: !Sub ${S3Stack.Outputs.BucketName} #required
       Description: GWFCore S3 Bucket
   
+  ParamEfsFileSystem:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name:
+        Fn::Sub:
+          - /gwfcore/${namespace}/efs-shared-file-system
+          - namespace: 
+              Fn::If:
+                - NoNamespace
+                - !Sub ${AWS::StackName}
+                - !Ref Namespace
+      Type: String #required
+      Value: !If [ EfsCondition, !GetAtt EfsStack.Outputs.EfsId, !If [ ExistingEfsCondition, !Ref ExistingEFS , 'none' ] ] # required
+      Description: GWFCore EFS Shared File System
+
   ParamDefaultJobQueue:
     Type: "AWS::SSM::Parameter"
     Properties:
@@ -226,7 +281,6 @@ Resources:
                 - NoNamespace
                 - !Sub ${AWS::StackName}
                 - !Ref Namespace
-
       Type: String #required
       Value: !Sub ${BatchStack.Outputs.DefaultJobQueueArn} #required
       Description: GWFCore Default AWS Batch Job Queue
