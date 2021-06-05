@@ -29,7 +29,7 @@ Conditions:
   5SubnetCondition: !Or
     - !Equals [!Ref 'NumberOfSubnets', '5']
     - !Condition '6SubnetCondition'
-  6SubnetCondition: !Equals [!Ref NumberOfSubnets, '4']
+  6SubnetCondition: !Equals [!Ref NumberOfSubnets, '6']
 
 Resources:
   SharedDataFileSystem:

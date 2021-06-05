@@ -135,9 +135,10 @@ Parameters:
     Type: String
     Default: ""
   NumberOfSubnets:
-    Type: String
+    Type: Number
     Description: Number of subnets to launch into. Should correspond to the length of Subnet Ids
-    AllowedPattern: '[1-4]'
+    MinValue: 1
+    MaxValue: 6
   DefaultCEMinvCpus:
     Description: The minimum number of CPUs for the default Batch Compute Environment
     Type: Number
