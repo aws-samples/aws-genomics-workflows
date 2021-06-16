@@ -106,7 +106,7 @@ def log(args):
                 for event in events:
                     ts = datetime.utcfromtimestamp(event['timestamp']/1000).strftime('%Y-%m-%d %H:%M:%S')
                     print(f"[{ts}] {event['message']}")
-            except cwlogs.exceptions.ResourceNotFoundException:
+            except (KeyError, cwlogs.exceptions.ResourceNotFoundException):
                 print("No log found. Either the job has not started yet or there was an error.")
 
 
