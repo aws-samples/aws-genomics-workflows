@@ -15,7 +15,6 @@
 # It can also download a zip file from S3 and run a script from inside.
 # See below for usage instructions.
 
-#PATH="/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
 BASENAME="${0##*/}"
 AWS="/usr/local/aws-cli/v2/current/bin/aws"
 
@@ -39,6 +38,34 @@ ${BASENAME} script-from-zip [ <script arguments> ]
 ENDUSAGE
 
   exit 2
+}
+
+function _s3_localize_with_retry() {
+  local s3_path=$1
+  # destination must be the path to a file and not just the directory you want the file in
+  local destination=$2
+
+  for i in {1..5};
+  do
+    if [[ $s3_path =~ s3://([^/]+)/(.+) ]]; then
+        bucket="${BASH_REMATCH[1]}"
+        key="${BASH_REMATCH[2]}"
+        content_length=$("$AWS"  s3api head-object --bucket "$bucket" --key "$key" --query 'ContentLength')
+    else
+      echo "$s3_path is not an S3 path with a bucket and key. aborting"
+      exit 1
+    fi
+
+    "$AWS"  s3 cp --no-progress "$s3_path" "$destination" &&
+    [[ $(LC_ALL=C ls -dn -- "$destination" | awk '{print $5; exit}') -eq "$content_length" ]] && break ||
+    echo "attempt $i to copy $s3_path failed";
+
+    if [ "$i" -eq 5 ]; then
+        echo "failed to copy $s3_path after $i attempts. aborting"
+        exit 2
+    fi
+    sleep $((7 * "$i"))
+  done
 }
 
 # Standard function to print an error and exit with a failing return code
@@ -84,7 +111,7 @@ install -m 0600 /dev/null "${TMPFILE}" || error_exit "Failed to create temp file
 # Fetch and run a script
 fetch_and_run_script () {
   # Create a temporary file and download the script
-  "${AWS}" s3 cp "${BATCH_FILE_S3_URL}" - > "${TMPFILE}" || error_exit "Failed to download S3 script."
+  _s3_localize_with_retry "${BATCH_FILE_S3_URL}" "${TMPFILE}"
 
   # Make the temporary file executable and run it with any given arguments
   local script="./${1}"; shift
@@ -98,7 +125,7 @@ fetch_and_run_zip () {
   command -v unzip >/dev/null 2>&1 || error_exit "Unable to find unzip executable."
 
   # Create a temporary file and download the zip file
-  "${AWS}" s3 cp "${BATCH_FILE_S3_URL}" - > "${TMPFILE}" || error_exit "Failed to download S3 zip file from ${BATCH_FILE_S3_URL}"
+  _s3_localize_with_retry "${BATCH_FILE_S3_URL}" "${TMPFILE}"
 
   # Create a temporary directory and unpack the zip file
   cd "${TMPDIR}" || error_exit "Unable to cd to temporary directory."
