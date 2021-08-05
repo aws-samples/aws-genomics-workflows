@@ -178,6 +178,9 @@ Resources:
           - c5n.4xlarge
           - m5n.4xlarge
           - r5n.4xlarge
+          - r5.8xlarge
+          - r5.12xlarge
+          - r5.16xlarge
         MinvCpus: !Ref DefaultCEMinvCpus
         MaxvCpus: !Ref DefaultCEMaxvCpus
         SecurityGroupIds:
