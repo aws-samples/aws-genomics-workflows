@@ -107,6 +107,7 @@ Resources:
               - amazon-ssm-agent
               - unzip
               - amazon-cloudwatch-agent
+              - lustre-client
 
               write_files:
               - permissions: '0644'
@@ -197,6 +198,16 @@ Resources:
               - mkdir -p /mnt/efs
               - echo $USEEFS:/ /mnt/efs efs tls,_netdev >> /etc/fstab
               - mount -a -t efs defaults
+              - fi
+
+              # optional FSx mount
+              - FSxId=`aws ssm get-parameter --name /gwfcore/${Namespace}/fsx-file-system --query 'Parameter.Value' --output text`
+              - if [[ $FSxId != "none" ]]
+              - then
+              - FSxMount=`aws ssm get-parameter --name /gwfcore/${Namespace}/fsx-mount-name --query 'Parameter.Value' --output text`
+              - mkdir -p /fsx && chmod 777 /fsx
+              - sudo mount -t lustre -o noatime,flock $FSxId.fsx.${AWS::Region}.amazonaws.com@tcp:/$FSxMount /fsx
+              - find /fsx -type f -print0 | xargs -0 -n 1 sudo lfs hsm_restore
               - fi
 
               --==BOUNDARY==--

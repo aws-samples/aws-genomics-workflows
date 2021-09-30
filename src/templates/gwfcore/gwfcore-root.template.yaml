@@ -24,6 +24,8 @@ Metadata:
           - PriorityCEMaxvCpus
           - CreateEFS
           - ExistingEFS
+          - CreateFSx
+          - FSxSubnetId
       - Label:
           default: Distribution Configuration
         Parameters:
@@ -53,7 +55,11 @@ Metadata:
       CreateEFS:
         default: Create Amazon EFS File System
       ExistingEFS:
-        default: Existing Amazon EFS File System.
+        default: Existing Amazon EFS File System
+      CreateFSx:
+        default: Create Amazon FSx for Lustre File System
+      FSxSubnetId:
+        default: FSx for Lustre SubnetId
       ArtifactBucketName:
         default: Artifact S3 Bucket Name
       ArtifactBucketPrefix:
@@ -78,6 +84,10 @@ Parameters:
     Description: Number of subnets to launch into. Should correspond to the length of Subnet Ids
     MinValue: 1
     MaxValue: 6
+  FSxSubnetId:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: 'Subnet you want FSx for Lustre to launch in. We recommend a private subnet. NOTE: Must be from the VPC provided.'
+
   S3BucketName:
     Description: >-
       A S3 bucket name for storing analysis results.
@@ -126,6 +136,13 @@ Parameters:
     Description: Specify existing EFS File System, eg for shared data. You should already have EFS Mounts to each subnet specified. If you select to create a new EFS file system, this parameter will be ignored.
     Type: String
     Default: ""
+  CreateFSx:
+    Description: Create Amazon FSx for Lustre File System. Default is No.
+    Type: String
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
   ArtifactBucketName:
     Type: String
     Default: aws-genomics-workflows
@@ -149,6 +166,7 @@ Conditions:
   NoNamespace: !Equals [ !Ref Namespace, "" ]
   EfsCondition: !Equals [ !Ref CreateEFS, "Yes"]
   ExistingEfsCondition: !And [ !Not [ !Equals [ !Ref ExistingEFS, "" ] ], !Not [ !Condition EfsCondition ] ]
+  FsxCondition: !Equals [ !Ref CreateFSx, "Yes"]
 
 Resources:
   S3Stack:
@@ -203,9 +221,22 @@ Resources:
         SubnetIds: !Join [",", !Ref SubnetIds ]
         NumberOfSubnets: !Ref NumberOfSubnets
 
+  FsxStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: FsxCondition
+    Properties:
+      TemplateURL: !Sub ${TemplateRootUrl}/gwfcore/gwfcore-fsx.template.yaml
+      Parameters:
+        S3BucketName: !Ref S3BucketName
+        VpcId: !Ref VpcId
+        SubnetId: !Join [",", !Ref FSxSubnetId ]
+
   LaunchTplStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: ParamEfsFileSystem
+    DependsOn: 
+      - ParamEfsFileSystem
+      - ParamFSxFileSystemID
+      - ParamFSxFileSystemMount
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/gwfcore/gwfcore-launch-template.template.yaml
       Parameters:
@@ -269,6 +300,36 @@ Resources:
       Type: String #required
       Value: !If [ EfsCondition, !GetAtt EfsStack.Outputs.EfsId, !If [ ExistingEfsCondition, !Ref ExistingEFS , 'none' ] ] # required
       Description: GWFCore EFS Shared File System
+
+  ParamFSxFileSystemID:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name:
+        Fn::Sub:
+          - /gwfcore/${namespace}/fsx-file-system
+          - namespace: 
+              Fn::If:
+                - NoNamespace
+                - !Sub ${AWS::StackName}
+                - !Ref Namespace
+      Type: String #required
+      Value: !If [ FsxCondition, !GetAtt FsxStack.Outputs.FSxId, 'none' ] # required
+      Description: GWFCore FSx File System ID
+
+  ParamFSxFileSystemMount:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name:
+        Fn::Sub:
+          - /gwfcore/${namespace}/fsx-mount-name
+          - namespace: 
+              Fn::If:
+                - NoNamespace
+                - !Sub ${AWS::StackName}
+                - !Ref Namespace
+      Type: String #required
+      Value: !If [ FsxCondition, !GetAtt FsxStack.Outputs.FSxMount, 'none' ] # required
+      Description: GWFCore FSx File System Mount Name
 
   ParamDefaultJobQueue:
     Type: "AWS::SSM::Parameter"

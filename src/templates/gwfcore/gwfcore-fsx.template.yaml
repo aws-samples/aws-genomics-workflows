@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  (WWPS-GLS-WF-GWFCORE-FSX) Creates FSx for Lustre file system
+
+Parameters:
+  S3BucketName:
+    Type: String
+    AllowedPattern: "((?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)|(^.{0}$))"
+    ConstraintDescription: "Must respect AWS naming conventions"
+    Description: A S3 bucket name to mount on FSx
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: The VPC to create security groups
+  SubnetId:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: "Subnet you want your batch compute environment to launch in. We recommend a private subnet. NOTE: Must be from the VPC provided."
+
+Resources:
+  FSxSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SG for FSx
+      VpcId:
+        Ref: VpcId
+
+  SGIngressTCP988:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: "Allow TCP Connections for this security group"
+      GroupId: !Ref FSxSecurityGroup
+      SourceSecurityGroupId: !Ref FSxSecurityGroup
+      IpProtocol: tcp
+      FromPort: 988
+      ToPort: 988
+
+  SGIngressTCP1021:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: "Allow TCP Connections for this security group"
+      GroupId: !Ref FSxSecurityGroup
+      SourceSecurityGroupId: !Ref FSxSecurityGroup
+      IpProtocol: tcp
+      FromPort: 1021
+      ToPort: 1023
+
+  FSxFileSystem:
+    Type: AWS::FSx::FileSystem
+    Properties:
+      FileSystemType: "LUSTRE"
+      LustreConfiguration:
+        AutoImportPolicy: "NEW_CHANGED"
+        DeploymentType: "PERSISTENT_1"
+        DriveCacheType: "NONE"
+        ExportPath: !Sub s3://${S3BucketName}
+        ImportPath: !Sub s3://${S3BucketName}
+        PerUnitStorageThroughput: 12
+      SecurityGroupIds:
+        - !Ref FSxSecurityGroup
+      StorageCapacity: 6000
+      StorageType: "HDD"
+      SubnetIds: !Ref SubnetId
+
+Outputs:
+  FSxId:
+    Value: !Ref FSxFileSystem
+    Description: FSx ID
+  FSxMount:
+    Value: !GetAtt FSxFileSystem.LustreMountName
+    Description: FSx Mount Name
