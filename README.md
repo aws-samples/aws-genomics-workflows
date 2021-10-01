@@ -85,4 +85,4 @@ $ mkdocs build
 
 ## License Summary
 
-This sample code is made available under a modified MIT license. See the LICENSE file.
+This library is licensed under the MIT-0 License. See the LICENSE file.
