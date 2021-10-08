@@ -38,8 +38,8 @@ Resources:
       PerformanceMode: generalPurpose
       Encrypted: true
       FileSystemTags:
-      - Key: Name
-        Value: SharedDataGenomics
+        - Key: Name
+          Value: SharedDataGenomics
 
   MountTargetSecurityGroup:
     Type: AWS::EC2::SecurityGroup

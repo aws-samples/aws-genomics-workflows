@@ -12,8 +12,38 @@ Parameters:
     Type: AWS::EC2::VPC::Id
     Description: The VPC to create security groups
   SubnetId:
-    Type: List<AWS::EC2::Subnet::Id>
-    Description: "Subnet you want your batch compute environment to launch in. We recommend a private subnet. NOTE: Must be from the VPC provided."
+    Type: String
+    Description: "Subnet you want your FSx for lustre file system to launch in. Ensure Batch compute environment is also launched in that subnet only."
+  FSxStorageVolumeSize:
+    Type: Number
+    Default: 0
+    Description: The initial size of the FSx volume to be used in GB
+  PerUnitStorageThroughput:
+    Type: Number
+    Default: 0
+    Description: The throughput for the FSx file system.
+  StorageType:
+    Type: String
+    Description: The type of FS needed i.e. SSD or HDD
+    Default: HDD
+
+Mappings:
+  ThroughputMap:
+    SSD:
+      MinValue: 50
+    HDD:
+      MinValue: 12
+
+  StorageMap:
+    SSD:
+      MinValue: 12000
+    HDD:
+      MinValue: 6000
+
+Conditions:
+  TypeCheck: !Equals [!Ref StorageType, "SSD"]
+  IsMinThroughput: !Equals [!Ref PerUnitStorageThroughput, 0]
+  IsMinStorageCapacity: !Equals [!Ref FSxStorageVolumeSize, 0]
 
 Resources:
   FSxSecurityGroup:
@@ -50,15 +80,27 @@ Resources:
       LustreConfiguration:
         AutoImportPolicy: "NEW_CHANGED"
         DeploymentType: "PERSISTENT_1"
-        DriveCacheType: "NONE"
+        DriveCacheType: 
+          Fn::If:
+            - TypeCheck
+            - !Ref AWS::NoValue
+            - "NONE"
         ExportPath: !Sub s3://${S3BucketName}
         ImportPath: !Sub s3://${S3BucketName}
-        PerUnitStorageThroughput: 12
+        PerUnitStorageThroughput:
+          Fn::If:
+            - IsMinThroughput
+            - !FindInMap [ThroughputMap, !Ref StorageType, MinValue]
+            - !Ref PerUnitStorageThroughput
       SecurityGroupIds:
         - !Ref FSxSecurityGroup
-      StorageCapacity: 6000
-      StorageType: "HDD"
-      SubnetIds: !Ref SubnetId
+      StorageCapacity:
+        Fn::If:
+          - IsMinStorageCapacity
+          - !FindInMap [StorageMap, !Ref StorageType, MinValue]
+          - !Ref FSxStorageVolumeSize
+      StorageType: !Ref StorageType
+      SubnetIds: [!Ref SubnetId]
 
 Outputs:
   FSxId:
@@ -67,3 +109,6 @@ Outputs:
   FSxMount:
     Value: !GetAtt FSxFileSystem.LustreMountName
     Description: FSx Mount Name
+  FSxSecurityGroupId:
+    Description: The FSx Security Group
+    Value: !Ref FSxSecurityGroup

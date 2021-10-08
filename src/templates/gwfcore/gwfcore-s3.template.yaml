@@ -55,7 +55,7 @@ Resources:
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
-             SSEAlgorithm: AES256
+              SSEAlgorithm: AES256
       Tags:
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
