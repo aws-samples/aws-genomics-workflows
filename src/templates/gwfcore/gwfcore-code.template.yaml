@@ -209,7 +209,9 @@ Resources:
       Tags:
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
-  
+        - Key: Application
+          Value: AWS-GENOMICS-WKF
+
   BuildEcsAdditions:
     Type: "AWS::CodeBuild::Project"
     Properties:
@@ -238,7 +240,9 @@ Resources:
       Tags:
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
-  
+        - Key: Application
+          Value: AWS-GENOMICS-WKF
+
   PipelineEcsAdditions:
     Type: "AWS::CodePipeline::Pipeline"
     Properties:
@@ -277,7 +281,9 @@ Resources:
       Tags:
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
-  
+        - Key: Application
+          Value: AWS-GENOMICS-WKF
+
   SourceEvent:
     Type: AWS::Events::Rule
     DependsOn:
@@ -363,7 +369,9 @@ Resources:
       Tags:
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
-  
+        - Key: Application
+          Value: AWS-GENOMICS-WKF
+
   CodeBuildInvocation:
     Type: Custom::CodeBuildInvocation
     Properties:
@@ -400,7 +408,10 @@ Resources:
                       cfnresponse.send(event, context, cfnresponse.FAILED, None)
               
               cfnresponse.send(event, context, cfnresponse.SUCCESS, None)
-              
+      Tags:
+        - Key: Application
+          Value: AWS-GENOMICS-WKF
+
 Outputs:
   EcsAdditionsRepo:
     Value: !Sub https://${AWS::Region}.console.aws.amazon.com/codesuite/codecommit/repositories/${RepoEcsAdditions.Name}/browse?region=${AWS::Region}

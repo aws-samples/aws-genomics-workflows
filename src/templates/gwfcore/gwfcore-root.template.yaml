@@ -24,6 +24,11 @@ Metadata:
           - PriorityCEMaxvCpus
           - CreateEFS
           - ExistingEFS
+          - CreateFSx
+          - FSxSubnetId
+          - FSxStorageVolumeSize
+          - PerUnitStorageThroughput
+          - StorageType
       - Label:
           default: Distribution Configuration
         Parameters:
@@ -53,14 +58,23 @@ Metadata:
       CreateEFS:
         default: Create Amazon EFS File System
       ExistingEFS:
-        default: Existing Amazon EFS File System.
+        default: Existing Amazon EFS File System
+      CreateFSx:
+        default: Create Amazon FSx for Lustre File System
+      FSxSubnetId:
+        default: FSx for Lustre SubnetId
       ArtifactBucketName:
         default: Artifact S3 Bucket Name
       ArtifactBucketPrefix:
         default: Artifact S3 Prefix
       TemplateRootUrl:
         default: Template Root URL
-
+      FSxStorageVolumeSize:
+        default: The size of FSx Storage Volume.
+      PerUnitStorageThroughput:
+        default: The throughput for the FSx file system.
+      StorageType:
+        default: The type of FS needed i.e. SSD or HDD
 
 Parameters:
   Namespace:
@@ -126,6 +140,29 @@ Parameters:
     Description: Specify existing EFS File System, eg for shared data. You should already have EFS Mounts to each subnet specified. If you select to create a new EFS file system, this parameter will be ignored.
     Type: String
     Default: ""
+  CreateFSx:
+    Description: Create Amazon FSx for Lustre File System. Default is No.
+    Type: String
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+  FSxSubnetId:
+    Type: String
+    Description: 'Subnet you want FSx for Lustre to launch in. We recommend a private subnet. NOTE: Must be from the VPC provided.'
+    Default: "No"
+  FSxStorageVolumeSize:
+    Type: Number
+    Description: The initial size of the FSx volume to be used in GB
+    Default: 0
+  PerUnitStorageThroughput:
+    Type: Number
+    Default: 0
+    Description: The throughput for the FSx file system.
+  StorageType:
+    Type: String
+    Description: The type of FS needed i.e. SSD or HDD
+    Default: HDD
   ArtifactBucketName:
     Type: String
     Default: aws-genomics-workflows
@@ -149,6 +186,7 @@ Conditions:
   NoNamespace: !Equals [ !Ref Namespace, "" ]
   EfsCondition: !Equals [ !Ref CreateEFS, "Yes"]
   ExistingEfsCondition: !And [ !Not [ !Equals [ !Ref ExistingEFS, "" ] ], !Not [ !Condition EfsCondition ] ]
+  FsxCondition: !Equals [ !Ref CreateFSx, "Yes"]
 
 Resources:
   S3Stack:
@@ -203,9 +241,25 @@ Resources:
         SubnetIds: !Join [",", !Ref SubnetIds ]
         NumberOfSubnets: !Ref NumberOfSubnets
 
+  FsxStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: FsxCondition
+    Properties:
+      TemplateURL: !Sub ${TemplateRootUrl}/gwfcore/gwfcore-fsx.template.yaml
+      Parameters:
+        S3BucketName: !Ref S3BucketName
+        VpcId: !Ref VpcId
+        SubnetId: !Ref FSxSubnetId
+        FSxStorageVolumeSize: !Ref FSxStorageVolumeSize
+        StorageType: !Ref StorageType
+        PerUnitStorageThroughput: !Ref PerUnitStorageThroughput
+
   LaunchTplStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: ParamEfsFileSystem
+    DependsOn: 
+      - ParamEfsFileSystem
+      - ParamFSxFileSystemID
+      - ParamFSxFileSystemMount
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/gwfcore/gwfcore-launch-template.template.yaml
       Parameters:
@@ -239,6 +293,19 @@ Resources:
         BatchServiceRoleArn: !Sub ${IamStack.Outputs.BatchServiceRoleArn}
         Ec2InstanceProfileArn: !Sub ${IamStack.Outputs.BatchInstanceProfileArn}
         SpotFleetRoleArn: !Sub ${IamStack.Outputs.BatchSpotFleetRoleArn}
+        FSxSubnetId: !Ref FSxSubnetId
+
+  FSxSGIngressTCP:
+    Condition: FsxCondition
+    DependsOn: BatchStack
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: "Allow TCP Connections for the Batch security group to FSx SG"
+      GroupId: !Sub ${FsxStack.Outputs.FSxSecurityGroupId}
+      SourceSecurityGroupId: !Sub ${BatchStack.Outputs.BatchSecurityGroupId}
+      IpProtocol: tcp
+      FromPort: 0
+      ToPort: 65535
 
   ParamS3Bucket:
     Type: "AWS::SSM::Parameter"
@@ -254,7 +321,9 @@ Resources:
       Type: String #required
       Value: !Sub ${S3Stack.Outputs.BucketName} #required
       Description: GWFCore S3 Bucket
-  
+      Tags: 
+        Application: 'AWS-GENOMICS-WKF'
+
   ParamEfsFileSystem:
     Type: "AWS::SSM::Parameter"
     Properties:
@@ -269,6 +338,42 @@ Resources:
       Type: String #required
       Value: !If [ EfsCondition, !GetAtt EfsStack.Outputs.EfsId, !If [ ExistingEfsCondition, !Ref ExistingEFS , 'none' ] ] # required
       Description: GWFCore EFS Shared File System
+      Tags: 
+        Application: 'AWS-GENOMICS-WKF'
+
+  ParamFSxFileSystemID:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name:
+        Fn::Sub:
+          - /gwfcore/${namespace}/fsx-file-system
+          - namespace: 
+              Fn::If:
+                - NoNamespace
+                - !Sub ${AWS::StackName}
+                - !Ref Namespace
+      Type: String #required
+      Value: !If [ FsxCondition, !GetAtt FsxStack.Outputs.FSxId, 'none' ] # required
+      Description: GWFCore FSx File System ID
+      Tags: 
+        Application: 'AWS-GENOMICS-WKF'
+
+  ParamFSxFileSystemMount:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name:
+        Fn::Sub:
+          - /gwfcore/${namespace}/fsx-mount-name
+          - namespace: 
+              Fn::If:
+                - NoNamespace
+                - !Sub ${AWS::StackName}
+                - !Ref Namespace
+      Type: String #required
+      Value: !If [ FsxCondition, !GetAtt FsxStack.Outputs.FSxMount, 'none' ] # required
+      Description: GWFCore FSx File System Mount Name
+      Tags: 
+        Application: 'AWS-GENOMICS-WKF'
 
   ParamDefaultJobQueue:
     Type: "AWS::SSM::Parameter"
@@ -284,7 +389,9 @@ Resources:
       Type: String #required
       Value: !Sub ${BatchStack.Outputs.DefaultJobQueueArn} #required
       Description: GWFCore Default AWS Batch Job Queue
-  
+      Tags: 
+        Application: 'AWS-GENOMICS-WKF'
+
   ParamPriorityJobQueue:
     Type: "AWS::SSM::Parameter"
     Properties:
@@ -299,7 +406,9 @@ Resources:
       Type: String #required
       Value: !Sub ${BatchStack.Outputs.PriorityJobQueueArn} #required
       Description: GWFCore Priority AWS Batch Job Queue
-  
+      Tags: 
+        Application: 'AWS-GENOMICS-WKF'
+
   ParamAdditionsRepoName:
     Type: "AWS::SSM::Parameter"
     Properties:
@@ -314,7 +423,9 @@ Resources:
       Type: String #required
       Value: !Sub ${CodeStack.Outputs.EcsAdditionsRepoName} #required
       Description: GWFCore ECS Additions Repository Name
-  
+      Tags: 
+        Application: 'AWS-GENOMICS-WKF'
+
   ParamAdditionsRepoCloneUrlHttp:
     Type: "AWS::SSM::Parameter"
     Properties:
@@ -329,7 +440,9 @@ Resources:
       Type: String #required
       Value: !Sub ${CodeStack.Outputs.EcsAdditionsRepoCloneUrlHttp} #required
       Description: GWFCore ECS Additions Repository HTTP Clone Url
-  
+      Tags: 
+        Application: 'AWS-GENOMICS-WKF'
+
   ParamInstalledArtifactsBucket:
     Type: "AWS::SSM::Parameter"
     Properties:
@@ -344,7 +457,9 @@ Resources:
       Type: String #required
       Value: !Sub ${CodeStack.Outputs.InstalledArtifactsBucket} #required
       Description: GWFCore S3 Bucket for Installed Artifacts
-  
+      Tags: 
+        Application: 'AWS-GENOMICS-WKF'
+
   ParamInstalledArtifactsPrefix:
     Type: "AWS::SSM::Parameter"
     Properties:
@@ -359,7 +474,9 @@ Resources:
       Type: String #required
       Value: !Sub ${CodeStack.Outputs.InstalledArtifactsPrefix} #required
       Description: GWFCore S3 Prefix for Installed Artifacts
-  
+      Tags: 
+        Application: 'AWS-GENOMICS-WKF'
+
   ParamInstalledArtifactsS3RootUrl:
     Type: "AWS::SSM::Parameter"
     Properties:
@@ -374,6 +491,8 @@ Resources:
       Type: String #required
       Value: !Sub ${CodeStack.Outputs.InstalledArtifactsS3RootUrl} #required
       Description: GWFCore S3 Root Url for Installed Artifacts
+      Tags: 
+        Application: 'AWS-GENOMICS-WKF'
 
 Outputs:
   S3BucketName:

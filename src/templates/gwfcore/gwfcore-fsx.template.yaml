@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  (WWPS-GLS-WF-GWFCORE-FSX) Creates FSx for Lustre file system
+
+Parameters:
+  S3BucketName:
+    Type: String
+    AllowedPattern: "((?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)|(^.{0}$))"
+    ConstraintDescription: "Must respect AWS naming conventions"
+    Description: A S3 bucket name to mount on FSx
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: The VPC to create security groups
+  SubnetId:
+    Type: String
+    Description: "Subnet you want your FSx for lustre file system to launch in. Ensure Batch compute environment is also launched in that subnet only."
+  FSxStorageVolumeSize:
+    Type: Number
+    Default: 0
+    Description: The initial size of the FSx volume to be used in GB
+  PerUnitStorageThroughput:
+    Type: Number
+    Default: 0
+    Description: The throughput for the FSx file system.
+  StorageType:
+    Type: String
+    Description: The type of FS needed i.e. SSD or HDD
+    Default: HDD
+
+Mappings:
+  ThroughputMap:
+    SSD:
+      MinValue: 50
+    HDD:
+      MinValue: 12
+
+  StorageMap:
+    SSD:
+      MinValue: 12000
+    HDD:
+      MinValue: 6000
+
+Conditions:
+  TypeCheck: !Equals [!Ref StorageType, "SSD"]
+  IsMinThroughput: !Equals [!Ref PerUnitStorageThroughput, 0]
+  IsMinStorageCapacity: !Equals [!Ref FSxStorageVolumeSize, 0]
+
+Resources:
+  FSxSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SG for FSx
+      VpcId:
+        Ref: VpcId
+      Tags:
+        - Key: Application
+          Value: AWS-GENOMICS-WKF
+
+  SGIngressTCP988:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: "Allow TCP Connections for this security group"
+      GroupId: !Ref FSxSecurityGroup
+      SourceSecurityGroupId: !Ref FSxSecurityGroup
+      IpProtocol: tcp
+      FromPort: 988
+      ToPort: 988
+
+  SGIngressTCP1021:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: "Allow TCP Connections for this security group"
+      GroupId: !Ref FSxSecurityGroup
+      SourceSecurityGroupId: !Ref FSxSecurityGroup
+      IpProtocol: tcp
+      FromPort: 1021
+      ToPort: 1023
+
+  FSxFileSystem:
+    Type: AWS::FSx::FileSystem
+    Properties:
+      FileSystemType: "LUSTRE"
+      LustreConfiguration:
+        AutoImportPolicy: "NEW_CHANGED"
+        DeploymentType: "PERSISTENT_1"
+        DriveCacheType: 
+          Fn::If:
+            - TypeCheck
+            - !Ref AWS::NoValue
+            - "NONE"
+        ExportPath: !Sub s3://${S3BucketName}
+        ImportPath: !Sub s3://${S3BucketName}
+        PerUnitStorageThroughput:
+          Fn::If:
+            - IsMinThroughput
+            - !FindInMap [ThroughputMap, !Ref StorageType, MinValue]
+            - !Ref PerUnitStorageThroughput
+      SecurityGroupIds:
+        - !Ref FSxSecurityGroup
+      StorageCapacity:
+        Fn::If:
+          - IsMinStorageCapacity
+          - !FindInMap [StorageMap, !Ref StorageType, MinValue]
+          - !Ref FSxStorageVolumeSize
+      StorageType: !Ref StorageType
+      SubnetIds: [!Ref SubnetId]
+      Tags:
+        - Key: Application
+          Value: AWS-GENOMICS-WKF
+
+Outputs:
+  FSxId:
+    Value: !Ref FSxFileSystem
+    Description: FSx ID
+  FSxMount:
+    Value: !GetAtt FSxFileSystem.LustreMountName
+    Description: FSx Mount Name
+  FSxSecurityGroupId:
+    Description: The FSx Security Group
+    Value: !Ref FSxSecurityGroup

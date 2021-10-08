@@ -22,6 +22,7 @@ Metadata:
         - BatchServiceRoleArn
         - Ec2InstanceProfileArn
         - SpotFleetRoleArn
+        - FSxSubnetId
     ParameterLabels:
       LaunchTemplateId:
         default: Launch Template ID
@@ -43,7 +44,8 @@ Metadata:
         default: EC2 Instance Profile ARN
       SpotFleetRoleArn:
         default: Spot Fleet Role ARN
-
+      FSxSubnetId:
+        default: The FSx subnet Id.
 
 Parameters:
   Namespace:
@@ -87,6 +89,13 @@ Parameters:
   Ec2InstanceProfileArn:
     Type: String
     Description: The IAM Role ARN for the Batch service
+  FSxSubnetId:
+    Type: String
+    Description: 'Subnet you want FSx for Lustre to launch in. We recommend a private subnet. NOTE: Must be from the VPC provided.'
+    Default: "No"
+
+Conditions:
+  FsxCondition: !Not [ !Equals [!Ref FSxSubnetId, "No"]]
 
 Resources:
   SecurityGroup:
@@ -95,6 +104,10 @@ Resources:
       GroupDescription: SG for genomics workflows on Batch
       VpcId:
         Ref: VpcId
+      Tags:
+        - Key: Application
+          Value: AWS-GENOMICS-WKF
+
   SGSSHIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -111,6 +124,7 @@ Resources:
       FromPort: 0
       ToPort: 65535
       CidrIp: 0.0.0.0/0
+
   SGAllTcpSelfIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -183,10 +197,11 @@ Resources:
         SecurityGroupIds:
           - !Ref SecurityGroup
         SpotIamFleetRole: !Ref SpotFleetRoleArn
-        Subnets: !Ref SubnetIds
+        Subnets: !If [FsxCondition, !Split [',', !Ref FSxSubnetId], !Ref SubnetIds]
         Type: SPOT
         Tags:
           Name: !Sub batch-worker-spot-${Namespace}
+          Application: AWS-GENOMICS-WKF
 
   OnDemandComputeEnv:
     Type: AWS::Batch::ComputeEnvironment
@@ -232,10 +247,11 @@ Resources:
         MaxvCpus: !Ref PriorityCEMaxvCpus
         SecurityGroupIds:
           - !Ref SecurityGroup
-        Subnets: !Ref SubnetIds
+        Subnets: !If [FsxCondition, !Split [',', !Ref FSxSubnetId], !Ref SubnetIds]
         Type: EC2
         Tags:
           Name: !Sub batch-worker-ondemand-${Namespace}
+          Application: AWS-GENOMICS-WKF
 
   PriorityQueue:
     Type: AWS::Batch::JobQueue
@@ -246,6 +262,8 @@ Resources:
       ComputeEnvironmentOrder:
         - Order: 1
           ComputeEnvironment: !Ref OnDemandComputeEnv
+      Tags:
+          Application: AWS-GENOMICS-WKF
 
   DefaultQueue:
     Type: AWS::Batch::JobQueue
@@ -256,7 +274,9 @@ Resources:
       ComputeEnvironmentOrder:
         - Order: 1
           ComputeEnvironment: !Ref SpotComputeEnv
-        
+      Tags:
+          Application: AWS-GENOMICS-WKF
+
   ContainerInstanceLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -268,4 +288,7 @@ Outputs:
     Value: !Ref DefaultQueue
   PriorityJobQueueArn:
     Value: !Ref PriorityQueue
+  BatchSecurityGroupId:
+    Description: The Batch Security Group
+    Value: !Ref SecurityGroup
 ...
