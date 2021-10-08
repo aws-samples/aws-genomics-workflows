@@ -52,9 +52,6 @@ Resources:
       GroupDescription: SG for FSx
       VpcId:
         Ref: VpcId
-      Tags:
-        - Key: Application
-          Value: AWS-GENOMICS-WKF
 
   SGIngressTCP988:
     Type: AWS::EC2::SecurityGroupIngress
@@ -104,9 +101,6 @@ Resources:
           - !Ref FSxStorageVolumeSize
       StorageType: !Ref StorageType
       SubnetIds: [!Ref SubnetId]
-      Tags:
-        - Key: Application
-          Value: AWS-GENOMICS-WKF
 
 Outputs:
   FSxId:

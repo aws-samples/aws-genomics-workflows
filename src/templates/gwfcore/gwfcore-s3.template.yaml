@@ -59,8 +59,6 @@ Resources:
       Tags:
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
-        - Key: Application
-          Value: AWS-GENOMICS-WKF
 
 Outputs:
   BucketName:

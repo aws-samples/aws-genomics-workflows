@@ -209,8 +209,6 @@ Resources:
       Tags:
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
-        - Key: Application
-          Value: AWS-GENOMICS-WKF
 
   BuildEcsAdditions:
     Type: "AWS::CodeBuild::Project"
@@ -240,8 +238,6 @@ Resources:
       Tags:
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
-        - Key: Application
-          Value: AWS-GENOMICS-WKF
 
   PipelineEcsAdditions:
     Type: "AWS::CodePipeline::Pipeline"
@@ -281,8 +277,6 @@ Resources:
       Tags:
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
-        - Key: Application
-          Value: AWS-GENOMICS-WKF
 
   SourceEvent:
     Type: AWS::Events::Rule
@@ -369,8 +363,6 @@ Resources:
       Tags:
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
-        - Key: Application
-          Value: AWS-GENOMICS-WKF
 
   CodeBuildInvocation:
     Type: Custom::CodeBuildInvocation
@@ -408,9 +400,6 @@ Resources:
                       cfnresponse.send(event, context, cfnresponse.FAILED, None)
               
               cfnresponse.send(event, context, cfnresponse.SUCCESS, None)
-      Tags:
-        - Key: Application
-          Value: AWS-GENOMICS-WKF
 
 Outputs:
   EcsAdditionsRepo:

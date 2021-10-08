@@ -104,9 +104,6 @@ Resources:
       GroupDescription: SG for genomics workflows on Batch
       VpcId:
         Ref: VpcId
-      Tags:
-        - Key: Application
-          Value: AWS-GENOMICS-WKF
 
   SGSSHIngress:
     Type: AWS::EC2::SecurityGroupIngress
@@ -201,7 +198,6 @@ Resources:
         Type: SPOT
         Tags:
           Name: !Sub batch-worker-spot-${Namespace}
-          Application: AWS-GENOMICS-WKF
 
   OnDemandComputeEnv:
     Type: AWS::Batch::ComputeEnvironment
@@ -251,7 +247,6 @@ Resources:
         Type: EC2
         Tags:
           Name: !Sub batch-worker-ondemand-${Namespace}
-          Application: AWS-GENOMICS-WKF
 
   PriorityQueue:
     Type: AWS::Batch::JobQueue
@@ -262,8 +257,6 @@ Resources:
       ComputeEnvironmentOrder:
         - Order: 1
           ComputeEnvironment: !Ref OnDemandComputeEnv
-      Tags:
-          Application: AWS-GENOMICS-WKF
 
   DefaultQueue:
     Type: AWS::Batch::JobQueue
@@ -274,8 +267,6 @@ Resources:
       ComputeEnvironmentOrder:
         - Order: 1
           ComputeEnvironment: !Ref SpotComputeEnv
-      Tags:
-          Application: AWS-GENOMICS-WKF
 
   ContainerInstanceLogGroup:
     Type: AWS::Logs::LogGroup
