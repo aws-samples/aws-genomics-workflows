@@ -92,6 +92,10 @@ Parameters:
     Description: Number of subnets to launch into. Should correspond to the length of Subnet Ids
     MinValue: 1
     MaxValue: 6
+  FSxSubnetId:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: 'Subnet you want FSx for Lustre to launch in. We recommend a private subnet. NOTE: Must be from the VPC provided.'
+
   S3BucketName:
     Description: >-
       A S3 bucket name for storing analysis results.
