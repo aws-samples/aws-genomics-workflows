@@ -91,7 +91,7 @@ Parameters:
     Description: The IAM Role ARN for the Batch service
   FSxSubnetId:
     Type: String
-    Description: 'Subnet you want FSx for Lustre to launch in. We recommend a private subnet. NOTE: Must be from the VPC provided.'
+    Description: 'Subnet you want FSx for Lustre to launch in. We recommend a private subnet. NOTE: Must be from the VPC provided. Default: (case-sesitive) "No"'
     Default: "No"
 
 Conditions:

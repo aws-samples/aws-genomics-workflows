@@ -17,7 +17,7 @@ Parameters:
   FSxStorageVolumeSize:
     Type: Number
     Default: 0
-    Description: The initial size of the FSx volume to be used in GB
+    Description: The initial size of the FSx volume to be used in GB. Default 0 will map to minimum values.
   PerUnitStorageThroughput:
     Type: Number
     Default: 0
