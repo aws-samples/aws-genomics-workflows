@@ -37,6 +37,7 @@ Metadata:
           - InstanceName
           - SSHLocation
           - HTTPLocation
+          - EC2RootVolumeSize
 
       - Label:
           default: "Cromwell Configuration"
@@ -47,7 +48,7 @@ Metadata:
           - S3DataBucketARNs
           - DBUsername
           - DBPassword
-      
+
     ParameterLabels:
       VpcId:
         default: "VPC ID"
@@ -73,7 +74,8 @@ Metadata:
         default: "Cromwell Database Username"
       DBPassword:
         default: "Cromwell Database Password"
-
+      EC2RootVolumeSize:
+        default: "Cromwell EC2 Root Volume Size in GBs"
 
 # Parameters
 Parameters:
@@ -139,7 +141,7 @@ Parameters:
     Description: >-
       URL to a pre-built cromwell-*.jar file.  Example: https://mycicdserver.com/build/cromwell-XX-SNAP.jar.
       If this is specifed, CromwellVersion is ignored.
-    Default: ""
+    Default: "https://github.com/henriqueribeiro/cromwell/releases/download/78-AWS/cromwell-78-28e5292-AWS.jar"
   
   DBSubnetIDs:
     Type: List<AWS::EC2::Subnet::Id>
@@ -199,6 +201,25 @@ Parameters:
     Type: CommaDelimitedList
     Default: "arn:aws:s3:::gatk-test-data/*,arn:aws:s3:::broad-references/*"
 
+  EC2RootVolumeSize:
+    Description: the size in GBs for the root volume
+    Type: Number
+    Default: 8
+
+  FSxFileSystemID:
+    Description: The FSx ID to be used
+    Type: String
+    Default: "NA"
+
+  FSxFileSystemMount:
+    Description: The FSx Mount to be used
+    Type: String
+    Default: "NA"
+
+  FSxSecurityGroupId:
+    Description: the Security Group Id for the FSx
+    Type: String
+    Default: "NA"
 
 Conditions:
   GetLatestCromwellVersion:
@@ -214,6 +235,8 @@ Conditions:
   UseCromwellJar:
     Fn::Not:
       - Condition: NoCromwellJar
+  
+  FsxCondition: !Not [!Equals [ !Ref FSxFileSystemID, "NA"]]
 
 
 # Resources
@@ -242,6 +265,7 @@ Resources:
                 - "batch:ListJobs"
                 - "batch:DescribeComputeEnvironments"
                 - "ecs:DescribeContainerInstances"
+                - "ecr:GetAuthorizationToken"
 
         - PolicyName: !Sub CromwellServer-S3-Access-${AWS::Region}
           PolicyDocument:
@@ -335,6 +359,18 @@ Resources:
         CidrIp:
           Ref: HTTPLocation
 
+  FSxSGIngressTCP:
+    Condition: FsxCondition
+    DependsOn: EC2SecurityGroup
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: "Allow TCP Connections for the Ec2 Cromwell security group to FSx SG"
+      GroupId: !Ref FSxSecurityGroupId
+      SourceSecurityGroupId: !Ref EC2SecurityGroup
+      IpProtocol: tcp
+      FromPort: 0
+      ToPort: 65535
+
   EC2Instance:
     Type: AWS::EC2::Instance
     Metadata:
@@ -412,11 +448,102 @@ Resources:
                 chmod +x cromshell
                 sudo mv cromshell /usr/local/bin/
 
+                mkdir /home/ec2-user/.cromshell
+                echo "http://localhost:8000" > /home/ec2-user/.cromshell/cromwell_server.config
+                sudo chmod 777 -R /home/ec2-user/.cromshell
+
               mode: "000755"
               owner: "ec2-user"
               group: "ec2-user"
 
-            "/home/ec2-user/cromwell.conf":
+            "/home/ec2-user/cromwell_local.conf":
+              content: !Sub 
+                - |
+                  include required(classpath("application"))
+
+                  webservice {
+                    interface = localhost
+                    port = 8000
+                  }
+
+                  akka {
+                    http {
+                      server {
+                        request-timeout = 600s
+                        idle-timeout = 600s
+                      }
+                    }
+                  }
+
+                  system {
+                    job-rate-control {
+                      jobs = 1
+                      per = 2 second
+                    }
+                  }
+
+                  aws {
+                    application-name = "cromwell"
+                    auths = [{
+                        name = "default"
+                        scheme = "default"
+                    }]
+                    region = "${AWS::Region}"
+                  }
+
+                  database {
+                    profile = "slick.jdbc.MySQLProfile$"
+                    db {
+                      driver = "com.mysql.cj.jdbc.Driver"
+                      url = "jdbc:mysql://${DBAddress}/cromwell?rewriteBatchedStatements=true&useSSL=false"
+                      user = "${DBUsername}"
+                      password = "${DBPassword}"
+                      connectionTimeout = 5000
+                    }
+                  }
+
+                  call-caching {
+                    enabled = true
+                    invalidate-bad-cache-results = true
+                  }
+
+                  engine { filesystems { local { auth = "default" } } }
+
+                  backend {
+                    default = "AWSBATCH"
+                    providers {
+                      AWSBATCH {
+                        actor-factory = "cromwell.backend.impl.aws.AwsBatchBackendLifecycleActorFactory"
+                        config {
+                          numSubmitAttempts = 10
+                          numCreateDefinitionAttempts = 10
+                          root = "/${S3Bucket}/cromwell-execution"
+                          auth = "default"
+                          default-runtime-attributes { queueArn = "${BatchQueue}" , scriptBucketName = "${S3Bucket}" }
+                          filesystems { 
+                            local { 
+                              auth = "default"
+                              duplication-strategy: [
+                                "soft-link", "copy"
+                              ]
+                              fsx = [${S3Bucket}]
+                              caching {
+                                hashing-strategy: "path+modtime"
+                              }
+                            } 
+                          }
+                        }
+                      }
+                    }
+                  }
+                - DBAddress: !GetAtt RDSCluster.Endpoint.Address
+                  BatchQueue: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/job-queue/default:1}}'
+                  S3Bucket: !Sub "{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
+              mode: "000644"
+              owner: "ec2-user"
+              group: "ec2-user"
+
+            "/home/ec2-user/cromwell_s3.conf":
               content: !Sub
                 - |
                   include required(classpath("application"))
@@ -503,33 +630,61 @@ Resources:
               mode: "000644"
               owner: "ec2-user"
               group: "ec2-user"
-              content: |
-                [unix_http_server]
-                file=/home/ec2-user/supervisor.sock   ; the path to the socket file
-                
-                [supervisord]
-                logfile=/home/ec2-user/supervisord.log ; main log file; default $CWD/supervisord.log
-                logfile_maxbytes=50MB                  ; max main logfile bytes b4 rotation; default 50MB
-                logfile_backups=10                     ; # of main logfile backups; 0 means none, default 10
-                loglevel=info                          ; log level; default info; others: debug,warn,trace
-                pidfile=/home/ec2-user/supervisord.pid ; supervisord pidfile; default supervisord.pid
-                nodaemon=false                         ; start in foreground if true; default false
-                minfds=1024                            ; min. avail startup file descriptors; default 1024
-                minprocs=200                           ; min. avail process descriptors;default 200
-                
-                [rpcinterface:supervisor]
-                supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
+              content: !If 
+                - FsxCondition
+                - |
+                  [unix_http_server]
+                  file=/home/ec2-user/supervisor.sock   ; the path to the socket file
+                  
+                  [supervisord]
+                  logfile=/home/ec2-user/supervisord.log ; main log file; default $CWD/supervisord.log
+                  logfile_maxbytes=50MB                  ; max main logfile bytes b4 rotation; default 50MB
+                  logfile_backups=10                     ; # of main logfile backups; 0 means none, default 10
+                  loglevel=info                          ; log level; default info; others: debug,warn,trace
+                  pidfile=/home/ec2-user/supervisord.pid ; supervisord pidfile; default supervisord.pid
+                  nodaemon=false                         ; start in foreground if true; default false
+                  minfds=1024                            ; min. avail startup file descriptors; default 1024
+                  minprocs=200                           ; min. avail process descriptors;default 200
+                  
+                  [rpcinterface:supervisor]
+                  supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
 
-                [supervisorctl]
-                serverurl=unix:///home/ec2-user/supervisor.sock ; use a unix:// URL  for a unix socket
+                  [supervisorctl]
+                  serverurl=unix:///home/ec2-user/supervisor.sock ; use a unix:// URL  for a unix socket
 
-                [program:cromwell-server]
-                command=java -Dconfig.file=cromwell.conf -XX:MaxRAMPercentage=85.0 -jar cromwell.jar server  ; the program (relative uses PATH, can take args)
-                directory=/home/ec2-user                                                                     ; directory to cwd to before exec (def no cwd)
-                user=ec2-user                                                                                ; setuid to this UNIX account to run the program
-                redirect_stderr=true                                                                         ; redirect proc stderr to stdout (default false)
-                stdout_logfile=/home/ec2-user/cromwell-server.log                                            ; stdout log path, NONE for none; default AUTO
-          
+                  [program:cromwell-server]
+                  command=java -Dconfig.file=cromwell_local.conf -XX:MaxRAMPercentage=85.0 -jar cromwell.jar server  ; the program (relative uses PATH, can take args)
+                  directory=/home/ec2-user                                                                     ; directory to cwd to before exec (def no cwd)
+                  user=ec2-user                                                                                ; setuid to this UNIX account to run the program
+                  redirect_stderr=true                                                                         ; redirect proc stderr to stdout (default false)
+                  stdout_logfile=/home/ec2-user/cromwell-server.log                                            ; stdout log path, NONE for none; default AUTO
+                - |
+                  [unix_http_server]
+                  file=/home/ec2-user/supervisor.sock   ; the path to the socket file
+                  
+                  [supervisord]
+                  logfile=/home/ec2-user/supervisord.log ; main log file; default $CWD/supervisord.log
+                  logfile_maxbytes=50MB                  ; max main logfile bytes b4 rotation; default 50MB
+                  logfile_backups=10                     ; # of main logfile backups; 0 means none, default 10
+                  loglevel=info                          ; log level; default info; others: debug,warn,trace
+                  pidfile=/home/ec2-user/supervisord.pid ; supervisord pidfile; default supervisord.pid
+                  nodaemon=false                         ; start in foreground if true; default false
+                  minfds=1024                            ; min. avail startup file descriptors; default 1024
+                  minprocs=200                           ; min. avail process descriptors;default 200
+                  
+                  [rpcinterface:supervisor]
+                  supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
+
+                  [supervisorctl]
+                  serverurl=unix:///home/ec2-user/supervisor.sock ; use a unix:// URL  for a unix socket
+
+                  [program:cromwell-server]
+                  command=java -Dconfig.file=cromwell_s3.conf -XX:MaxRAMPercentage=85.0 -jar cromwell.jar server  ; the program (relative uses PATH, can take args)
+                  directory=/home/ec2-user                                                                     ; directory to cwd to before exec (def no cwd)
+                  user=ec2-user                                                                                ; setuid to this UNIX account to run the program
+                  redirect_stderr=true                                                                         ; redirect proc stderr to stdout (default false)
+                  stdout_logfile=/home/ec2-user/cromwell-server.log                                            ; stdout log path, NONE for none; default AUTO
+            
             "/etc/nginx/nginx.conf":
               mode: "000644"
               content: |
@@ -630,6 +785,22 @@ Resources:
               owner: "ec2-user"
               group: "ec2-user"
 
+            "/home/ec2-user/mount_fsx.sh":
+              content: !Sub
+              - |
+                #!/bin/bash
+                if [[ ${FSXFSId} != "NA" ]]; then
+                  sudo mkdir /${S3Bucket}
+                  sudo mount -t lustre -o noatime,flock ${FSXFSId}.fsx.${AWS::Region}.amazonaws.com@tcp:/${FSXFSMount} /${S3Bucket}
+                  sudo chmod -R 777 /${S3Bucket}
+                fi
+              - FSXFSId: !Ref FSxFileSystemID
+                FSXFSMount: !Ref FSxFileSystemMount
+                S3Bucket: !Sub "{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
+              mode: "000755"
+              owner: "ec2-user"
+              group: "ec2-user"
+
           commands:
             00_get_instance_id:
               command: curl -s http://169.254.169.254/latest/meta-data/instance-id/ > /etc/instance-id
@@ -673,6 +844,10 @@ Resources:
             01_chown_womtool:
               cwd: "/home/ec2-user/"
               command: "chown ec2-user:ec2-user womtool*.jar"
+
+            02_mount_fsx:
+              cwd: "/home/ec2-user/"
+              command: "/home/ec2-user/mount_fsx.sh"
     
     Properties:
       ImageId: !Ref LatestAmazonLinuxAMI
@@ -685,15 +860,18 @@ Resources:
           Value: !FindInMap ["TagMap", "default", "architecture"]
         - Key: solution
           Value: !FindInMap ["TagMap", "default", "solution"]
-      
+      BlockDeviceMappings:
+        - DeviceName: "/dev/xvda"
+          Ebs:
+            VolumeSize: !Ref EC2RootVolumeSize
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -x
           yum -y update
           yum install -y aws-cfn-bootstrap
-          yum install -y jq awslogs python3 java mailx
+          yum install -y jq awslogs python3 java mailx git
 
-          amazon-linux-extras install -y nginx1
+          amazon-linux-extras install -y nginx1 lustre2.10
           pip3 install supervisor
 
           # create a self-signed certificate
