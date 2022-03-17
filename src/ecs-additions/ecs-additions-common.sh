@@ -7,6 +7,10 @@ echo ECS_ENABLE_SPOT_INSTANCE_DRAINING=true >> /etc/ecs/ecs.config
 echo ECS_IMAGE_PULL_BEHAVIOR=prefer-cached >> /etc/ecs/ecs.config
 # increase docker stop timeout so that containers can perform cleanup actions
 echo ECS_CONTAINER_STOP_TIMEOUT=60 >> /etc/ecs/ecs.config
+# This variable specifies how frequently the automated image cleanup process should check for images to delete. The default is every 30 minutes but you can reduce this period to as low as 10 minutes to remove images more frequently.
+echo ECS_IMAGE_CLEANUP_INTERVAL=5m >> /etc/ecs/ecs.config
+# This variable specifies the minimum amount of time between when an image was pulled and when it may become a candidate for removal. This is used to prevent cleaning up images that have just been pulled. The default is 1 hour.
+echo ECS_IMAGE_MINIMUM_CLEANUP_AGE=60m >> /etc/ecs/ecs.config
 
 # add fetch and run batch helper script
 chmod a+x /opt/ecs-additions/fetch_and_run.sh

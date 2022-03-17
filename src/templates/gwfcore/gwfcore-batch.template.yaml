@@ -22,6 +22,8 @@ Metadata:
         - BatchServiceRoleArn
         - Ec2InstanceProfileArn
         - SpotFleetRoleArn
+        - FSxSubnetId
+        - BatchSpotBidPercentage
     ParameterLabels:
       LaunchTemplateId:
         default: Launch Template ID
@@ -43,7 +45,10 @@ Metadata:
         default: EC2 Instance Profile ARN
       SpotFleetRoleArn:
         default: Spot Fleet Role ARN
-
+      FSxSubnetId:
+        default: The FSx subnet Id.
+      BatchSpotBidPercentage:
+        default: The % of the On-demand EC2 price the SPOT instances should be bid at.
 
 Parameters:
   Namespace:
@@ -87,6 +92,28 @@ Parameters:
   Ec2InstanceProfileArn:
     Type: String
     Description: The IAM Role ARN for the Batch service
+  FSxSubnetId:
+    Type: String
+    Description: 'Subnet you want FSx for Lustre to launch in. We recommend a private subnet. NOTE: Must be from the VPC provided.'
+    Default: "No"
+  BatchSpotBidPercentage:
+    Type: Number
+    Description: The maximum percentage that an EC2 Spot Instance price can be when compared with the On-Demand price for that instance type before instances are launched.
+    Default: 100
+
+Mappings:
+  TagMap:
+    default:
+      architecture: "genomics-workflows"
+      solution: "default"
+      tags:
+        - Key: "architecture"
+          Value: "genomics-workflows"
+        - Key: "solution"
+          Value: "default"
+
+Conditions:
+  FsxCondition: !Not [ !Equals [!Ref FSxSubnetId, "No"]]
 
 Resources:
   SecurityGroup:
@@ -135,7 +162,7 @@ Resources:
         # This is the maximum price for spot instances that Batch will launch.
         # Lowering this puts a limit on the spot capacity that Batch has available.
         # Spot instances are terminated when on-demand capacity is needed, regardless of the price set.
-        BidPercentage: 100 
+        BidPercentage: !Ref BatchSpotBidPercentage 
         # Ec2KeyPair: !Ref Ec2KeyPairName
         LaunchTemplate:
           LaunchTemplateId: !Ref LaunchTemplateId
@@ -183,10 +210,11 @@ Resources:
         SecurityGroupIds:
           - !Ref SecurityGroup
         SpotIamFleetRole: !Ref SpotFleetRoleArn
-        Subnets: !Ref SubnetIds
+        Subnets: !If [FsxCondition, !Split [',', !Ref FSxSubnetId], !Ref SubnetIds]
         Type: SPOT
         Tags:
           Name: !Sub batch-worker-spot-${Namespace}
+          architecture: !FindInMap ["TagMap", "default", "architecture"]
 
   OnDemandComputeEnv:
     Type: AWS::Batch::ComputeEnvironment
@@ -232,10 +260,11 @@ Resources:
         MaxvCpus: !Ref PriorityCEMaxvCpus
         SecurityGroupIds:
           - !Ref SecurityGroup
-        Subnets: !Ref SubnetIds
+        Subnets: !If [FsxCondition, !Split [',', !Ref FSxSubnetId], !Ref SubnetIds]
         Type: EC2
         Tags:
           Name: !Sub batch-worker-ondemand-${Namespace}
+          architecture: !FindInMap ["TagMap", "default", "architecture"]
 
   PriorityQueue:
     Type: AWS::Batch::JobQueue
@@ -268,4 +297,7 @@ Outputs:
     Value: !Ref DefaultQueue
   PriorityJobQueueArn:
     Value: !Ref PriorityQueue
+  BatchSecurityGroupId:
+    Description: The Batch Security Group
+    Value: !Ref SecurityGroup
 ...

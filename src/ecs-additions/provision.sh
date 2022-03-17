@@ -7,8 +7,8 @@ export OS=`uname -r`
 BASEDIR=`dirname $0`
 
 # Expected environment variables
-#   GWFCORE_NAMESPACE
-#   ARTIFACT_S3_ROOT_URL
+GWFCORE_NAMESPACE=$1
+ARTIFACT_S3_ROOT_URL=$2
 #   WORKFLOW_ORCHESTRATOR (OPTIONAL)
 
 printenv

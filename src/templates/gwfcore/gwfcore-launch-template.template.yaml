@@ -107,6 +107,7 @@ Resources:
               - amazon-ssm-agent
               - unzip
               - amazon-cloudwatch-agent
+              - lustre-client
 
               write_files:
               - permissions: '0644'
@@ -181,15 +182,6 @@ Resources:
               - mkdir -p /opt/aws-cli/bin
               - cp -a $(dirname $(find /usr/local/aws-cli -name 'aws' -type f))/. /opt/aws-cli/bin/
 
-              # set environment variables for provisioning
-              - export GWFCORE_NAMESPACE=${Namespace}
-              - export INSTALLED_ARTIFACTS_S3_ROOT_URL=$(aws ssm get-parameter --name /gwfcore/${Namespace}/installed-artifacts/s3-root-url --query 'Parameter.Value' --output text)
-
-              - cd /opt
-              - aws s3 sync $INSTALLED_ARTIFACTS_S3_ROOT_URL/ecs-additions ./ecs-additions
-              - chmod a+x /opt/ecs-additions/provision.sh
-              - /opt/ecs-additions/provision.sh
-
               # optional EFS mount
               - USEEFS=`aws ssm get-parameter --name /gwfcore/${Namespace}/efs-shared-file-system --query 'Parameter.Value' --output text`
               - if [[ $USEEFS != "none" ]]
@@ -199,8 +191,33 @@ Resources:
               - mount -a -t efs defaults
               - fi
 
-              --==BOUNDARY==--
+              # optional FSx mount
+              # For loops added for retry logic as the limits could be exhausted for ssm
+              # If the calls to get parameter is very high, make sure to increase the throughput from console. AWS Systems Manager -> Parameter Store -> Settings -> Parameter Store throughput -> paid tier/higher throughput limit.
+              - for i in {1..5}; do FSxId=`aws ssm get-parameter --name /gwfcore/${Namespace}/fsx-file-system --query 'Parameter.Value' --output text` && break || sleep 15; done 
+              - if [[ $FSxId != "none" ]]
+              - then
+              - for i in {1..5}; do FSxMount=`aws ssm get-parameter --name /gwfcore/${Namespace}/fsx-mount-name --query 'Parameter.Value' --output text` && break || sleep 15; done 
+              - for i in {1..5}; do export S3_BUCKET_TO_MOUNT=$(aws ssm get-parameter --name /gwfcore/${Namespace}/installed-artifacts/bucket --query 'Parameter.Value' --output text) && break || sleep 15; done 
+              - mkdir -p /$S3_BUCKET_TO_MOUNT && chmod 777 /$S3_BUCKET_TO_MOUNT
+              - sudo amazon-linux-extras install -y lustre2.10
+              - for i in {1..5}; do sudo mount -t lustre -o noatime,flock $FSxId.fsx.${AWS::Region}.amazonaws.com@tcp:/$FSxMount /$S3_BUCKET_TO_MOUNT && break || sleep 15; done 
+              - grep -qs /$S3_BUCKET_TO_MOUNT /proc/mounts;if [ $? -ne 0 ];then sudo shutdown -h now;else echo "FSx successfully mounted.";fi
+              - fi
 
+              # set environment variables for provisioning
+              - for i in {1..5}; do export INSTALLED_ARTIFACTS_S3_ROOT_URL=$(aws ssm get-parameter --name /gwfcore/${Namespace}/installed-artifacts/s3-root-url --query 'Parameter.Value' --output text) && break || sleep 15; done 
+
+              # enable ecs , docker and autoscaling.
+              - cd /opt
+              - aws s3 sync $INSTALLED_ARTIFACTS_S3_ROOT_URL/ecs-additions ./ecs-additions
+              - chmod a+x /opt/ecs-additions/provision.sh /opt/ecs-additions/ecs-logs-collector.sh
+              - /opt/ecs-additions/provision.sh ${Namespace} $INSTALLED_ARTIFACTS_S3_ROOT_URL
+
+              # Added below logic for collecting the ecs logs on s3 for troubleshooting
+              - sudo /opt/ecs-additions/ecs-logs-collector.sh
+              - aws s3 cp /opt/ecs-additions/collect-i*tgz s3://$S3_BUCKET_TO_MOUNT/ecs-instance-logs/
+              --==BOUNDARY==--
 
 Outputs:
   LaunchTemplateId:
