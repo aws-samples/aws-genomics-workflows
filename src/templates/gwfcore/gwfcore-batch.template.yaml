@@ -24,6 +24,7 @@ Metadata:
         - SpotFleetRoleArn
         - FSxSubnetId
         - BatchSpotBidPercentage
+        - BatchComputeInstanceTypes
     ParameterLabels:
       LaunchTemplateId:
         default: Launch Template ID
@@ -49,6 +50,8 @@ Metadata:
         default: The FSx subnet Id.
       BatchSpotBidPercentage:
         default: The % of the On-demand EC2 price the SPOT instances should be bid at.
+      BatchComputeInstanceTypes:
+        default: The list of instance types to be used for EC2 instances using Batch Compute Environments.
 
 Parameters:
   Namespace:
@@ -81,7 +84,7 @@ Parameters:
   DefaultCEMaxvCpus:
     Type: Number
     Description: Maximum number of CPUs in the default compute environment. Should be >= than MinCpus
-    Default: 100
+    Default: 3000
     MinValue: 0
   BatchServiceRoleArn:
     Type: String
@@ -100,6 +103,9 @@ Parameters:
     Type: Number
     Description: The maximum percentage that an EC2 Spot Instance price can be when compared with the On-Demand price for that instance type before instances are launched.
     Default: 100
+  BatchComputeInstanceTypes:
+    Type: String
+    Description: The list of instance types to be used for EC2 instances using Batch Compute Environments.
 
 Mappings:
   TagMap:
@@ -168,43 +174,7 @@ Resources:
           LaunchTemplateId: !Ref LaunchTemplateId
           Version: $Latest
         InstanceRole: !Ref Ec2InstanceProfileArn
-        InstanceTypes:
-          - c4.large
-          - m4.large
-          - r4.large
-          - c4.xlarge
-          - m4.xlarge
-          - r4.xlarge
-          - c4.2xlarge
-          - m4.2xlarge
-          - r4.2xlarge
-          - c4.4xlarge
-          - m4.4xlarge
-          - r4.4xlarge
-          - c5.large
-          - m5.large
-          - r5.large
-          - c5.xlarge
-          - m5.xlarge
-          - r5.xlarge
-          - c5.2xlarge
-          - m5.2xlarge
-          - r5.2xlarge
-          - c5.4xlarge
-          - m5.4xlarge
-          - r5.4xlarge
-          - c5n.large
-          - m5n.large
-          - r5n.large
-          - c5n.xlarge
-          - m5n.xlarge
-          - r5n.xlarge
-          - c5n.2xlarge
-          - m5n.2xlarge
-          - r5n.2xlarge
-          - c5n.4xlarge
-          - m5n.4xlarge
-          - r5n.4xlarge
+        InstanceTypes: !Split [",", !Ref BatchComputeInstanceTypes ]
         MinvCpus: !Ref DefaultCEMinvCpus
         MaxvCpus: !Ref DefaultCEMaxvCpus
         SecurityGroupIds:
@@ -231,31 +201,7 @@ Resources:
           LaunchTemplateId: !Ref LaunchTemplateId
           Version: $Latest
         InstanceRole:  !Ref Ec2InstanceProfileArn
-        InstanceTypes:
-          - c5.large
-          - m5.large
-          - r5.large
-          - c5.xlarge
-          - m5.xlarge
-          - r5.xlarge
-          - c5.2xlarge
-          - m5.2xlarge
-          - r5.2xlarge
-          - c5.4xlarge
-          - m5.4xlarge
-          - r5.4xlarge
-          - c5n.large
-          - m5n.large
-          - r5n.large
-          - c5n.xlarge
-          - m5n.xlarge
-          - r5n.xlarge
-          - c5n.2xlarge
-          - m5n.2xlarge
-          - r5n.2xlarge
-          - c5n.4xlarge
-          - m5n.4xlarge
-          - r5n.4xlarge
+        InstanceTypes: !Split [",", !Ref BatchComputeInstanceTypes ]
         MinvCpus: !Ref PriorityCEMinvCpus
         MaxvCpus: !Ref PriorityCEMaxvCpus
         SecurityGroupIds:
