@@ -78,7 +78,7 @@ export default class VariantCallingStateMachine extends cdk.Stack {
       ...defaultJobDefinitionProps,
       repository: "genomics/bwa",
       timeout: 600,
-      memoryLimit: 8000,
+      memoryLimit: 32000,
       vcpus: 8,
     });
 

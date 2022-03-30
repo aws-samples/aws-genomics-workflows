@@ -40,12 +40,18 @@ cd /opt/work/$GUID
 NF_CONFIG=./nextflow.config
 echo "Creating config file: $NF_CONFIG"
 
+# To figure out - batch volumes 
 cat << EOF > $NF_CONFIG
 workDir = "$NF_WORKDIR"
 process.executor = "awsbatch"
 process.queue = "$NF_JOB_QUEUE"
 aws.batch.cliPath = "$AWS_CLI_PATH"
 EOF
+
+if [[ "$EFS_MOUNT" != "" ]]
+then
+    echo aws.batch.volumes = [\"/mnt/efs\"] >> $NF_CONFIG
+fi
 
 echo "=== CONFIGURATION ==="
 cat ./nextflow.config
@@ -81,8 +87,9 @@ function show_log() {
 }
 
 function cleanup() {
-    set -e
+    set +e
     wait $NEXTFLOW_PID
+    set -e
     echo "=== Running Cleanup ==="
 
     show_log
@@ -99,12 +106,13 @@ function cancel() {
     echo "=== !! CANCELLING WORKFLOW !! ==="
     echo "stopping nextflow pid: $NEXTFLOW_PID"
     kill -TERM "$NEXTFLOW_PID"
+    echo "waiting .."
     wait $NEXTFLOW_PID
     echo "=== !! cancellation complete !! ==="
     set -e
 }
 
-trap "cancel" TERM
+trap "cancel; cleanup" TERM
 trap "cleanup" EXIT
 
 # stage workflow definition
@@ -122,4 +130,5 @@ nextflow run $NEXTFLOW_PROJECT $NEXTFLOW_PARAMS &
 NEXTFLOW_PID=$!
 echo "nextflow pid: $NEXTFLOW_PID"
 jobs
+echo "waiting .."
 wait $NEXTFLOW_PID

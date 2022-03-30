@@ -1,20 +1,20 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  (WWPS-GLS-WF-NEXTFLOW-AIO) Creates the complete set of resources needed to run
-  genomics workflows using Nextflow on AWS Batch
+  (WWPS-GLS-WF-CROMWELL-AIO) Creates the complete set of resources needed to run
+  genomics workflows using Cromwell on AWS Batch
 
 
 Mappings:
   TagMap:
     default:
       architecture: "genomics-workflows"
-      solution: "nextflow"
+      solution: "cromwell"
       tags:
         - Key: "architecture"
           Value: "genomics-workflows"
         - Key: "solution"
-          Value: "nextflow"
+          Value: "cromwell"
 
 
 Metadata:
@@ -26,14 +26,13 @@ Metadata:
           - Namespace
           - VpcId
           - SubnetIds
-          - NumberOfSubnets
+          - ServerSubnetID
+          - DBSubnetIDs
       - Label:
           default: "Data Storage"
         Parameters:
           - S3DataBucketName
           - ExistingDataBucket
-          - CreateEFS
-          - ExistingEFS
       - Label:
           default: "AWS Batch"
         Parameters:
@@ -42,13 +41,14 @@ Metadata:
           - PriorityCEMinvCpus
           - PriorityCEMaxvCpus
       - Label:
-          default: "Nextflow Resources"
+          default: "Cromwell Resources"
         Parameters:
-          - S3NextflowPrefix
-          - S3LogsDirPrefix
-          - S3WorkDirPrefix
-          - NextflowVersion
-          - NextflowVersionSpecified
+          - CromwellVersion
+          - CromwellVersionSpecified
+          - CromwellJarUrl
+          - S3DataBucketARNs
+          - DBUsername
+          - DBPassword
 
     ParameterLabels:
       Namespace:
@@ -57,16 +57,12 @@ Metadata:
         default: VPC ID
       SubnetIds:
         default: VPC Subnet IDs
-      NumberOfSubnets:
-        default: Number of Subnets
+      ServerSubnetID:
+        default: "Server Subnet ID"
       S3DataBucketName:
         default: S3 Data Bucket Name
       ExistingDataBucket:
         default: Existing Data Bucket?
-      CreateEFS:
-        default: Create Amazon EFS File System
-      ExistingEFS:
-        default: Existing Amazon EFS File System.
       DefaultCEMinvCpus:
         default: Default Min vCPU
       DefaultCEMaxvCpus:
@@ -75,16 +71,18 @@ Metadata:
         default: High Priority Min vCPU
       PriorityCEMaxvCpus:
         default: High Priority Max vCPU
-      S3NextflowPrefix:
-        default: S3 Nextflow Prefix
-      S3LogsDirPrefix:
-        default: S3 Logs Dir Prefix
-      S3WorkDirPrefix:
-        default: S3 Work Dir Prefix
-      NextflowVersion:
-        default: Nextflow Version
-      NextflowVersionSpecified:
-        default: Nextflow Version Specified?
+      S3DataBucketARNs:
+        default: "S3 Open Data Bucket ARNs"
+      CromwellVersion:
+        default: "Cromwell Version"
+      CromwellVersionSpecified:
+        default: "Cromwell Version Specified"
+      DBSubnetIDs:
+        default: "Database Subnet IDs"
+      DBUsername:
+        default: "Cromwell Database Username"
+      DBPassword:
+        default: "Cromwell Database Password"
       TemplateRootUrl:
         default: Template Root URL
 
@@ -93,9 +91,7 @@ Parameters:
   Namespace:
     Type: String
     Description: Namespace (e.g. project name) to use to label resources. Between 4-20 letters, digits, and '-', starting with a letter.
-    AllowedPattern: "^[a-zA-Z]{1}[a-zA-Z0-9\\-]{3,19}$"
-    ConstraintDescription: "Between 4-20 letters, digits, '-', starting with a letter"
-    Default: "nextflow"
+    Default: ""
 
   VpcId:
     Type: AWS::EC2::VPC::Id
@@ -103,6 +99,9 @@ Parameters:
   SubnetIds:
     Type: List<AWS::EC2::Subnet::Id>
     Description: 'Subnets you want your batch compute environment to launch in. We recommend private subnets. NOTE: Must be from the VPC provided.'
+  ServerSubnetID:
+    Type: AWS::EC2::Subnet::Id
+    Description: Subnet for the Cromwell server. For public access, use a public subnet.
 
   S3DataBucketName:
     Description: >-
@@ -110,7 +109,6 @@ Parameters:
       The bucket name must respect the S3 bucket naming conventions 
       (can contain lowercase letters, numbers, periods and hyphens).
       If left blank a unique bucket name will be generated.
-
     Type: String
     Default: ""
     AllowedPattern: "((?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)|(^.{0}$))"
@@ -123,72 +121,66 @@ Parameters:
       - "Yes"
       - "No"
     Default: "No"
-  CreateEFS:
-    Description: Create Amazon EFS File System, eg for shared data. Mounts to each subnet specified.
-    Type: String
-    AllowedValues:
-      - "Yes"
-      - "No"
-    Default: "No"
-  ExistingEFS:
-    Description: Specify existing EFS File System, eg for shared data. You should already have EFS Mounts to each subnet specified. If you select to create a new EFS file system, this parameter will be ignored.
-    Type: String
-    Default: ""
-  NumberOfSubnets:
-    Type: Number
-    Description: Number of subnets to launch into. Should correspond to the length of Subnet Ids
-    MinValue: 1
-    MaxValue: 6
   DefaultCEMinvCpus:
     Description: The minimum number of CPUs for the default Batch Compute Environment
     Type: Number
     Default: 0
-    MinValue: 0
   DefaultCEMaxvCpus:
     Description: The maximum number of CPUs for the default Batch Compute Environment
     Type: Number
     Default: 100
-    MinValue: 0
   PriorityCEMinvCpus:
     Description: The minimum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
     Default: 0
-    MinValue: 0
   PriorityCEMaxvCpus:
     Description: The maximum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
-    Default: 100 
-    MinValue: 0
-  S3NextflowPrefix:
+    Default: 100
+  
+  CromwellVersion:
     Type: String
     Description: >-
-      (Optional) Parent folder in the GWFCore bucket for metadata folders.
-    Default: _nextflow
-  S3LogsDirPrefix:
-    Type: String
-    Description: >-
-      (Optional) Folder in the GWFCore bucket under the {Nextflow Prefix}
-      for session cache and logs.
-    Default: logs
-  S3WorkDirPrefix:
-    Type: String
-    Description: >-
-      (Optional) Folder in the GWFCore bucket under the {Nextflow Prefix}
-      that contains workflow intermediate results
-    Default: runs
-  NextflowVersion:
-    Type: String
-    Default: latest
+      Version of Cromwell to install. "latest" will retrieve the currently released
+      version of Cromwell from Github.
     AllowedValues:
       - latest
       - specify ...
-    Description: >-
-      Version of Nextflow to use. Select "specify ..." to provide a specific version.
-  NextflowVersionSpecified:
+    Default: latest
+  CromwellVersionSpecified:
     Type: String
     Description: >-
-      Specific version of Nextflow to use. Must match a released version number - e.g. "20.04.1".
+      Specific version of Cromwell to install.  Must match a released version number.
+      For example, 52, 52.1, etc. The minimum supported version is 52. Ignored if "Cromwell Version" is set to "latest".
     Default: ""
+  CromwellJarUrl:
+    Type: String
+    Description: >-
+      URL to a pre-built cromwell-*.jar file.  Example: https://mycicdserver.com/build/cromwell-XX-SNAP.jar.
+      If this is specifed, CromwellVersion is ignored.
+    Default: ""
+  DBSubnetIDs:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Minimum 2 subnets for the Cromwell Database. Private subnets are recommended.
+  DBUsername:
+    Type: String
+    Description: >-
+      The master username for the Aurora MySQL RDS cluster that will be used as Cromwell's database
+    Default: cromwell
+    MaxLength: 16
+    MinLength: 1
+    AllowedPattern: "^[a-zA-Z]{1}[a-zA-Z0-9]{0,15}$"
+    ConstraintDescription: >-
+      DBUsername must have 1 to 16 alphanumeric characters. First character must be a letter
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: >-
+      The master password for the Aurora MySQL RDS cluster that will be used as Cromwell's database
+    MinLength: 8
+    AllowedPattern: '^[ -~][^"@/]{7,}$'
+    ConstraintDescription: >-
+      DBPassword must have at least 8 printable ASCII characters. Can't contain any of the following: / (slash), "(double quote) and @ (at sign).
 
   ArtifactBucketName:
     Type: String
@@ -200,6 +192,10 @@ Parameters:
     Default: artifacts  # dist: pin_version
     Description: >-
       Prefix in ArtifactBucketName where distribution artifacts and additions scripts are stored
+  S3DataBucketARNs:
+    Description: Open datasets on AWS S3 for workflow inputs
+    Type: CommaDelimitedList
+    Default: "arn:aws:s3:::gatk-test-data/*,arn:aws:s3:::broad-references/*"
 
   TemplateRootUrl:
     Type: String
@@ -211,20 +207,24 @@ Parameters:
     AllowedPattern: "https://[a-z0-9-./]{0,}s3([a-z0-9-.]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
 
 
+Conditions:
+  NoNamespace: !Equals [ !Ref Namespace, "" ]
+
 Resources:
   GenomicsWorkflowStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL:  !Sub ${TemplateRootUrl}/gwfcore/gwfcore-root.template.yaml
       Parameters:
-        Namespace: !Sub ${Namespace}-gwfcore
+        Namespace:
+          Fn::If:
+            - NoNamespace
+            - !Sub ${AWS::StackName}
+            - !Ref Namespace
         VpcId: !Ref VpcId
         SubnetIds: !Join [",", !Ref SubnetIds ]
         S3BucketName: !Ref S3DataBucketName
         ExistingBucket: !Ref ExistingDataBucket
-        CreateEFS: !Ref CreateEFS
-        ExistingEFS: !Ref ExistingEFS
-        NumberOfSubnets: !Ref NumberOfSubnets
         DefaultCEMinvCpus: !Ref DefaultCEMinvCpus
         DefaultCEMaxvCpus: !Ref DefaultCEMaxvCpus
         PriorityCEMinvCpus: !Ref PriorityCEMinvCpus
@@ -234,55 +234,67 @@ Resources:
         TemplateRootUrl: !Ref TemplateRootUrl
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
-  NextflowStack:
+  CromwellStack:
     Type: AWS::CloudFormation::Stack
     DependsOn: GenomicsWorkflowStack
     Properties:
-      TemplateURL:  !Sub ${TemplateRootUrl}/nextflow/nextflow-resources.template.yaml
+      TemplateURL:  !Sub ${TemplateRootUrl}/cromwell/cromwell-resources.template.yaml
       Parameters:
-        Namespace: !Sub ${Namespace}-nextflow
-        GWFCoreNamespace: !Sub "${Namespace}-gwfcore"
-        MountEfs: !Ref CreateEFS
-        S3NextflowPrefix: !Ref S3NextflowPrefix
-        S3LogsDirPrefix: !Ref S3LogsDirPrefix
-        S3WorkDirPrefix: !Ref S3WorkDirPrefix
-        NextflowVersion: !Ref NextflowVersion
-        NextflowVersionSpecified: !Ref NextflowVersionSpecified
-        TemplateRootUrl: !Ref TemplateRootUrl
+        Namespace: 
+          Fn::If:
+            - NoNamespace
+            - !Sub ${AWS::StackName}-cromwell
+            - !Sub ${Namespace}-cromwell
+        GWFCoreNamespace:
+          Fn::If:
+            - NoNamespace
+            - !Sub ${AWS::StackName}
+            - !Ref Namespace
+        VpcId: !Ref VpcId
+        ServerSubnetID:  !Ref ServerSubnetID
+        CromwellVersion: !Ref CromwellVersion
+        CromwellVersionSpecified: !Ref CromwellVersionSpecified
+        CromwellJarUrl: !Ref CromwellJarUrl
+        S3DataBucketARNs: !Join [",", !Ref S3DataBucketARNs]
+        DBUsername: !Ref DBUsername
+        DBPassword: !Ref DBPassword
+        DBSubnetIDs: !Join [",", !Ref DBSubnetIDs]
       Tags: !FindInMap ["TagMap", "default", "tags"]
 
 
 Outputs:
-  NextflowContainerImage:
-    Value: !GetAtt NextflowStack.Outputs.NextflowContainerImage
+  CromwellVersion:
+    Value: !GetAtt CromwellStack.Outputs.CromwellVersion
     Export:
-      Name: !Sub "${Namespace}-NextflowContainerImage"
+      Name: !Sub "${Namespace}-CromwellVersion"
     
-  NextflowJobDefinition:
-    Value: !GetAtt NextflowStack.Outputs.NextflowJobDefinition
+  EC2Instance:
+    Value: !GetAtt CromwellStack.Outputs.EC2Instance
     Export:
-      Name: !Sub "${Namespace}-NextflowJobDefinition"
+      Name: !Sub "${Namespace}-EC2Instance"
     Description: >-
-      Batch Job Definition that creates a nextflow head node for running workflows
+      The EC2 Instance ID of your Cromwell Server
   
-  S3NextFlowBucket:
-    Value: !GetAtt NextflowStack.Outputs.NextflowBucket
+  PublicIp:
+    Value: !GetAtt CromwellStack.Outputs.PublicIp
     Export:
-      Name: !Sub "${Namespace}-NextflowBucket"
+      Name: !Sub "${Namespace}-PublicIp"
     Description: >-
-      S3 Bucket used to store Nextflow metadata (session cache, logs, and intermediate results)
-  S3NextflowLogsDir:
-    Value: !GetAtt NextflowStack.Outputs.LogsDir
+      Cromwell server public IP address
+
+  HostName:
+    Value: !GetAtt CromwellStack.Outputs.HostName
     Export:
-      Name: !Sub "${Namespace}-NextflowLogsDir"
+      Name: !Sub "${Namespace}-HostName"
     Description: >-
-      S3 URI where nextflow session cache and logs are stored.
-  S3NextflowWorkDir:
-    Value: !GetAtt NextflowStack.Outputs.WorkDir
+      Cromwell server public DNS name
+
+  CloudWatchLogStream:
+    Value: !GetAtt CromwellStack.Outputs.CloudWatchLogStream
     Export:
-      Name: !Sub "${Namespace}-NextflowWorkDir"
+      Name: !Sub "${Namespace}-CloudWatchLogStream"
     Description: >-
-      S3 URI where workflow intermediate results are stored.
+      Cromwell server log stream
   
   VpcId:
     Description: >-

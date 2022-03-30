@@ -3,7 +3,6 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
   (WWPS-GLS-WF-GWFCORE) Genomics workflow core execution environment
 
-
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -14,6 +13,7 @@ Metadata:
           - ExistingBucket
           - VpcId
           - SubnetIds
+          - NumberOfSubnets
       - Label:
           default: Optional
         Parameters:
@@ -22,6 +22,15 @@ Metadata:
           - DefaultCEMaxvCpus
           - PriorityCEMinvCpus
           - PriorityCEMaxvCpus
+          - CreateEFS
+          - ExistingEFS
+          - CreateFSx
+          - FSxSubnetId
+          - FSxStorageVolumeSize
+          - FSxPerUnitStorageThroughput
+          - FSxStorageType
+          - BatchSpotBidPercentage
+          - BatchComputeInstanceTypes
       - Label:
           default: Distribution Configuration
         Parameters:
@@ -38,6 +47,8 @@ Metadata:
         default: VPC ID
       SubnetIds:
         default: VPC Subnet IDs
+      NumberOfSubnets:
+        default: Number of Subnets
       DefaultCEMinvCpus:
         default: Default Min vCPU
       DefaultCEMaxvCpus:
@@ -46,31 +57,54 @@ Metadata:
         default: High Priority Min vCPU
       PriorityCEMaxvCpus:
         default: High Priority Max vCPU
+      CreateEFS:
+        default: Create Amazon EFS File System
+      ExistingEFS:
+        default: Existing Amazon EFS File System
       ArtifactBucketName:
         default: Artifact S3 Bucket Name
       ArtifactBucketPrefix:
         default: Artifact S3 Prefix
       TemplateRootUrl:
         default: Template Root URL
-
+      CreateFSx:
+        default: Create Amazon FSx for Lustre File System
+      FSxSubnetId:
+        default: FSx for Lustre SubnetId
+      FSxStorageVolumeSize:
+        default: The size of FSx Storage Volume.
+      FSxPerUnitStorageThroughput:
+        default: The throughput for the FSx file system.
+      FSxStorageType:
+        default: The type of FS needed i.e. SSD or HDD or SCRATCH
+      BatchSpotBidPercentage:
+        default: The maximum percentage that an EC2 Spot Instance price can be when compared with the On-Demand price for that instance type before instances are launched.
+      BatchComputeInstanceTypes:
+        default: The list of instance types to be used for EC2 instances using Batch Compute Environments.
 
 Parameters:
   Namespace:
     Type: String
     Description: Optional namespace (e.g. project name) to use to label resources. If not specified the stack-name will be used.
     Default: ""
-
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: 'The VPC to create security groups and deploy AWS Batch to. NOTE: Must be the same VPC as the provided subnet IDs.'
   SubnetIds:
     Type: List<AWS::EC2::Subnet::Id>
     Description: 'Subnets you want your batch compute environment to launch in. We recommend private subnets. NOTE: Must be from the VPC provided.'
+  NumberOfSubnets:
+    Type: Number
+    Description: Number of subnets to launch into. Should correspond to the length of Subnet Ids
+    MinValue: 1
+    MaxValue: 6
   S3BucketName:
     Description: >-
       A S3 bucket name for storing analysis results.
       The bucket name must respect the S3 bucket naming conventions 
       (can contain lowercase letters, numbers, periods and hyphens).
+      The bucket must be in the same region this template is being 
+      deployed to.
     Type: String
     AllowedPattern: "((?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)|(^.{0}$))"
     ConstraintDescription: "Must respect AWS naming conventions"
@@ -85,18 +119,60 @@ Parameters:
     Description: The minimum number of CPUs for the default Batch Compute Environment
     Type: Number
     Default: 0
+    MinValue: 0
   DefaultCEMaxvCpus:
     Description: The maximum number of CPUs for the default Batch Compute Environment
     Type: Number
     Default: 100
+    MinValue: 0
   PriorityCEMinvCpus:
     Description: The minimum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
     Default: 0
+    MinValue: 0
   PriorityCEMaxvCpus:
     Description: The maximum number of CPUs for the high-priority Batch Compute Environment
     Type: Number
     Default: 100
+    MinValue: 0
+  CreateEFS:
+    Description: Create Amazon EFS File System, eg for shared data. Mounts to each subnet specified. Default is No.
+    Type: String
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+  ExistingEFS:
+    Description: Specify existing EFS File System, eg for shared data. You should already have EFS Mounts to each subnet specified. If you select to create a new EFS file system, this parameter will be ignored.
+    Type: String
+    Default: ""
+  CreateFSx:
+    Description: Create Amazon FSx for Lustre File System. Default is No.
+    Type: String
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+  FSxSubnetId:
+    Type: String
+    Description: 'Subnet you want FSx for Lustre to launch in. We recommend a private subnet. NOTE: Must be from the VPC provided.'
+    Default: "No"
+  FSxStorageVolumeSize:
+    Type: Number
+    Description: The initial size of the FSx volume to be used in GB
+    Default: 0
+  FSxPerUnitStorageThroughput:
+    Type: Number
+    Default: 0
+    Description: The throughput for the FSx file system.
+  FSxStorageType:
+    Type: String
+    Description: The type of FS needed i.e. SSD/HDD/SCRATCH, all capitals.
+    Default: SCRATCH
+    AllowedValues:
+      - "SSD"
+      - "HDD"
+      - "SCRATCH"
   ArtifactBucketName:
     Type: String
     Default: aws-genomics-workflows
@@ -115,9 +191,21 @@ Parameters:
     ConstraintDescription: >-
       Must be a valid S3 HTTP URL
     AllowedPattern: "https://[a-z0-9-./]{0,}s3([a-z0-9-.]+)*\\.amazonaws\\.com/[a-z0-9-./]{3,}"
+  BatchSpotBidPercentage:
+    Type: Number
+    Description: The maximum percentage that an EC2 Spot Instance price can be when compared with the On-Demand price for that instance type before instances are launched.
+    Default: 100
+
+  BatchComputeInstanceTypes:
+    Type: String
+    Description: The list of instance types to be used for EC2 instances using Batch Compute Environments.
+    Default: "c4.large,m4.large,r4.large,c4.xlarge,m4.xlarge,r4.xlarge,c4.2xlarge,m4.2xlarge,r4.2xlarge,c4.4xlarge,m4.4xlarge,r4.4xlarge,c5.large,m5.large,r5.large,c5.xlarge,m5.xlarge,r5.xlarge,c5.2xlarge,m5.2xlarge,r5.2xlarge,c5.4xlarge,m5.4xlarge,r5.4xlarge,c5n.large,m5n.large,r5n.large,c5n.xlarge,m5n.xlarge,r5n.xlarge,c5n.2xlarge,m5n.2xlarge,r5n.2xlarge,c5n.4xlarge,m5n.4xlarge,r5n.4xlarge"
 
 Conditions:
   NoNamespace: !Equals [ !Ref Namespace, "" ]
+  EfsCondition: !Equals [ !Ref CreateEFS, "Yes"]
+  ExistingEfsCondition: !And [ !Not [ !Equals [ !Ref ExistingEFS, "" ] ], !Not [ !Condition EfsCondition ] ]
+  FsxCondition: !Equals [ !Ref CreateFSx, "Yes"]
 
 Resources:
   S3Stack:
@@ -162,8 +250,35 @@ Resources:
         ArtifactBucketName: !Ref ArtifactBucketName
         ArtifactBucketPrefix: !Ref ArtifactBucketPrefix
 
+  EfsStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: EfsCondition
+    Properties:
+      TemplateURL: !Sub ${TemplateRootUrl}/gwfcore/gwfcore-efs.template.yaml
+      Parameters:
+        VpcId: !Ref VpcId
+        SubnetIds: !Join [",", !Ref SubnetIds ]
+        NumberOfSubnets: !Ref NumberOfSubnets
+
+  FsxStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: FsxCondition
+    Properties:
+      TemplateURL: !Sub ${TemplateRootUrl}/gwfcore/gwfcore-fsx.template.yaml
+      Parameters:
+        VpcId: !Ref VpcId
+        SubnetId: !Ref FSxSubnetId
+        S3BucketName: !Ref S3BucketName
+        FSxStorageType: !Ref FSxStorageType
+        FSxStorageVolumeSize: !Ref FSxStorageVolumeSize
+        FSxPerUnitStorageThroughput: !Ref FSxPerUnitStorageThroughput
+
   LaunchTplStack:
     Type: AWS::CloudFormation::Stack
+    DependsOn: 
+      - ParamEfsFileSystem
+      - ParamFSxFileSystemID
+      - ParamFSxFileSystemMount
     Properties:
       TemplateURL: !Sub ${TemplateRootUrl}/gwfcore/gwfcore-launch-template.template.yaml
       Parameters:
@@ -172,7 +287,7 @@ Resources:
             - NoNamespace
             - !Sub ${AWS::StackName}
             - !Ref Namespace
-  
+        
   BatchStack:
     Type: AWS::CloudFormation::Stack
     DependsOn:
@@ -197,6 +312,21 @@ Resources:
         BatchServiceRoleArn: !Sub ${IamStack.Outputs.BatchServiceRoleArn}
         Ec2InstanceProfileArn: !Sub ${IamStack.Outputs.BatchInstanceProfileArn}
         SpotFleetRoleArn: !Sub ${IamStack.Outputs.BatchSpotFleetRoleArn}
+        FSxSubnetId: !Ref FSxSubnetId
+        BatchSpotBidPercentage: !Ref BatchSpotBidPercentage
+        BatchComputeInstanceTypes: !Ref BatchComputeInstanceTypes
+
+  FSxSGIngressTCP:
+    Condition: FsxCondition
+    DependsOn: BatchStack
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: "Allow TCP Connections for the Batch security group to FSx SG"
+      GroupId: !Sub ${FsxStack.Outputs.FSxSecurityGroupId}
+      SourceSecurityGroupId: !Sub ${BatchStack.Outputs.BatchSecurityGroupId}
+      IpProtocol: tcp
+      FromPort: 0
+      ToPort: 65535
 
   ParamS3Bucket:
     Type: "AWS::SSM::Parameter"
@@ -212,7 +342,52 @@ Resources:
       Type: String #required
       Value: !Sub ${S3Stack.Outputs.BucketName} #required
       Description: GWFCore S3 Bucket
-  
+
+  ParamEfsFileSystem:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name:
+        Fn::Sub:
+          - /gwfcore/${namespace}/efs-shared-file-system
+          - namespace: 
+              Fn::If:
+                - NoNamespace
+                - !Sub ${AWS::StackName}
+                - !Ref Namespace
+      Type: String #required
+      Value: !If [ EfsCondition, !GetAtt EfsStack.Outputs.EfsId, !If [ ExistingEfsCondition, !Ref ExistingEFS , 'none' ] ] # required
+      Description: GWFCore EFS Shared File System
+
+  ParamFSxFileSystemID:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name:
+        Fn::Sub:
+          - /gwfcore/${namespace}/fsx-file-system
+          - namespace: 
+              Fn::If:
+                - NoNamespace
+                - !Sub ${AWS::StackName}
+                - !Ref Namespace
+      Type: String #required
+      Value: !If [ FsxCondition, !GetAtt FsxStack.Outputs.FSxId, 'none' ] # required
+      Description: GWFCore FSx File System ID
+
+  ParamFSxFileSystemMount:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name:
+        Fn::Sub:
+          - /gwfcore/${namespace}/fsx-mount-name
+          - namespace: 
+              Fn::If:
+                - NoNamespace
+                - !Sub ${AWS::StackName}
+                - !Ref Namespace
+      Type: String #required
+      Value: !If [ FsxCondition, !GetAtt FsxStack.Outputs.FSxMount, 'none' ] # required
+      Description: GWFCore FSx File System Mount Name
+
   ParamDefaultJobQueue:
     Type: "AWS::SSM::Parameter"
     Properties:
@@ -224,11 +399,10 @@ Resources:
                 - NoNamespace
                 - !Sub ${AWS::StackName}
                 - !Ref Namespace
-
       Type: String #required
       Value: !Sub ${BatchStack.Outputs.DefaultJobQueueArn} #required
       Description: GWFCore Default AWS Batch Job Queue
-  
+
   ParamPriorityJobQueue:
     Type: "AWS::SSM::Parameter"
     Properties:
@@ -243,7 +417,7 @@ Resources:
       Type: String #required
       Value: !Sub ${BatchStack.Outputs.PriorityJobQueueArn} #required
       Description: GWFCore Priority AWS Batch Job Queue
-  
+
   ParamAdditionsRepoName:
     Type: "AWS::SSM::Parameter"
     Properties:
@@ -258,7 +432,7 @@ Resources:
       Type: String #required
       Value: !Sub ${CodeStack.Outputs.EcsAdditionsRepoName} #required
       Description: GWFCore ECS Additions Repository Name
-  
+
   ParamAdditionsRepoCloneUrlHttp:
     Type: "AWS::SSM::Parameter"
     Properties:
@@ -273,7 +447,7 @@ Resources:
       Type: String #required
       Value: !Sub ${CodeStack.Outputs.EcsAdditionsRepoCloneUrlHttp} #required
       Description: GWFCore ECS Additions Repository HTTP Clone Url
-  
+
   ParamInstalledArtifactsBucket:
     Type: "AWS::SSM::Parameter"
     Properties:
@@ -288,7 +462,7 @@ Resources:
       Type: String #required
       Value: !Sub ${CodeStack.Outputs.InstalledArtifactsBucket} #required
       Description: GWFCore S3 Bucket for Installed Artifacts
-  
+
   ParamInstalledArtifactsPrefix:
     Type: "AWS::SSM::Parameter"
     Properties:
@@ -303,7 +477,7 @@ Resources:
       Type: String #required
       Value: !Sub ${CodeStack.Outputs.InstalledArtifactsPrefix} #required
       Description: GWFCore S3 Prefix for Installed Artifacts
-  
+
   ParamInstalledArtifactsS3RootUrl:
     Type: "AWS::SSM::Parameter"
     Properties:
@@ -344,4 +518,9 @@ Outputs:
     Value: !Ref ParamInstalledArtifactsPrefix
   ParamInstalledArtifactsS3RootUrl:
     Value: !Ref ParamInstalledArtifactsS3RootUrl
-  
+  FSxFileSystemID:
+    Value: !If [FsxCondition, !GetAtt FsxStack.Outputs.FSxId, 'NA' ]
+  FSxFileSystemMount:
+    Value: !If [FsxCondition, !GetAtt FsxStack.Outputs.FSxMount, 'NA' ]
+  FSxSecurityGroupId:
+    Value: !If [FsxCondition, !GetAtt FsxStack.Outputs.FSxSecurityGroupId, 'NA' ]
