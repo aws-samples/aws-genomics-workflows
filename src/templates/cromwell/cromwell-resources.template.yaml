@@ -141,7 +141,7 @@ Parameters:
     Description: >-
       URL to a pre-built cromwell-*.jar file.  Example: https://mycicdserver.com/build/cromwell-XX-SNAP.jar.
       If this is specifed, CromwellVersion is ignored.
-    Default: "https://github.com/henriqueribeiro/cromwell/releases/download/78-AWS/cromwell-78-600df43-AWS.jar"
+    Default: "https://github.com/henriqueribeiro/cromwell/releases/download/78-AWS/cromwell-78-AWS.jar"
   
   DBSubnetIDs:
     Type: List<AWS::EC2::Subnet::Id>
@@ -265,7 +265,16 @@ Resources:
                 - "batch:ListJobs"
                 - "batch:DescribeComputeEnvironments"
                 - "ecs:DescribeContainerInstances"
+                - "imagebuilder:GetComponent"
+                - "imagebuilder:GetContainerRecipe"
                 - "ecr:GetAuthorizationToken"
+                - "ecr:BatchGetImage"
+                - "ecr:InitiateLayerUpload"
+                - "ecr:UploadLayerPart"
+                - "ecr:CompleteLayerUpload"
+                - "ecr:BatchCheckLayerAvailability"
+                - "ecr:GetDownloadUrlForLayer"
+                - "ecr:PutImage"
 
         - PolicyName: !Sub CromwellServer-S3-Access-${AWS::Region}
           PolicyDocument:
@@ -498,7 +507,7 @@ Resources:
                       url = "jdbc:mysql://${DBAddress}/cromwell?rewriteBatchedStatements=true&useSSL=false"
                       user = "${DBUsername}"
                       password = "${DBPassword}"
-                      connectionTimeout = 5000
+                      connectionTimeout = 30000
                     }
                   }
 
@@ -585,7 +594,7 @@ Resources:
                       url = "jdbc:mysql://${DBAddress}/cromwell?rewriteBatchedStatements=true&useSSL=false"
                       user = "${DBUsername}"
                       password = "${DBPassword}"
-                      connectionTimeout = 5000
+                      connectionTimeout = 30000
                     }
                   }
 
@@ -684,7 +693,7 @@ Resources:
                   user=ec2-user                                                                                ; setuid to this UNIX account to run the program
                   redirect_stderr=true                                                                         ; redirect proc stderr to stdout (default false)
                   stdout_logfile=/home/ec2-user/cromwell-server.log                                            ; stdout log path, NONE for none; default AUTO
-            
+
             "/etc/nginx/nginx.conf":
               mode: "000644"
               content: |
