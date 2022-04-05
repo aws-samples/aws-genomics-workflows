@@ -60,7 +60,7 @@ aws cloudformation create-stack \
 Amazon EFS is supported out of the box for `GWFCore` and `Nextflow`. You have two options to use EFS.
 
 1. **Create a new EFS File System:** Be sure to have `CreateEFS` set to `Yes` and also include the total number of subnets.
-2. **Use an Exisitng EFS File System:** Be sure to specify the EFS ID in the `ExistingEFS` parameter. This file system should be accessible from every subnet you specify.
+2. **Use an Existing EFS File System:** Be sure to specify the EFS ID in the `ExistingEFS` parameter. This file system should be accessible from every subnet you specify.
 
 Following successful deployment of `GWFCore`, when creating your Nextflow Resources, set `MountEFS` to `Yes`.
 
