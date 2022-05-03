@@ -9,6 +9,7 @@ COPY --from=build /usr/local/bin/nextflow /usr/bin/nextflow
 RUN yum update -y \
  && yum install -y \
     curl \
+    which \
     hostname \
     java \
     unzip \
