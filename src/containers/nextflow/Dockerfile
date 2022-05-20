@@ -12,6 +12,7 @@ RUN yum update -y \
     hostname \
     java \
     unzip \
+    which \
  && yum clean -y all
 RUN rm -rf /var/cache/yum
 
