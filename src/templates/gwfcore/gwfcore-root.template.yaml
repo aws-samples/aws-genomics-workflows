@@ -25,6 +25,7 @@ Metadata:
           - CreateEFS
           - ExistingEFS
           - CreateFSx
+          - FSxBucketName
           - FSxSubnetId
           - FSxStorageVolumeSize
           - FSxPerUnitStorageThroughput
