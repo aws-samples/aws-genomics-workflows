@@ -69,6 +69,8 @@ Metadata:
         default: Template Root URL
       CreateFSx:
         default: Create Amazon FSx for Lustre File System
+      FSxBucketName:
+        default: A S3 bucket name that will be mounted on FSx
       FSxSubnetId:
         default: FSx for Lustre SubnetId
       FSxStorageVolumeSize:
