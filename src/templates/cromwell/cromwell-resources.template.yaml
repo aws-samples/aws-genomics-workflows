@@ -168,7 +168,6 @@ Parameters:
     ConstraintDescription: >-
       DBPassword must have at least 8 printable ASCII characters. Can't contain any of the following: / (slash), "(double quote) and @ (at sign).
 
-
   InstanceName:
     Type: String
     Default: cromwell-server
@@ -206,6 +205,13 @@ Parameters:
     Type: Number
     Default: 8
 
+  UseFSx:
+    Type: String
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+
   FSxFileSystemID:
     Description: The FSx ID to be used
     Type: String
@@ -236,7 +242,7 @@ Conditions:
     Fn::Not:
       - Condition: NoCromwellJar
   
-  FsxCondition: !Not [!Equals [ !Ref FSxFileSystemID, "NA"]]
+  FsxCondition: !Equals [ !Ref UseFSx, "Yes"]
 
 
 # Resources
