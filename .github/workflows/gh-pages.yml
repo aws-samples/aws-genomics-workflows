@@ -1,0 +1,40 @@
+# Build docs and publish to github pages
+
+name: github pages
+
+on:
+  workflow_dispatch:      # Allow manual triggering of the action
+  release:
+    types: [published]
+
+
+jobs:
+  deploy:
+    runs-on: ubuntu-20.04
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: 'release'
+
+      - name: Setup Python
+        uses: actions/setup-python@v3.1.2
+        with:
+          python-version: 3.9
+      
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      # - name: Clean Docs
+      #   run: make clean-docs
+
+      - name: Generate Docs
+        run: mkdocs build
+
+      - name: Deploy To Pages
+        uses: peaceiris/actions-gh-pages@v3           # see https://github.com/peaceiris/actions-gh-pages for details
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages                    # set to 'gh-pages to publish to github pages'
+          publish_dir: ./site                         # Deploy the contents of ./docs to github pages
