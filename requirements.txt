@@ -3,5 +3,5 @@ mkdocs-macros-plugin==0.2.4
 mkdocs-markdownextradata-plugin==0.0.5
 mkdocs-material==3.1.0
 pymdown-extensions==6.0
-fontawesome-markdown==0.2.6
+jinja2==3.0.0  # https://github.com/mkdocs/mkdocs/issues/2799
 cfn-lint

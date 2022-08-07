@@ -37,7 +37,6 @@ theme:
     primary: blue grey
     accent: deep orange
 markdown_extensions:
-  - fontawesome_markdown
   - admonition
   - pymdownx.emoji:
       emoji_generator: !!python/name:pymdownx.emoji.to_png
