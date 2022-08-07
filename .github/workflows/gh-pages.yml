@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: 'release'
+          ref: 'master'  # TODO: revert this to 'release'
 
       - name: Setup Python
         uses: actions/setup-python@v3.1.2
