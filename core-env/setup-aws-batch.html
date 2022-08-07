@@ -1,0 +1,1099 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+      
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-3.1.0">
+    
+    
+      
+        <title>AWS Batch - Genomics Workflows on AWS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/application.11e41852.css">
+      
+        <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#546e7a">
+      
+    
+    
+      <script src="../assets/javascripts/modernizr.20ef595d.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="../assets/fonts/material-icons.css">
+    
+    
+      <link rel="stylesheet" href="../extra.css">
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448"
+    viewBox="0 0 416 448" id="__github">
+  <path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19-18.125
+        8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19 18.125-8.5
+        18.125 8.5 10.75 19 3.125 20.5zM320 304q0 10-3.125 20.5t-10.75
+        19-18.125 8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19
+        18.125-8.5 18.125 8.5 10.75 19 3.125 20.5zM360
+        304q0-30-17.25-51t-46.75-21q-10.25 0-48.75 5.25-17.75 2.75-39.25
+        2.75t-39.25-2.75q-38-5.25-48.75-5.25-29.5 0-46.75 21t-17.25 51q0 22 8
+        38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0
+        37.25-1.75t35-7.375 30.5-15 20.25-25.75 8-38.375zM416 260q0 51.75-15.25
+        82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5-41.75
+        1.125q-19.5 0-35.5-0.75t-36.875-3.125-38.125-7.5-34.25-12.875-30.25-20.25-21.5-28.75q-15.5-30.75-15.5-82.75
+        0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25
+        30.875q36.75-8.75 77.25-8.75 37 0 70 8 26.25-20.5
+        46.75-30.25t47.25-9.75q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34
+        99.5z" />
+</svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#core-aws-batch" tabindex="1" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="../index.html" title="Genomics Workflows on AWS" class="md-header-nav__button md-logo">
+          
+            <img src="../images/AWS_logo_RGB_REV.svg" width="24" height="24">
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            
+              <span class="md-header-nav__topic">
+                Genomics Workflows on AWS
+              </span>
+              <span class="md-header-nav__topic">
+                AWS Batch
+              </span>
+            
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          
+            <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+            
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+          
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/aws-samples/aws-genomics-workflows/" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#__github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      Contribute
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="../index.html" title="Genomics Workflows on AWS" class="md-nav__button md-logo">
+      
+        <img src="../images/AWS_logo_RGB_REV.svg" width="48" height="48">
+      
+    </a>
+    Genomics Workflows on AWS
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/aws-samples/aws-genomics-workflows/" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#__github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      Contribute
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../index.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../disclaimer.html" title="Disclaimer" class="md-nav__link">
+      Disclaimer
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../quick-start.html" title="Quick Start" class="md-nav__link">
+      Quick Start
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
+    
+    <label class="md-nav__link" for="nav-4">
+      Core Environment
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Core Environment
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="introduction.html" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="create-s3-bucket.html" title="Data Storage" class="md-nav__link">
+      Data Storage
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="create-iam-roles.html" title="Permissions" class="md-nav__link">
+      Permissions
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="create-custom-compute-resources.html" title="Compute Resources" class="md-nav__link">
+      Compute Resources
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        AWS Batch
+      </label>
+    
+    <a href="setup-aws-batch.html" title="AWS Batch" class="md-nav__link md-nav__link--active">
+      AWS Batch
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#job-requirements" title="Job Requirements" class="md-nav__link">
+    Job Requirements
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-an-aws-batch-environment" title="Creating an AWS Batch Environment" class="md-nav__link">
+    Creating an AWS Batch Environment
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#automated-via-cloudformation" title="Automated via CloudFormation" class="md-nav__link">
+    Automated via CloudFormation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manually-via-the-aws-console" title="Manually via the AWS Console" class="md-nav__link">
+    Manually via the AWS Console
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compute-environments" title="Compute Environments" class="md-nav__link">
+    Compute Environments
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-an-optimal-on-demand-compute-environment" title="Create an "optimal" on-demand compute environment" class="md-nav__link">
+    Create an "optimal" on-demand compute environment
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-an-optimal-spot-compute-environment" title="Create an "optimal" spot compute environment" class="md-nav__link">
+    Create an "optimal" spot compute environment
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job-queues" title="Job Queues" class="md-nav__link">
+    Job Queues
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-a-default-job-queue" title="Create a "default" job queue" class="md-nav__link">
+    Create a "default" job queue
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-priority-job-queue" title="Create a "priority" job queue" class="md-nav__link">
+    Create a "priority" job queue
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="custom-deploy.html" title="Customized Deployment" class="md-nav__link">
+      Customized Deployment
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="build-custom-distribution.html" title="Building a Custom Distribution" class="md-nav__link">
+      Building a Custom Distribution
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+    
+    <label class="md-nav__link" for="nav-5">
+      Workflow Orchestration
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        Workflow Orchestration
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/orchestration-intro.html" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-2" type="checkbox" id="nav-5-2">
+    
+    <label class="md-nav__link" for="nav-5-2">
+      AWS Step Functions
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-2">
+        AWS Step Functions
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/step-functions/step-functions-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-3" type="checkbox" id="nav-5-3">
+    
+    <label class="md-nav__link" for="nav-5-3">
+      Cromwell
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-3">
+        Cromwell
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/cromwell/cromwell-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/cromwell/cromwell-examples.html" title="Examples" class="md-nav__link">
+      Examples
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/cromwell/cromwell-trouble-shooting.html" title="Trouble Shooting" class="md-nav__link">
+      Trouble Shooting
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-4" type="checkbox" id="nav-5-4">
+    
+    <label class="md-nav__link" for="nav-5-4">
+      Nextflow
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-4">
+        Nextflow
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/nextflow/nextflow-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/nextflow/nextflow-trouble-shooting.html" title="Trouble Shooting" class="md-nav__link">
+      Trouble Shooting
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/cost-effective-workflows/cost-effective-workflows.html" title="Cost Effective Workflows" class="md-nav__link">
+      Cost Effective Workflows
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#job-requirements" title="Job Requirements" class="md-nav__link">
+    Job Requirements
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-an-aws-batch-environment" title="Creating an AWS Batch Environment" class="md-nav__link">
+    Creating an AWS Batch Environment
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#automated-via-cloudformation" title="Automated via CloudFormation" class="md-nav__link">
+    Automated via CloudFormation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manually-via-the-aws-console" title="Manually via the AWS Console" class="md-nav__link">
+    Manually via the AWS Console
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compute-environments" title="Compute Environments" class="md-nav__link">
+    Compute Environments
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-an-optimal-on-demand-compute-environment" title="Create an "optimal" on-demand compute environment" class="md-nav__link">
+    Create an "optimal" on-demand compute environment
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-an-optimal-spot-compute-environment" title="Create an "optimal" spot compute environment" class="md-nav__link">
+    Create an "optimal" spot compute environment
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job-queues" title="Job Queues" class="md-nav__link">
+    Job Queues
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-a-default-job-queue" title="Create a "default" job queue" class="md-nav__link">
+    Create a "default" job queue
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-priority-job-queue" title="Create a "priority" job queue" class="md-nav__link">
+    Create a "priority" job queue
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/aws-samples/aws-genomics-workflows/edit/master/docs/core-env/setup-aws-batch.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                <h1 id="core-aws-batch">Core: AWS Batch</h1>
+<p><a href="https://aws.amazon.com/batch/">AWS Batch</a> is a managed service that helps you efficiently run batch computing workloads on the AWS Cloud. Users submit jobs to job queues, specifying the application to be run and the compute resources (CPU and memory) required by the job. AWS Batch is responsible for launching the appropriate quantity and types of instances needed to run your jobs.</p>
+<p>AWS Batch manages the following resources:</p>
+<ul>
+<li>Job Definitions</li>
+<li>Job Queues</li>
+<li>Compute Environments</li>
+</ul>
+<p>A <a href="http://docs.aws.amazon.com/batch/latest/userguide/job_definitions.html">job definition</a> specifies how jobs are to be run. For example, which Docker image to use for your job, how many vCPUs and how much memory is required, the IAM role to be used, and more.</p>
+<p>Jobs are submitted to <a href="http://docs.aws.amazon.com/batch/latest/userguide/job_queues.html">job queues</a> where they reside until they can be scheduled to run on Amazon EC2 instances within a compute environment. An AWS account can have multiple job queues, each with varying priority. This gives you the ability to closely align the consumption of compute resources with your organizational requirements.</p>
+<p><a href="http://docs.aws.amazon.com/batch/latest/userguide/compute_environments.html">Compute environments</a> are effectively autoscaling clusters of EC2 instances that are launched to run your jobs.  Unlike traditional HPC clusters, compute environments can be configured to use a variety of instance types and sizes.  The AWS Batch job scheduler will do the heavy lifting of placing jobs on the most appropriate instance type based on the jobs resource requirements.  Compute environments can also use either On-demand instances, or Spot instances for maximum cost savings.  Job queues are mapped to one or more compute environments and a given environment can also be mapped to one or more job queues. This many-to-many relationship is defined by the compute environment order and job queue priority properties.</p>
+<p>The following diagram shows a general overview of how the AWS Batch resources interact.</p>
+<p><img alt="AWS Batch environment" src="https://d2908q01vomqb2.cloudfront.net/1b6453892473a467d07372d45eb05abc2031647a/2018/04/23/AWSBatchresoucreinteract-diagram.png" /></p>
+<p>For more information, watch the <a href="https://www.youtube.com/watch?v=T4aAWrGHmxQ">How AWS Batch Works</a> video.</p>
+<h2 id="job-requirements">Job Requirements</h2>
+<p>AWS Batch does not make assumptions on the structure and requirements that Jobs take with respect to inputs and outputs. Batch Jobs may take data streams, files, or only parameters as input, and produce the same variety for output, inclusive of files, metadata changes, updates to databases, etc. Batch assumes that each application handles their own input/output requirements.</p>
+<p>A common pattern for bioinformatics tooling is that files such as genomic sequence data are both inputs and outputs to/from a process. Many bioinformatics tools have also been developed to run in traditional Linux-based compute clusters with shared filesystems and are not necessarily optimized for cloud computing.</p>
+<p>When using AWS Batch for genomics workflows, there are a couple key considerations:</p>
+<ul>
+<li>
+<p>Independent execution:</p>
+<p>To make your workflow as flexible as possible, each job should run independently. As a result, you cannot necessarily guarantee that different jobs in the same overall workflow will run on the same instance. Using S3 as the location to exchange data between containers enables you to decouple storage of your intermediate files from compute.</p>
+</li>
+<li>
+<p>Multitenancy:</p>
+<p>Multiple container jobs may run concurrently on the same instance. In these situations, it is essential that your job writes to a unique subdirectory.</p>
+</li>
+<li>
+<p>Data cleanup:</p>
+<p>As your jobs complete and write the output back to S3, it is a good idea to delete the scratch data generated by that job on the instance. This allows you to optimize for cost by reusing EC2 instances if there are jobs remaining in the queue, rather than terminating the EC2 instances.</p>
+</li>
+</ul>
+<h2 id="creating-an-aws-batch-environment">Creating an AWS Batch Environment</h2>
+<p>A complete AWS Batch environment consists of the following:</p>
+<ol>
+<li>A Compute Environment that utilizes <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances.html">EC2 Spot instances</a> for cost-effective computing</li>
+<li>A Compute Environment that utilizes EC2 on-demand (e.g. <a href="https://aws.amazon.com/ec2/pricing/on-demand/">public pricing</a>) instances for high-priority work that can't risk job interruptions or delays due to insufficient Spot capacity.</li>
+<li>A default Job Queue that solely utilizes the Spot compute environment. This is for jobs where timeliness isn't a constraint, and can wait for the right instances to become available, as well has handle interruption. It also ensures the most cost savings.</li>
+<li>A priority Job Queue that leverages the on-demand, and optionally Spot, CE's (in that order) and has higher priority than the default queue. This is for jobs that cannot handle interruption, and need to be executed immediately.</li>
+</ol>
+<h3 id="automated-via-cloudformation">Automated via CloudFormation</h3>
+<p>The CloudFormation template below will create all of the above.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th style="text-align: center;">Source</th>
+<th style="text-align: center;">Launch Stack</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AWS Batch</td>
+<td>Creates AWS Batch Job Queues and Compute Environments. <em>You will need to provide the details for your Launch Template ID, IAM roles and instance profiles, and the IDs for a VPC and subnets.</em></td>
+<td style="text-align: center;"><a href="https://github.com/aws-samples/aws-genomics-workflows/blob/master/src/templates/gwfcore/gwfcore-batch.template.yaml" target="_blank"><i class="material-icons">cloud_download</i></a></td>
+<td style="text-align: center;"><a class="launch-button launch-button-disabled"><i class="material-icons">play_arrow</i></a></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>The launch button has been disabled above since this template is part of a set of nested templates. It is not recommended to launch it independently of its intended parent stack.</p>
+</div>
+<h3 id="manually-via-the-aws-console">Manually via the AWS Console</h3>
+<h4 id="compute-environments">Compute Environments</h4>
+<p>You can create several compute environments to suit your needs.  Below we'll create the following:</p>
+<ul>
+<li>An "optimal" compute environment using on-demand instances</li>
+<li>An "optimal" compute environment using spot instances</li>
+</ul>
+<p>"Optimal" is a default grouping of EC2 instance types used for compute environments.  It includes M4 (general purpose), C4 (compute-optimized), and R4 (memory-optimized) instance families which should be suitable for a wide range of computing cases.</p>
+<h5 id="create-an-optimal-on-demand-compute-environment">Create an "optimal" on-demand compute environment</h5>
+<ol>
+<li>Go to the AWS Batch Console</li>
+<li>Click on "Compute environments"</li>
+<li>Click on "Create environment"</li>
+<li>Select "Managed" as the "Compute environment type"</li>
+<li>For "Compute environment name" type: "ondemand"</li>
+<li>In the "Service role" drop down, select the <code>AWSBatchServiceRole</code> you created previously</li>
+<li>In the "Instance role" drop down, select the <code>ecsInstanceRole</code> you created previously</li>
+<li>For "Provisioning model" select "On-Demand"</li>
+<li>"Allowed instance types" will be already populated with "optimal" - which is a mixture of M4, C4, and R4 instances. This should be sufficient for demonstration purposes. In a production setting, it is recommended to specify the instance famimlies and sizes most apprioriate for the jobs the CE will support. For the On-Demand CE, selecting newer instance types is beneficial as they tend to have better price per performance.</li>
+<li>"Allocation strategy" will already be set to <code>BEST_FIT</code>. This is recommended for on-demand based compute environments as it ensures the most cost efficiency.</li>
+<li>In the "Launch template" drop down, select the <code>genomics-workflow-template</code> you created previously</li>
+<li>Set Minimum and Desired vCPUs to 0.</li>
+</ol>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p><strong>Minimum vCPUs</strong> is the lowest number of active vCPUs (i.e. instances) your compute environment will keep running and available for placing jobs when there are no jobs queued.  Setting this to 0 means that AWS Batch will terminate all instances when all queued jobs are complete.</p>
+<p><strong>Desired vCPUs</strong> is the number of active vCPUs (i.e. instances) that are currently needed in the compute environment to process queued jobs.  Setting this to 0 implies that there are currently no queued jobs.  AWS Batch will adjust this number based on the number of jobs queued and their resource requirements.</p>
+<p><strong>Maximum vCPUs</strong> is the highest number of active vCPUs (i.e. instances) your compute environment will launch.  This places a limit on the number of jobs the compute environment can process in parallel.</p>
+</div>
+<p>For networking, the options are populated with your account's default VPC, public subnets, and security group.  This should be sufficient for the purposes of this workshop.  In a production setting, it is recommended to use a separate VPC, private subnets therein, and associated security groups.</p>
+<p>Optional: (Recommended) Add EC2 tags.  These will help identify which EC2 instances were launched by AWS Batch.  At minimum:  </p>
+<ul>
+<li>Key: "Name"</li>
+<li>Value: "batch-ondemand-worker"</li>
+</ul>
+<p>Click on "Create"</p>
+<h5 id="create-an-optimal-spot-compute-environment">Create an "optimal" spot compute environment</h5>
+<ol>
+<li>Go to the AWS Batch Console</li>
+<li>Click on "Compute environments"</li>
+<li>Click on "Create environment"</li>
+<li>Select "Managed" as the "Compute environment type"</li>
+<li>For "Compute environment name" type: "spot"</li>
+<li>In the "Service role" drop down, select the <code>AWSBatchServiceRole</code> you created previously</li>
+<li>In the "Instance role" drop down, select the <code>ecsInstanceRole</code> you created previously</li>
+<li>For "Provisioning model" select "Spot"</li>
+<li>"Allowed instance types" will be already populated with "optimal" - which is a mixture of M4, C4, and R4 instances. This should be sufficient for demonstration purposes. In a production setting, it is recommended to specify the instance families and sizes most appropriate for the jobs the CE will support. For the SPOT CE a wider diversity of instance types is recommended to maximize the pools from which capacity can be drawn from. Limiting the size of instances is also recommended to avoid scheduling too many jobs on a SPOT instance that could be interrupted.</li>
+<li>"Allocation strategy" will already be set to <code>SPOT_CAPACITY_OPTIMIZED</code>. This is recommended for Spot based compute environments as it ensures the most compute capacity is available for your jobs.</li>
+<li>In the "Launch template" drop down, select the <code>genomics-workflow-template</code> you created previously</li>
+<li>Set Minimum and Desired vCPUs to 0.</li>
+</ol>
+<p>For networking, the options are populated with your account's default VPC, public subnets, and security group.  This should be sufficient for the purposes of this workshop.  In a production setting, it is recommended to use a separate VPC, private subnets therein, and associated security groups.</p>
+<p>Optional: (Recommended) Add EC2 tags.  These will help identify which EC2 instances were launched by AWS Batch.  At minimum:  </p>
+<ul>
+<li>Key: "Name"</li>
+<li>Value: "batch-spot-worker"</li>
+</ul>
+<p>Click on "Create"</p>
+<h4 id="job-queues">Job Queues</h4>
+<p>AWS Batch job queues, are where you submit and monitor the status of jobs.</p>
+<p>Job queues can be associated with one or more compute environments in a preferred order. Multiple job queues can be associated with the same compute environment.  Thus to handle scheduling, job queues also have a priority weight as well.</p>
+<p>Below we'll create two job queues:</p>
+<ul>
+<li>A "Default" job queue</li>
+<li>A "Priority" job queue</li>
+</ul>
+<p>Both job queues will use both compute environments you created previously.</p>
+<h5 id="create-a-default-job-queue">Create a "default" job queue</h5>
+<p>This queue is intended for jobs that do not require urgent completion, and can handle potential interruption. This queue will schedule jobs to only the "spot" compute environment.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It is not recommended to configure a job queue to "spillover" from Spot to On-Demand. Doing so could lead Insufficient Capacity Errors, resulting in Batch unable to schedule jobs, leaving them stuck in "RUNNABLE"</p>
+</div>
+<p>Because it leverages Spot instances, it will also be the most cost effective job queue.</p>
+<ul>
+<li>Go to the AWS Batch Console</li>
+<li>Click on "Job queues"</li>
+<li>Click on "Create queue"</li>
+<li>For "Queue name" use "default"</li>
+<li>Set "Priority" to 1</li>
+<li>
+<p>Under "Connected compute environments for this queue", using the drop down menu:</p>
+<ol>
+<li>Select the "spot" compute environment you created previously</li>
+</ol>
+</li>
+<li>
+<p>Click on "Create Job Queue"</p>
+</li>
+</ul>
+<h5 id="create-a-priority-job-queue">Create a "priority" job queue</h5>
+<p>This queue is intended for jobs that are urgent and <strong>cannot</strong> handle potential interruption. This queue will schedule jobs to:</p>
+<ol>
+<li>The "ondemand" compute environment</li>
+<li>The "spot" compute environment</li>
+</ol>
+<p>in that order. In this queue configuration, Batch will schedule jobs to the "ondemand" compute environment first. When the number of Max vCPUs for that environment is reached, Batch will begin scheduling jobs to the "spot" compute environment. The use of the "spot" compute environment is optional, and is used to help drain pending jobs from the queue faster.</p>
+<ul>
+<li>Go to the AWS Batch Console</li>
+<li>Click on "Job queues"</li>
+<li>Click on "Create queue"</li>
+<li>For "Queue name" use "priority"</li>
+<li>Set "Priority" to 100 (higher values mean higher priority)</li>
+<li>
+<p>Under "Connected compute environments for this queue", using the drop down menu:</p>
+<ol>
+<li>Select the "ondemand" compute environment you created previously, then</li>
+<li>Select the "spot" compute environment you created previously</li>
+</ol>
+</li>
+<li>
+<p>Click on "Create Job Queue"</p>
+</li>
+</ul>
+                
+                  
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="create-custom-compute-resources.html" title="Compute Resources" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Compute Resources
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="custom-deploy.html" title="Customized Deployment" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Customized Deployment
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            2019 Amazon Web Services
+          </div>
+        
+        powered by
+        <a href="https://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+        
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../assets/javascripts/application.9e1f3b71.js"></script>
+      
+      <script>app.initialize({version:"1.3.0",url:{base:".."}})</script>
+      
+    
+    
+      
+    
+  </body>
+</html>

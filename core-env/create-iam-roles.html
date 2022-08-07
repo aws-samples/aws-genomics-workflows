@@ -1,0 +1,1185 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+      
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-3.1.0">
+    
+    
+      
+        <title>Permissions - Genomics Workflows on AWS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/application.11e41852.css">
+      
+        <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#546e7a">
+      
+    
+    
+      <script src="../assets/javascripts/modernizr.20ef595d.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="../assets/fonts/material-icons.css">
+    
+    
+      <link rel="stylesheet" href="../extra.css">
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448"
+    viewBox="0 0 416 448" id="__github">
+  <path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19-18.125
+        8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19 18.125-8.5
+        18.125 8.5 10.75 19 3.125 20.5zM320 304q0 10-3.125 20.5t-10.75
+        19-18.125 8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19
+        18.125-8.5 18.125 8.5 10.75 19 3.125 20.5zM360
+        304q0-30-17.25-51t-46.75-21q-10.25 0-48.75 5.25-17.75 2.75-39.25
+        2.75t-39.25-2.75q-38-5.25-48.75-5.25-29.5 0-46.75 21t-17.25 51q0 22 8
+        38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0
+        37.25-1.75t35-7.375 30.5-15 20.25-25.75 8-38.375zM416 260q0 51.75-15.25
+        82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5-41.75
+        1.125q-19.5 0-35.5-0.75t-36.875-3.125-38.125-7.5-34.25-12.875-30.25-20.25-21.5-28.75q-15.5-30.75-15.5-82.75
+        0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25
+        30.875q36.75-8.75 77.25-8.75 37 0 70 8 26.25-20.5
+        46.75-30.25t47.25-9.75q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34
+        99.5z" />
+</svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#core-permissions" tabindex="1" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="../index.html" title="Genomics Workflows on AWS" class="md-header-nav__button md-logo">
+          
+            <img src="../images/AWS_logo_RGB_REV.svg" width="24" height="24">
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            
+              <span class="md-header-nav__topic">
+                Genomics Workflows on AWS
+              </span>
+              <span class="md-header-nav__topic">
+                Permissions
+              </span>
+            
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          
+            <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+            
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+          
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/aws-samples/aws-genomics-workflows/" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#__github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      Contribute
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="../index.html" title="Genomics Workflows on AWS" class="md-nav__button md-logo">
+      
+        <img src="../images/AWS_logo_RGB_REV.svg" width="48" height="48">
+      
+    </a>
+    Genomics Workflows on AWS
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/aws-samples/aws-genomics-workflows/" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#__github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      Contribute
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../index.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../disclaimer.html" title="Disclaimer" class="md-nav__link">
+      Disclaimer
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../quick-start.html" title="Quick Start" class="md-nav__link">
+      Quick Start
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
+    
+    <label class="md-nav__link" for="nav-4">
+      Core Environment
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Core Environment
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="introduction.html" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="create-s3-bucket.html" title="Data Storage" class="md-nav__link">
+      Data Storage
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Permissions
+      </label>
+    
+    <a href="create-iam-roles.html" title="Permissions" class="md-nav__link md-nav__link--active">
+      Permissions
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#create-iam-resources" title="Create IAM Resources" class="md-nav__link">
+    Create IAM Resources
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#iam-policies" title="IAM Policies" class="md-nav__link">
+    IAM Policies
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#iam-roles" title="IAM Roles" class="md-nav__link">
+    IAM Roles
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automated-via-cloudformation" title="Automated via CloudFormation" class="md-nav__link">
+    Automated via CloudFormation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manually-via-the-aws-console" title="Manually via the AWS Console" class="md-nav__link">
+    Manually via the AWS Console
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-a-bucket-access-policy" title="Create a bucket access policy" class="md-nav__link">
+    Create a bucket access policy
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-an-ebs-autoscale-policy" title="Create an EBS autoscale policy" class="md-nav__link">
+    Create an EBS autoscale policy
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-batch-service-role" title="Create a Batch Service Role" class="md-nav__link">
+    Create a Batch Service Role
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-an-ec2-instance-role" title="Create an EC2 Instance Role" class="md-nav__link">
+    Create an EC2 Instance Role
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-an-ec2-spotfleet-role" title="Create an EC2 SpotFleet Role" class="md-nav__link">
+    Create an EC2 SpotFleet Role
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-job-role" title="Create a Job Role" class="md-nav__link">
+    Create a Job Role
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="create-custom-compute-resources.html" title="Compute Resources" class="md-nav__link">
+      Compute Resources
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="setup-aws-batch.html" title="AWS Batch" class="md-nav__link">
+      AWS Batch
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="custom-deploy.html" title="Customized Deployment" class="md-nav__link">
+      Customized Deployment
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="build-custom-distribution.html" title="Building a Custom Distribution" class="md-nav__link">
+      Building a Custom Distribution
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+    
+    <label class="md-nav__link" for="nav-5">
+      Workflow Orchestration
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        Workflow Orchestration
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/orchestration-intro.html" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-2" type="checkbox" id="nav-5-2">
+    
+    <label class="md-nav__link" for="nav-5-2">
+      AWS Step Functions
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-2">
+        AWS Step Functions
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/step-functions/step-functions-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-3" type="checkbox" id="nav-5-3">
+    
+    <label class="md-nav__link" for="nav-5-3">
+      Cromwell
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-3">
+        Cromwell
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/cromwell/cromwell-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/cromwell/cromwell-examples.html" title="Examples" class="md-nav__link">
+      Examples
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/cromwell/cromwell-trouble-shooting.html" title="Trouble Shooting" class="md-nav__link">
+      Trouble Shooting
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-4" type="checkbox" id="nav-5-4">
+    
+    <label class="md-nav__link" for="nav-5-4">
+      Nextflow
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-4">
+        Nextflow
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/nextflow/nextflow-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/nextflow/nextflow-trouble-shooting.html" title="Trouble Shooting" class="md-nav__link">
+      Trouble Shooting
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/cost-effective-workflows/cost-effective-workflows.html" title="Cost Effective Workflows" class="md-nav__link">
+      Cost Effective Workflows
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#create-iam-resources" title="Create IAM Resources" class="md-nav__link">
+    Create IAM Resources
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#iam-policies" title="IAM Policies" class="md-nav__link">
+    IAM Policies
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#iam-roles" title="IAM Roles" class="md-nav__link">
+    IAM Roles
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automated-via-cloudformation" title="Automated via CloudFormation" class="md-nav__link">
+    Automated via CloudFormation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manually-via-the-aws-console" title="Manually via the AWS Console" class="md-nav__link">
+    Manually via the AWS Console
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-a-bucket-access-policy" title="Create a bucket access policy" class="md-nav__link">
+    Create a bucket access policy
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-an-ebs-autoscale-policy" title="Create an EBS autoscale policy" class="md-nav__link">
+    Create an EBS autoscale policy
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-batch-service-role" title="Create a Batch Service Role" class="md-nav__link">
+    Create a Batch Service Role
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-an-ec2-instance-role" title="Create an EC2 Instance Role" class="md-nav__link">
+    Create an EC2 Instance Role
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-an-ec2-spotfleet-role" title="Create an EC2 SpotFleet Role" class="md-nav__link">
+    Create an EC2 SpotFleet Role
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-job-role" title="Create a Job Role" class="md-nav__link">
+    Create a Job Role
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/aws-samples/aws-genomics-workflows/edit/master/docs/core-env/create-iam-roles.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                <h1 id="core-permissions">Core: Permissions</h1>
+<p>IAM is used to control access to your AWS resources.  This includes access by users and groups in your account, as well as access by AWS services such as AWS Batch operating on your behalf.</p>
+<p>Services use IAM Roles which provide temporary access to AWS resources when needed.</p>
+<div class="admonition danger">
+<p class="admonition-title">IMPORTANT</p>
+<p>You need to have Administrative access to your AWS account to make changes in IAM.</p>
+<p>A recommended way to do this is to create a user and add that user to a group with the <code>AdministratorAccess</code> managed policy attached.  This makes it easier to  revoke these privileges if necessary.</p>
+</div>
+<h2 id="create-iam-resources">Create IAM Resources</h2>
+<h3 id="iam-policies">IAM Policies</h3>
+<p>For the EC2 instance role described in the next section, it is recommended to restrict access to just the resources and permissions it needs to use.  In this case, it will be:</p>
+<ul>
+<li>Access to the specific buckets used for input and output data</li>
+<li>The ability to create and add EBS volumes to the instance (more on this later)</li>
+</ul>
+<p>These policies could be used by other roles, so it will be easier to manage them if each are stand alone documents.</p>
+<ul>
+<li><strong>Bucket Access Policy (required)</strong>:</li>
+</ul>
+<p>This policy specifies full access to a single S3 bucket named <code>&lt;bucket-name&gt;</code> which physically resides in <code>&lt;region&gt;</code>.</p>
+<pre><code class="language-json">{
+    &quot;PolicyName&quot;: &quot;s3bucket-access-&lt;region&gt;&quot;,
+    &quot;PolicyDocument&quot;: {
+        &quot;Version&quot;: &quot;2012-10-17&quot;,
+        &quot;Statement&quot;: [
+            {
+                &quot;Effect&quot;: &quot;Allow&quot;,
+                &quot;Action&quot;: &quot;s3:*&quot;,
+                &quot;Resource&quot;: [
+                    &quot;arn:aws:s3:::&lt;bucket-name&gt;&quot;,
+                    &quot;arn:aws:s3:::&lt;bucket-name&gt;/*&quot;
+                ]
+            }
+        ]
+    }
+}
+</code></pre>
+<p>If needed, the policy can be made more granular - i.e. only allowing access to a prefix within the bucket - by modifying the second <code>Resource</code> item to include the prefix path before the <code>*</code>.</p>
+<ul>
+<li><strong>EBS Autoscale Policy (required)</strong>:</li>
+</ul>
+<p>This policy allows job instance to attach EBS volumes to create extra scratch space for genomic data using <a href="https://github.com/awslabs/amazon-ebs-autoscale">Amazon EBS Autoscale</a>.</p>
+<pre><code class="language-json">{
+    &quot;PolicyName&quot;: &quot;ebs-autoscale-&lt;region&gt;&quot;,
+    &quot;PolicyDocument&quot;: {
+        &quot;Version&quot;: &quot;2012-10-17&quot;,
+        &quot;Statement&quot;: [
+            {
+                &quot;Effect&quot;: &quot;Allow&quot;,
+                &quot;Action&quot;: [
+                    &quot;ec2:AttachVolume&quot;,
+                    &quot;ec2:DescribeVolumeStatus&quot;,
+                    &quot;ec2:DescribeVolumes&quot;,
+                    &quot;ec2:ModifyInstanceAttribute&quot;,
+                    &quot;ec2:DescribeVolumeAttribute&quot;,
+                    &quot;ec2:CreateVolume&quot;,
+                    &quot;ec2:DeleteVolume&quot;,
+                    &quot;ec2:CreateTags&quot;
+                ],
+                &quot;Resource&quot;: &quot;*&quot;
+            }
+        ]
+    }
+}
+</code></pre>
+<h3 id="iam-roles">IAM Roles</h3>
+<p>IAM roles that your job execution environment in AWS Batch will use include:</p>
+<ul>
+<li>
+<p><strong>Batch Service Role (required)</strong>:</p>
+<p>Role used by AWS Batch to call other AWS services on its behalf.
+AWS Batch makes calls to other AWS services on your behalf to manage the resources that you use with the service. Before you can use the service, you must have an IAM policy and role that provides the necessary permissions to AWS Batch.
+<a href="https://docs.aws.amazon.com/batch/latest/userguide/service_IAM_role.html">(Learn More)</a></p>
+</li>
+<li>
+<p><strong>Batch Instance Profile (required)</strong>:</p>
+<p>Role that defines service permissions for EC2 instances launched by AWS Batch.
+This role should also have attached policies (see above) that allow access to specific S3 buckets and the ability to modify storage (e.g. EBS volumes) on the instance.
+<a href="https://docs.aws.amazon.com/batch/latest/userguide/instance_IAM_role.html">(Learn More)</a></p>
+</li>
+<li>
+<p><strong>Batch SpotFleet Role (depends)</strong>:</p>
+<p>This role is needed if you intend to launch spot instances from AWS Batch.
+If you create a managed compute environment that uses Amazon EC2 Spot Fleet Instances with a <code>BEST_FIT</code> allocation strategy, you must create a role that grants the Spot Fleet permission to set a cost threshold, launch, tag, and terminate instances on your behalf.
+<a href="https://docs.aws.amazon.com/batch/latest/userguide/spot_fleet_IAM_role.html">(Learn More)</a></p>
+</li>
+<li>
+<p><strong>Batch Job Role (optional)</strong>:</p>
+<p>Role used to provide specific service permissions to individual jobs.
+Jobs can run without an IAM role. In that case, they inherit the
+permissions of the instance they run on.  Job roles are useful if you have jobs that utilize additional AWS resources such as buckets with supplementary data or need to interact with other AWS services like databases.</p>
+</li>
+</ul>
+<h3 id="automated-via-cloudformation">Automated via CloudFormation</h3>
+<p>The CloudFormation template below creates all of the above roles and policies.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th style="text-align: center;">Source</th>
+<th style="text-align: center;">Launch Stack</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Amazon IAM Roles</td>
+<td>Create the necessary IAM Roles. This is useful to hand to someone with the right permissions to create these on your behalf. <em>You will need to provide a S3 bucket name</em>.</td>
+<td style="text-align: center;"><a href="https://github.com/aws-samples/aws-genomics-workflows/blob/master/src/templates/gwfcore/gwfcore-iam.template.yaml" target="_blank"><i class="material-icons">cloud_download</i></a></td>
+<td style="text-align: center;"><a class="launch-button launch-button-disabled"><i class="material-icons">play_arrow</i></a></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>The launch button has been disabled above since this template is part of a set of nested templates. It is not recommended to launch it independently of its intended parent stack.</p>
+</div>
+<div class="admonition danger">
+<p class="admonition-title">Administrative Access Required</p>
+<p>In order run this CloudFormation template you you will need privileged access to your account either through an IAM user, STS assumed role, or CloudFormation Stack role.</p>
+</div>
+<h3 id="manually-via-the-aws-console">Manually via the AWS Console</h3>
+<h4 id="create-a-bucket-access-policy">Create a bucket access policy</h4>
+<ul>
+<li>Go to the IAM Console</li>
+<li>Click on "Policies"</li>
+<li>Click on "Create Policy"</li>
+<li>Repeat the following for as many buckets as you will use (e.g. if you have one bucket for nextflow logs and another for nextflow workDir, you will need to do this twice)</li>
+<li>Select "S3" as the service</li>
+<li>Select "All Actions"</li>
+<li>Under Resources select "Specific"</li>
+<li>Under Resources &gt; bucket, click "Add ARN"<ul>
+<li>Type in the name of the bucket</li>
+<li>Click "Add"</li>
+</ul>
+</li>
+<li>Under Resources &gt; object, click "Add ARN"<ul>
+<li>For "Bucket Name", type in the name of the bucket</li>
+<li>For "Object Name", select "Any"</li>
+</ul>
+</li>
+<li>Click "Add additional permissions" if you have additional buckets you are using</li>
+<li>Click "Review Policy"</li>
+<li>Name the policy "bucket-access-policy"</li>
+<li>Click "Create Policy"</li>
+</ul>
+<h4 id="create-an-ebs-autoscale-policy">Create an EBS autoscale policy</h4>
+<ul>
+<li>Go to the IAM Console</li>
+<li>Click on "Policies"</li>
+<li>Click on "Create Policy"</li>
+<li>Switch to the "JSON" tab</li>
+<li>Paste the following into the editor:</li>
+</ul>
+<pre><code class="language-json">{
+    &quot;Version&quot;: &quot;2012-10-17&quot;,
+    &quot;Statement&quot;: {
+        &quot;Action&quot;: [
+            &quot;ec2:*Volume&quot;,
+            &quot;ec2:modifyInstanceAttribute&quot;,
+            &quot;ec2:describeVolumes&quot;
+        ],
+        &quot;Resource&quot;: &quot;*&quot;,
+        &quot;Effect&quot;: &quot;Allow&quot;
+    }
+}
+</code></pre>
+<ul>
+<li>Click "Review Policy"</li>
+<li>Name the policy "ebs-autoscale-policy"</li>
+<li>Click "Create Policy"</li>
+</ul>
+<h4 id="create-a-batch-service-role">Create a Batch Service Role</h4>
+<p>This is a role used by AWS Batch to launch EC2 instances on your behalf.</p>
+<ul>
+<li>Go to the IAM Console</li>
+<li>Click on "Roles"</li>
+<li>Click on "Create role"</li>
+<li>Select "AWS service" as the trusted entity</li>
+<li>Choose "Batch" as the service to use the role</li>
+<li>Click "Next: Permissions"</li>
+</ul>
+<p>In Attached permissions policies, the "AWSBatchServiceRole" will already be attached</p>
+<ul>
+<li>Click "Next: Tags".  (adding tags is optional)</li>
+<li>Click "Next: Review"</li>
+<li>Set the Role Name to "AWSBatchServiceRole"</li>
+<li>Click "Create role"</li>
+</ul>
+<h4 id="create-an-ec2-instance-role">Create an EC2 Instance Role</h4>
+<p>This is a role that controls what AWS Resources EC2 instances launched by AWS Batch have access to.
+In this case, you will limit S3 access to just the bucket you created earlier.</p>
+<ul>
+<li>Go to the IAM Console</li>
+<li>Click on "Roles"</li>
+<li>Click on "Create role"</li>
+<li>Select "AWS service" as the trusted entity</li>
+<li>Choose EC2 from the larger services list</li>
+<li>Choose "EC2 - Allows EC2 instances to call AWS services on your behalf" as the use case.</li>
+<li>
+<p>Click "Next: Permissions"</p>
+</li>
+<li>
+<p>Type "ContainerService" in the search field for policies</p>
+</li>
+<li>
+<p>Click the checkbox next to "AmazonEC2ContainerServiceforEC2Role" to attach the policy</p>
+</li>
+<li>
+<p>Type "S3" in the search field for policies</p>
+</li>
+<li>Click the checkbox next to "AmazonS3ReadOnlyAccess" to attach the policy</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Enabling Read-Only access to all S3 resources is required if you use publicly available datasets such as the <a href="https://registry.opendata.aws/1000-genomes/">1000 Genomes dataset</a>, and others, available in the <a href="https://registry.opendata.aws">AWS Registry of Open Datasets</a></p>
+</div>
+<ul>
+<li>Type "bucket-access-policy" in the search field for policies</li>
+<li>
+<p>Click the checkbox next to "bucket-access-policy" to attach the policy</p>
+</li>
+<li>
+<p>Type "ebs-autoscale-policy" in the search field for policies</p>
+</li>
+<li>
+<p>Click the checkbox next to "ebs-autoscale-policy" to attach the policy</p>
+</li>
+<li>
+<p>Click "Next: Tags".  (adding tags is optional)</p>
+</li>
+<li>Click "Next: Review"</li>
+<li>Set the Role Name to "ecsInstanceRole"</li>
+<li>Click "Create role"</li>
+</ul>
+<h4 id="create-an-ec2-spotfleet-role">Create an EC2 SpotFleet Role</h4>
+<p>This is a role that allows creation and launch of Spot fleets - Spot instances with similar compute capabilities (i.e. vCPUs and RAM).  This is for using Spot instances when running jobs in AWS Batch.</p>
+<ul>
+<li>Go to the IAM Console</li>
+<li>Click on "Roles"</li>
+<li>Click on "Create role"</li>
+<li>Select "AWS service" as the trusted entity</li>
+<li>Choose EC2 from the larger services list</li>
+<li>Choose "EC2 - Spot Fleet Tagging" as the use case</li>
+</ul>
+<p>In Attached permissions policies, the "AmazonEC2SpotFleetTaggingRole" will already be attached</p>
+<ul>
+<li>Click "Next: Tags".  (adding tags is optional)</li>
+<li>Click "Next: Review"</li>
+<li>Set the Role Name to "AWSSpotFleetTaggingRole"</li>
+<li>Click "Create role"</li>
+</ul>
+<h4 id="create-a-job-role">Create a Job Role</h4>
+<p>This is a role used by individual Batch Jobs to specify permissions to AWS resources in addition to permissions allowed by the Instance Role above.</p>
+<ul>
+<li>Go to the IAM Console</li>
+<li>Click on "Roles"</li>
+<li>Click on "Create role"</li>
+<li>Select "AWS service" as the trusted entity</li>
+<li>Choose Elastic Container Service from the larger services list</li>
+<li>Choose "Elastic Container Service Task" as the use case.</li>
+<li>
+<p>Click "Next: Permissions"</p>
+</li>
+<li>
+<p>Attach AWS managed and user defined policies as needed.</p>
+</li>
+<li>
+<p>Click "Next: Tags".  (adding tags is optional)</p>
+</li>
+<li>Click "Next: Review"</li>
+<li>Set the Role Name to "BatchJobRole"</li>
+<li>Click "Create role"</li>
+</ul>
+                
+                  
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="create-s3-bucket.html" title="Data Storage" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Data Storage
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="create-custom-compute-resources.html" title="Compute Resources" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Compute Resources
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            2019 Amazon Web Services
+          </div>
+        
+        powered by
+        <a href="https://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+        
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../assets/javascripts/application.9e1f3b71.js"></script>
+      
+      <script>app.initialize({version:"1.3.0",url:{base:".."}})</script>
+      
+    
+    
+      
+    
+  </body>
+</html>

@@ -1,0 +1,1242 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+      
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-3.1.0">
+    
+    
+      
+        <title>Overview - Genomics Workflows on AWS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/application.11e41852.css">
+      
+        <link rel="stylesheet" href="../../assets/stylesheets/application-palette.22915126.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#546e7a">
+      
+    
+    
+      <script src="../../assets/javascripts/modernizr.20ef595d.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="../../assets/fonts/material-icons.css">
+    
+    
+      <link rel="stylesheet" href="../../extra.css">
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448"
+    viewBox="0 0 416 448" id="__github">
+  <path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19-18.125
+        8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19 18.125-8.5
+        18.125 8.5 10.75 19 3.125 20.5zM320 304q0 10-3.125 20.5t-10.75
+        19-18.125 8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19
+        18.125-8.5 18.125 8.5 10.75 19 3.125 20.5zM360
+        304q0-30-17.25-51t-46.75-21q-10.25 0-48.75 5.25-17.75 2.75-39.25
+        2.75t-39.25-2.75q-38-5.25-48.75-5.25-29.5 0-46.75 21t-17.25 51q0 22 8
+        38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0
+        37.25-1.75t35-7.375 30.5-15 20.25-25.75 8-38.375zM416 260q0 51.75-15.25
+        82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5-41.75
+        1.125q-19.5 0-35.5-0.75t-36.875-3.125-38.125-7.5-34.25-12.875-30.25-20.25-21.5-28.75q-15.5-30.75-15.5-82.75
+        0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25
+        30.875q36.75-8.75 77.25-8.75 37 0 70 8 26.25-20.5
+        46.75-30.25t47.25-9.75q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34
+        99.5z" />
+</svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#cromwell-on-aws-batch" tabindex="1" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="../../index.html" title="Genomics Workflows on AWS" class="md-header-nav__button md-logo">
+          
+            <img src="../../images/AWS_logo_RGB_REV.svg" width="24" height="24">
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            
+              <span class="md-header-nav__topic">
+                Genomics Workflows on AWS
+              </span>
+              <span class="md-header-nav__topic">
+                Overview
+              </span>
+            
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          
+            <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+            
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+          
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/aws-samples/aws-genomics-workflows/" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#__github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      Contribute
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="../../index.html" title="Genomics Workflows on AWS" class="md-nav__button md-logo">
+      
+        <img src="../../images/AWS_logo_RGB_REV.svg" width="48" height="48">
+      
+    </a>
+    Genomics Workflows on AWS
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/aws-samples/aws-genomics-workflows/" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#__github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      Contribute
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../index.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../disclaimer.html" title="Disclaimer" class="md-nav__link">
+      Disclaimer
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../quick-start.html" title="Quick Start" class="md-nav__link">
+      Quick Start
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      Core Environment
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Core Environment
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../core-env/introduction.html" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../core-env/create-s3-bucket.html" title="Data Storage" class="md-nav__link">
+      Data Storage
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../core-env/create-iam-roles.html" title="Permissions" class="md-nav__link">
+      Permissions
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../core-env/create-custom-compute-resources.html" title="Compute Resources" class="md-nav__link">
+      Compute Resources
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../core-env/setup-aws-batch.html" title="AWS Batch" class="md-nav__link">
+      AWS Batch
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../core-env/custom-deploy.html" title="Customized Deployment" class="md-nav__link">
+      Customized Deployment
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../core-env/build-custom-distribution.html" title="Building a Custom Distribution" class="md-nav__link">
+      Building a Custom Distribution
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5" checked>
+    
+    <label class="md-nav__link" for="nav-5">
+      Workflow Orchestration
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        Workflow Orchestration
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration-intro.html" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-2" type="checkbox" id="nav-5-2">
+    
+    <label class="md-nav__link" for="nav-5-2">
+      AWS Step Functions
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-2">
+        AWS Step Functions
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../step-functions/step-functions-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-3" type="checkbox" id="nav-5-3" checked>
+    
+    <label class="md-nav__link" for="nav-5-3">
+      Cromwell
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-3">
+        Cromwell
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Overview
+      </label>
+    
+    <a href="cromwell-overview.html" title="Overview" class="md-nav__link md-nav__link--active">
+      Overview
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" title="Requirements" class="md-nav__link">
+    Requirements
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vpc" title="VPC" class="md-nav__link">
+    VPC
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#genomics-workflow-core" title="Genomics Workflow Core" class="md-nav__link">
+    Genomics Workflow Core
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cromwell-resources" title="Cromwell Resources" class="md-nav__link">
+    Cromwell Resources
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment-details" title="Deployment Details" class="md-nav__link">
+    Deployment Details
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cromwell-database" title="Cromwell Database" class="md-nav__link">
+    Cromwell Database
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cromwell-server" title="Cromwell server" class="md-nav__link">
+    Cromwell server
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#access-to-aws-batch" title="Access to AWS Batch" class="md-nav__link">
+    Access to AWS Batch
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#access-to-s3" title="Access to S3" class="md-nav__link">
+    Access to S3
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuring-cromwell-to-use-aws-batch" title="Configuring Cromwell to use AWS Batch" class="md-nav__link">
+    Configuring Cromwell to use AWS Batch
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#accessing-the-cromwell-server" title="Accessing the Cromwell server" class="md-nav__link">
+    Accessing the Cromwell server
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop-start-restart-the-cromwell-service" title="Stop / Start / Restart the Cromwell service" class="md-nav__link">
+    Stop / Start / Restart the Cromwell service
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-a-workflow" title="Running a workflow" class="md-nav__link">
+    Running a workflow
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workflow-logs" title="Workflow logs" class="md-nav__link">
+    Workflow logs
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cost-optimizing-workflows" title="Cost optimizing workflows" class="md-nav__link">
+    Cost optimizing workflows
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="cromwell-examples.html" title="Examples" class="md-nav__link">
+      Examples
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="cromwell-trouble-shooting.html" title="Trouble Shooting" class="md-nav__link">
+      Trouble Shooting
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-4" type="checkbox" id="nav-5-4">
+    
+    <label class="md-nav__link" for="nav-5-4">
+      Nextflow
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-4">
+        Nextflow
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../nextflow/nextflow-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../nextflow/nextflow-trouble-shooting.html" title="Trouble Shooting" class="md-nav__link">
+      Trouble Shooting
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../cost-effective-workflows/cost-effective-workflows.html" title="Cost Effective Workflows" class="md-nav__link">
+      Cost Effective Workflows
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" title="Requirements" class="md-nav__link">
+    Requirements
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vpc" title="VPC" class="md-nav__link">
+    VPC
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#genomics-workflow-core" title="Genomics Workflow Core" class="md-nav__link">
+    Genomics Workflow Core
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cromwell-resources" title="Cromwell Resources" class="md-nav__link">
+    Cromwell Resources
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment-details" title="Deployment Details" class="md-nav__link">
+    Deployment Details
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cromwell-database" title="Cromwell Database" class="md-nav__link">
+    Cromwell Database
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cromwell-server" title="Cromwell server" class="md-nav__link">
+    Cromwell server
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#access-to-aws-batch" title="Access to AWS Batch" class="md-nav__link">
+    Access to AWS Batch
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#access-to-s3" title="Access to S3" class="md-nav__link">
+    Access to S3
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuring-cromwell-to-use-aws-batch" title="Configuring Cromwell to use AWS Batch" class="md-nav__link">
+    Configuring Cromwell to use AWS Batch
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#accessing-the-cromwell-server" title="Accessing the Cromwell server" class="md-nav__link">
+    Accessing the Cromwell server
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop-start-restart-the-cromwell-service" title="Stop / Start / Restart the Cromwell service" class="md-nav__link">
+    Stop / Start / Restart the Cromwell service
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-a-workflow" title="Running a workflow" class="md-nav__link">
+    Running a workflow
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workflow-logs" title="Workflow logs" class="md-nav__link">
+    Workflow logs
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cost-optimizing-workflows" title="Cost optimizing workflows" class="md-nav__link">
+    Cost optimizing workflows
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/aws-samples/aws-genomics-workflows/edit/master/docs/orchestration/cromwell/cromwell-overview.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                <h1 id="cromwell-on-aws-batch">Cromwell on AWS Batch</h1>
+<p><img alt="Cromwell on AWS" src="images/cromwell-on-aws_infrastructure.png" /></p>
+<p><a href="https://cromwell.readthedocs.io/en/stable/">Cromwell</a> is a workflow management
+system for scientific workflows developed by the <a href="https://broadinstitute.org/">Broad Institute</a>
+and supports job execution using <a href="https://aws.amazon.com/batch/">AWS Batch</a>.</p>
+<h2 id="requirements">Requirements</h2>
+<p>To get started using Cromwell on AWS you'll need the following setup in your AWS
+account:</p>
+<ul>
+<li>A VPC with at least 2 <strong>private</strong> subnets</li>
+<li>The Genomics Workflow <a href="../../core-env/introduction.html">Core Environment</a></li>
+<li>EC2 Instance as a Cromwell Server</li>
+<li>RDS Cluster for the Cromwell metadata database</li>
+</ul>
+<p>The following will help you deploy these components.</p>
+<h3 id="vpc">VPC</h3>
+<p>Cromwell uses a relational database for storing metadata information. In AWS you can use an RDS cluster for this. For security and availability is is recommended that your RDS cluster deploy into at least 2 private subnets. If the target VPC you want to deploy Cromwell into already has this, you can skip ahead. If not, you can use the CloudFormation template below, which uses the <a href="https://aws.amazon.com/quickstart/architecture/vpc/">AWS VPC Quickstart</a>, to create one meeting these requirements.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th style="text-align: center;">Source</th>
+<th style="text-align: center;">Launch Stack</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VPC (Optional)</td>
+<td>Creates a new Virtual Private Cloud to use for your genomics workflow resources.</td>
+<td style="text-align: center;"><a href="https://aws-quickstart.s3.amazonaws.com/quickstart-aws-vpc/templates/aws-vpc.template.yaml" target="_blank"><i class="material-icons">cloud_download</i></a></td>
+<td style="text-align: center;"><a href="https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=GenomicsVPC&templateURL=https://aws-quickstart.s3.amazonaws.com/quickstart-aws-vpc/templates/aws-vpc.template.yaml" target="_blank" class="launch-button"><i class="material-icons">play_arrow</i></a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="genomics-workflow-core">Genomics Workflow Core</h3>
+<p>To launch the Genomics Workflow Core in your AWS account, use the CloudFormation template below.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th style="text-align: center;">Source</th>
+<th style="text-align: center;">Launch Stack</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Genomics Workflow Core</td>
+<td>Create EC2 Launch Templates, AWS Batch Job Queues and Compute Environments, a secure Amazon S3 bucket, and IAM policies and roles within an <strong>existing</strong> VPC. <em>NOTE: You must provide VPC ID, and subnet IDs</em>.</td>
+<td style="text-align: center;"><a href="https://github.com/aws-samples/aws-genomics-workflows/blob/master/src/templates/gwfcore/gwfcore-root.template.yaml" target="_blank"><i class="material-icons">cloud_download</i></a></td>
+<td style="text-align: center;"><a href="https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=gwfcore&templateURL=https://aws-genomics-workflows.s3.amazonaws.com/latest/templates/gwfcore/gwfcore-root.template.yaml" target="_blank" class="launch-button"><i class="material-icons">play_arrow</i></a></td>
+</tr>
+</tbody>
+</table>
+<p>The core is agnostic of the workflow orchestrator you intended to use, and can be installed multiple times in your account if needed (e.g. for use by different projects). Each installation uses a <code>Namespace</code> value to group resources accordingly. By default, the <code>Namespace</code> is set to the stack name, which must be unique within an AWS region.</p>
+<p>See the <a href="../../core-env/introduction.html">Core Environment</a> For more details on the core's architecture.</p>
+<h3 id="cromwell-resources">Cromwell Resources</h3>
+<p>The following CloudFormation template will create a Cromwell server instance and, an RDS Aurora Serverless database cluster.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th style="text-align: center;">Source</th>
+<th style="text-align: center;">Launch Stack</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cromwell Resource</td>
+<td>Create resources needed to run Cromwell on AWS: an RDS Aurora database, an EC2 instance with Cromwell installed as a server, and an IAM instance profile</td>
+<td style="text-align: center;"><a href="https://github.com/aws-samples/aws-genomics-workflows/blob/master/src/templates/cromwell/cromwell-resources.template.yaml" target="_blank"><i class="material-icons">cloud_download</i></a></td>
+<td style="text-align: center;"><a href="https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=cromwell-resources&templateURL=https://aws-genomics-workflows.s3.amazonaws.com/latest/templates/cromwell/cromwell-resources.template.yaml" target="_blank" class="launch-button"><i class="material-icons">play_arrow</i></a></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>The <code>Namespace</code> parameter in this template configures Cromwell and associates it with a specific Genomics Workflow Core.</p>
+</div>
+<p>Once created, you can access the server instance in a web browser via the instance's public DNS name which can be found on the <strong>Outputs</strong> tab for the stack in the CloudFormation Console.  There you should see Cromwell's SwaggerUI, which provides a simple web interface for submitting workflows.</p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>The server instance uses a self-signed certificate and is configured for HTTPS access. You may get a security warning from your web-browser when accessing it. In a production setting, it is recommended to install a certificate from a trusted authority.</p>
+</div>
+<p>The CloudFormation template above also configures the server with integration to <a href="https://aws.amazon.com/cloudwatch/">Amazon CloudWatch</a> for monitoring Cromwell's log output and <a href="https://aws.amazon.com/systems-manager/">AWS Systems Manager</a>. The private key that you referenced in the CloudFormation template allows SSH terminal access and performing any maintenance on the instance. In addition the server instance can be managed from AWS Systems Manager.</p>
+<h2 id="deployment-details">Deployment Details</h2>
+<h3 id="cromwell-database">Cromwell Database</h3>
+<p>Cromwell uses a relational database to store workflow metadata and caching information. By default, Cromwell will use an in-memory database, which is sufficient for ephemeral, single workflow use. However, for more scalability and to fully take advantage of workflow caching capabilities, it is recommended to use a dedicated and persistent database that is separate from the instance Cromwell is running on. The CloudFormation template will deploy an RDS Aurora MySQL instance and configure the server to connect to this DB</p>
+<h3 id="cromwell-server">Cromwell server</h3>
+<p>The CloudFormation template above launches an EC2 instance as a persistent Cromwell server. You can use this server as an endpoint for running multiple concurrent workflows. This instance needs the following:</p>
+<ul>
+<li>Java 8</li>
+<li>The latest version of Cromwell with AWS Batch backend support (v52+)</li>
+<li>Permissions to<ul>
+<li>read from all S3 buckets used for input and output data</li>
+<li>submit / describe / cancel / terminate jobs on AWS Batch queues</li>
+</ul>
+</li>
+</ul>
+<p>These permissions are granted to the server instance via an <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html">instance profile</a>. This allows an EC2 instance to assume an IAM role and call other AWS services on your behalf.</p>
+<p>The specific IAM policies used in the instance profile are shown below.</p>
+<h4 id="access-to-aws-batch">Access to AWS Batch</h4>
+<p>Lets the Cromwell server instance submit and get info about AWS Batch jobs.</p>
+<pre><code class="language-json">{
+    &quot;Version&quot;: &quot;2012-10-17&quot;,
+    &quot;Statement&quot;: [
+        {
+            &quot;Sid&quot;: &quot;CromwellServer-BatchPolicy&quot;,
+            &quot;Effect&quot;: &quot;Allow&quot;,
+            &quot;Action&quot;: [
+                &quot;batch:DescribeJobQueues&quot;
+                &quot;batch:DeregisterJobDefinition&quot;
+                &quot;batch:TerminateJob&quot;
+                &quot;batch:DescribeJobs&quot;
+                &quot;batch:CancelJob&quot;
+                &quot;batch:SubmitJob&quot;
+                &quot;batch:RegisterJobDefinition&quot;
+                &quot;batch:DescribeJobDefinitions&quot;
+                &quot;batch:ListJobs&quot;
+                &quot;batch:DescribeComputeEnvironments&quot;
+            ],
+            &quot;Resource&quot;: &quot;*&quot;
+        }
+    ]
+}
+</code></pre>
+<p>If you want to further limit Cromwell's access to compute resources - e.g. to specific job queues - you can scope down the above policy as needed by explicitly specifying <code>Resources</code>.</p>
+<h4 id="access-to-s3">Access to S3</h4>
+<p>Lets the Cromwell server instance read and write data from/to S3. Specifically, Cromwell needs access to the return code files (<code>rc.txt</code>) generated by each job to track job status. In addition, this should also include any open dataset buckets you may need to read from for your workflows since Cromwell will need to perform <code>HeadObject</code> and <code>ListBucket</code> operations when determining job inputs for tasks.</p>
+<pre><code class="language-json">{
+    &quot;Version&quot;: &quot;2012-10-17&quot;,
+    &quot;Statement&quot;: [
+        {
+            &quot;Sid&quot;: &quot;CromwellServer-S3Policy&quot;,
+            &quot;Effect&quot;: &quot;Allow&quot;,
+            &quot;Action&quot;: &quot;s3:*&quot;,
+            &quot;Resource&quot;: [
+                &quot;arn:aws:s3:::&lt;bucket-name&gt;&quot;,
+                &quot;arn:aws:s3:::&lt;bucket-name&gt;/*&quot;,
+            ]
+        }
+    ]
+}
+</code></pre>
+<h4 id="configuring-cromwell-to-use-aws-batch">Configuring Cromwell to use AWS Batch</h4>
+<p>The following is an example <code>*.conf</code> file to use the <code>AWSBackend</code>.</p>
+<pre><code class="language-java">// cromwell.conf
+include required(classpath(&quot;application&quot;))
+
+webservice {
+  interface = localhost
+  port = 8000
+}
+
+aws {
+  application-name = &quot;cromwell&quot;
+  auths = [{
+      name = &quot;default&quot;
+      scheme = &quot;default&quot;
+  }]
+  region = &quot;&lt;your-region&gt;&quot;
+}
+
+database {
+  profile = &quot;slick.jdbc.MySQLProfile$&quot;
+  db {
+    driver = &quot;com.mysql.cj.jdbc.Driver&quot;
+    url = &quot;&lt;db-url&gt;&quot;
+    user = &quot;cromwell&quot;
+    password = &quot;&lt;cromwell_password&gt;&quot;
+    connectionTimeout = 5000
+  }
+}
+
+call-caching {
+  enabled = true
+  invalidate-bad-cache-results = true
+}
+
+engine { filesystems { s3 { auth = &quot;default&quot; } } }
+
+backend {
+  default = &quot;AWSBATCH&quot;
+  providers {
+    AWSBATCH {
+      actor-factory = &quot;cromwell.backend.impl.aws.AwsBatchBackendLifecycleActorFactory&quot;
+      config {
+        numSubmitAttempts = 10
+        numCreateDefinitionAttempts = 10
+        root = &quot;s3://&lt;your-s3-bucket-name&gt;&quot;
+        auth = &quot;default&quot;
+        default-runtime-attributes { queueArn = &quot;&lt;your-queue-arn&gt;&quot; , scriptBucketName = &quot;&lt;your-bucket-name&gt;&quot; }
+        filesystems {
+          s3 {
+            auth = &quot;default&quot;
+            duplication-strategy: [
+              &quot;hard-link&quot;, &quot;soft-link&quot;, &quot;copy&quot;
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>The above file uses the <a href="https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html">default credential provider chain</a> for authorization.</p>
+<p>Replace the following with values appropriate for your account and workload:</p>
+<ul>
+<li><code>&lt;your region&gt;</code> : the AWS region your S3 bucket and AWS Batch environment are
+  deployed into - e.g. <code>us-east-1</code></li>
+<li><code>&lt;db-url&gt;</code> : the JDBC url of the Cromwell metadata database</li>
+<li><code>&lt;cromwell-password&gt;</code> : the password of the <code>cromwell</code> user in the metadata database.
+This value can also be supplied as a Java command line variable.</li>
+<li><code>&lt;your-s3-bucket-name&gt;</code> : the name of the S3 bucket you will use for inputs
+  and outputs from tasks in the workflow.</li>
+<li><code>&lt;your-queue-arn&gt;</code> : the Amazon Resource Name of the AWS Batch queue you want
+  to use for your tasks.</li>
+</ul>
+<h3 id="accessing-the-cromwell-server">Accessing the Cromwell server</h3>
+<p>The Cromwell EC2 instance may be accessed using the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/session-manager.html">AWS Session Manager</a> via console or in the terminal with the command <code>aws ssm start-session --target &lt;instance-id&gt;</code>.</p>
+<p>Please note that by default this will log you in as user <code>ec2-user</code> in the directory <code>/usr/bin</code>. You may prefer to become the ec2-user with the command <code>sudo su - ec2-user</code> which will switch you to that user's home directory.</p>
+<h3 id="stop-start-restart-the-cromwell-service">Stop / Start / Restart the Cromwell service</h3>
+<p>The CloudFormation template above installs Cromwell as a service under the control of <code>supervisorctl</code>. If you need to make changes to the <code>cromwell.conf</code> file you will want to restart the service so that configuration changes are included.</p>
+<pre><code class="language-bash">supervisorctl restart cromwell-server
+</code></pre>
+<p><code>supervisorctl start</code> and <code>supervisorctl stop</code> are also supported.</p>
+<h2 id="running-a-workflow">Running a workflow</h2>
+<p>To submit a workflow to your Cromwell server, you can use any of the following:</p>
+<ul>
+<li>Cromwell's SwaggerUI in a web-browser</li>
+<li>a REST client like <a href="https://insomnia.rest/">Insomnia</a> or <a href="https://www.getpostman.com/">Postman</a></li>
+<li>the command line with <code>curl</code> for example:</li>
+</ul>
+<pre><code class="language-bash">curl -X POST &quot;http://localhost:8000/api/workflows/v1&quot; \
+    -H  &quot;accept: application/json&quot; \
+    -F &quot;workflowSource=@workflow.wdl&quot; \
+    -F &quot;workflowInputs=@inputs.json&quot; \
+    -F &quot;workflowOptions=@options.json&quot;
+</code></pre>
+<h3 id="workflow-logs">Workflow logs</h3>
+<p>After submitting a workflow, you can monitor the progress of tasks via the
+AWS Batch console. Cromwell server logs are captured in the <code>cromwell_server</code>
+log group and the logs of the AWS Batch jobs that run each task in the workflow
+can be found in the <code>/aws/batch/jobs</code> CloudWatch log group.</p>
+<p>The next section provides some examples of running Crommwell on AWS.</p>
+<h2 id="cost-optimizing-workflows">Cost optimizing workflows</h2>
+<p><a href="../cost-effective-workflows/cost-effective-workflows.html">Optimizing</a> the allocation of resources to your workflows can help you to reduce costs</p>
+                
+                  
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../step-functions/step-functions-overview.html" title="Overview" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Overview
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="cromwell-examples.html" title="Examples" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Examples
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            2019 Amazon Web Services
+          </div>
+        
+        powered by
+        <a href="https://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+        
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../assets/javascripts/application.9e1f3b71.js"></script>
+      
+      <script>app.initialize({version:"1.3.0",url:{base:"../.."}})</script>
+      
+    
+    
+      
+    
+  </body>
+</html>

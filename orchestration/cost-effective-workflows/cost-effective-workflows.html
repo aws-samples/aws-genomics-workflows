@@ -1,0 +1,916 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+      
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-3.1.0">
+    
+    
+      
+        <title>Cost Effective Workflows - Genomics Workflows on AWS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/application.11e41852.css">
+      
+        <link rel="stylesheet" href="../../assets/stylesheets/application-palette.22915126.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#546e7a">
+      
+    
+    
+      <script src="../../assets/javascripts/modernizr.20ef595d.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="../../assets/fonts/material-icons.css">
+    
+    
+      <link rel="stylesheet" href="../../extra.css">
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448"
+    viewBox="0 0 416 448" id="__github">
+  <path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19-18.125
+        8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19 18.125-8.5
+        18.125 8.5 10.75 19 3.125 20.5zM320 304q0 10-3.125 20.5t-10.75
+        19-18.125 8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19
+        18.125-8.5 18.125 8.5 10.75 19 3.125 20.5zM360
+        304q0-30-17.25-51t-46.75-21q-10.25 0-48.75 5.25-17.75 2.75-39.25
+        2.75t-39.25-2.75q-38-5.25-48.75-5.25-29.5 0-46.75 21t-17.25 51q0 22 8
+        38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0
+        37.25-1.75t35-7.375 30.5-15 20.25-25.75 8-38.375zM416 260q0 51.75-15.25
+        82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5-41.75
+        1.125q-19.5 0-35.5-0.75t-36.875-3.125-38.125-7.5-34.25-12.875-30.25-20.25-21.5-28.75q-15.5-30.75-15.5-82.75
+        0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25
+        30.875q36.75-8.75 77.25-8.75 37 0 70 8 26.25-20.5
+        46.75-30.25t47.25-9.75q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34
+        99.5z" />
+</svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#optimizing-aws-batch-resources-for-cost-effective-genomics-workflows" tabindex="1" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="../../index.html" title="Genomics Workflows on AWS" class="md-header-nav__button md-logo">
+          
+            <img src="../../images/AWS_logo_RGB_REV.svg" width="24" height="24">
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            
+              <span class="md-header-nav__topic">
+                Genomics Workflows on AWS
+              </span>
+              <span class="md-header-nav__topic">
+                Cost Effective Workflows
+              </span>
+            
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          
+            <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+            
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+          
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/aws-samples/aws-genomics-workflows/" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#__github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      Contribute
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="../../index.html" title="Genomics Workflows on AWS" class="md-nav__button md-logo">
+      
+        <img src="../../images/AWS_logo_RGB_REV.svg" width="48" height="48">
+      
+    </a>
+    Genomics Workflows on AWS
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/aws-samples/aws-genomics-workflows/" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#__github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      Contribute
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../index.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../disclaimer.html" title="Disclaimer" class="md-nav__link">
+      Disclaimer
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../quick-start.html" title="Quick Start" class="md-nav__link">
+      Quick Start
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      Core Environment
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Core Environment
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../core-env/introduction.html" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../core-env/create-s3-bucket.html" title="Data Storage" class="md-nav__link">
+      Data Storage
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../core-env/create-iam-roles.html" title="Permissions" class="md-nav__link">
+      Permissions
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../core-env/create-custom-compute-resources.html" title="Compute Resources" class="md-nav__link">
+      Compute Resources
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../core-env/setup-aws-batch.html" title="AWS Batch" class="md-nav__link">
+      AWS Batch
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../core-env/custom-deploy.html" title="Customized Deployment" class="md-nav__link">
+      Customized Deployment
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../core-env/build-custom-distribution.html" title="Building a Custom Distribution" class="md-nav__link">
+      Building a Custom Distribution
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5" checked>
+    
+    <label class="md-nav__link" for="nav-5">
+      Workflow Orchestration
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        Workflow Orchestration
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration-intro.html" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-2" type="checkbox" id="nav-5-2">
+    
+    <label class="md-nav__link" for="nav-5-2">
+      AWS Step Functions
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-2">
+        AWS Step Functions
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../step-functions/step-functions-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-3" type="checkbox" id="nav-5-3">
+    
+    <label class="md-nav__link" for="nav-5-3">
+      Cromwell
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-3">
+        Cromwell
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../cromwell/cromwell-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../cromwell/cromwell-examples.html" title="Examples" class="md-nav__link">
+      Examples
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../cromwell/cromwell-trouble-shooting.html" title="Trouble Shooting" class="md-nav__link">
+      Trouble Shooting
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-4" type="checkbox" id="nav-5-4">
+    
+    <label class="md-nav__link" for="nav-5-4">
+      Nextflow
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-4">
+        Nextflow
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../nextflow/nextflow-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../nextflow/nextflow-trouble-shooting.html" title="Trouble Shooting" class="md-nav__link">
+      Trouble Shooting
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Cost Effective Workflows
+      </label>
+    
+    <a href="cost-effective-workflows.html" title="Cost Effective Workflows" class="md-nav__link md-nav__link--active">
+      Cost Effective Workflows
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#optimize-the-longest-running-and-most-parallel-tasks-first" title="Optimize the longest running, and most parallel tasks first" class="md-nav__link">
+    Optimize the longest running, and most parallel tasks first
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enable-cloudwatch-container-insights" title="Enable CloudWatch Container Insights" class="md-nav__link">
+    Enable CloudWatch Container Insights
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-container-insights" title="Using Container Insights" class="md-nav__link">
+    Using Container Insights
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#correlating-tasks-with-metrics" title="Correlating tasks with metrics" class="md-nav__link">
+    Correlating tasks with metrics
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consider-cpu-and-memory-ratios" title="Consider CPU and memory ratios" class="md-nav__link">
+    Consider CPU and memory ratios
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#split-tasks-that-pipe-output" title="Split tasks that pipe output" class="md-nav__link">
+    Split tasks that pipe output
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#use-the-most-cost-effective-instance-generation" title="Use the most cost effective instance generation" class="md-nav__link">
+    Use the most cost effective instance generation
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#optimize-the-longest-running-and-most-parallel-tasks-first" title="Optimize the longest running, and most parallel tasks first" class="md-nav__link">
+    Optimize the longest running, and most parallel tasks first
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enable-cloudwatch-container-insights" title="Enable CloudWatch Container Insights" class="md-nav__link">
+    Enable CloudWatch Container Insights
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-container-insights" title="Using Container Insights" class="md-nav__link">
+    Using Container Insights
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#correlating-tasks-with-metrics" title="Correlating tasks with metrics" class="md-nav__link">
+    Correlating tasks with metrics
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consider-cpu-and-memory-ratios" title="Consider CPU and memory ratios" class="md-nav__link">
+    Consider CPU and memory ratios
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#split-tasks-that-pipe-output" title="Split tasks that pipe output" class="md-nav__link">
+    Split tasks that pipe output
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#use-the-most-cost-effective-instance-generation" title="Use the most cost effective instance generation" class="md-nav__link">
+    Use the most cost effective instance generation
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/aws-samples/aws-genomics-workflows/edit/master/docs/orchestration/cost-effective-workflows/cost-effective-workflows.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                <h1 id="optimizing-aws-batch-resources-for-cost-effective-genomics-workflows">Optimizing AWS Batch Resources for Cost Effective Genomics Workflows</h1>
+<p>Tasks in a workflow run in Docker containers. Each task contains a <code>runtime</code> definition that specifies the 
+number of CPUs and amount of RAM allocated to the task. </p>
+<pre><code>  runtime {
+    docker: &quot;biocontainers/plink1.9:v1.90b6.6-181012-1-deb_cv1&quot;
+    memory: &quot;8 GB&quot;
+    cpu: 2
+  }
+</code></pre>
+<p>The amount of resource allocated to each container ultimately impacts the cost to run a workflow. Optimally allocating 
+resources leads to cost efficiency. The following suggestions can help to “right size” your workflow.</p>
+<h2 id="optimize-the-longest-running-and-most-parallel-tasks-first">Optimize the longest running, and most parallel tasks first</h2>
+<p>With AWS Batch you pay for what you use, so it makes most sense to focus on those tasks that run the longest as well as those 
+that have the largest scatters (parallel tasks) as they will make up the majority of the workflow runtime and contribute
+ most to the cost.</p>
+<h2 id="enable-cloudwatch-container-insights">Enable CloudWatch Container Insights</h2>
+<p>CloudWatch container insights provides detailed monitoring of ECS clusters as well as containers running on those 
+clusters. AWS Batch compute environments are managed ECS clusters, enabling container insights on those 
+clusters will show how the cluster utilization during a workflow run. Currently, cluster insights can be enabled 
+using the AWS CLI. To do this we need the name of the ECS cluster that is managed by the AWS Batch Compute Environment.</p>
+<ol>
+<li>
+<p>From the AWS Batch console, identify the Batch Compute Environment(s) of interest</p>
+<p><img alt="ScreenShot1" src="images/ScreenShot1.png" />
+1. Click on the link of the environment and note the ECS Cluster Name</p>
+<p><img alt="ScreenShot2" src="images/ScreenShot1a.png" />
+1. Enable cluster insights with the following command</p>
+</li>
+</ol>
+<p><code>aws ecs update-cluster-settings --cluster **ECS-CLUSTER-NAME** --settings name=containerInsights,value=enabled</code></p>
+<h3 id="using-container-insights">Using Container Insights</h3>
+<p>With Container Insights enabled metrics can be viewed in the CloudWatch console and used to determine if resources are 
+under or over allocated.</p>
+<ol>
+<li>
+<p>From the side bar of the CloudWatch console click <strong>Container Insights</strong> and <strong>View Performance Dashboards</strong></p>
+<p><img alt="ScreenShot3" src="images/ScreenShot2.png" /></p>
+</li>
+<li>
+<p>From the dropdown select <strong>ECS Clusters</strong> to view the Cluster utilization. Select a time range corresponding to a 
+Cromwell Workflow run.</p>
+<p><img alt="Screen Shot3" src="images/ScreenShot3.png" /></p>
+<p>Using the <strong>ECS Clusters</strong> Dashboard we can see the utilization of each EC2 worker in the cluster. The CPU 
+utilization averages about 50% suggesting that the containers may not be efficiently packed (see below for tips on
+ packing), the containers have too much CPU allocated or both. The memory utilization is very low so memory 
+ is over allocated. Container instance count shows the average number of EC2 workers hosting containers, 
+ and the task count is the number of tasks running in containers at that time.</p>
+<p><img alt="Cluster Dashboard" src="images/ClusterDashboard.png" /></p>
+</li>
+<li>
+<p>From the dropdown select <strong>ECS Tasks</strong> to view the container utilization. Select a time range corresponding to a 
+Cromwell Workflow run.</p>
+<p>Using the <strong>ECS Tasks</strong> Dashboard we can gain insight into the average activity within the containers during 
+the workflow. In this case we again see that memory is over allocated and CPU could potentially be reduced.</p>
+<p><img alt="Tasks Dashboard" src="images/TaskDashboard.png" /></p>
+</li>
+</ol>
+<h3 id="correlating-tasks-with-metrics">Correlating tasks with metrics</h3>
+<p>To most effectively use CloudWatch Container Insight metrics it is important to know the time at which each workflow
+task started and finished. You can get this information from the Metadata API of your Cromwell server. The following 
+will return the metadata of the workflow run as a JSON object. </p>
+<pre><code>curl -k -X GET &quot;https://my-cromwell-server/api/workflows/v1/WORKFLOW-ID/metadata&quot;
+</code></pre>
+<h2 id="consider-cpu-and-memory-ratios">Consider CPU and memory ratios</h2>
+<p>EC2 workers for Cromwell AWS Batch compute environments are <code>c</code>, <code>m</code>, and <code>r</code> instance families that
+have vCPU to memory ratios of 1:2, 1:4 and 1:8 respectively. AWS Batch will attempt to fit containers to instances in 
+the most optimal way depending on cost and size requirements. Given that a task requiring 16GB of RAM that could make 
+use of all available CPUs, then to optimally pack the containers you should specify either 2, 4, or 8 vCPU. Other 
+values could lead to inefficient packing meaning the resources of the EC2 container instance will be paid for but 
+not optimally used.</p>
+<p>NOTE: Fully packing an instance can result in it becoming unresponsive if the tasks in the containers use 100% 
+(or more if they start swapping) of the allocated resources. The instance may then be unresponsive to Batch and may 
+time out. To avoid this, always allow for a little overhead.</p>
+<h2 id="split-tasks-that-pipe-output">Split tasks that pipe output</h2>
+<p>If a workflow task consists of a process that pipes STDOUT to another process then both processes will run in the same 
+container and receive the same resources. If one task requires more resources than the other this might be inefficient 
+and  might be better divided into two tasks each with its own <code>runtime</code> configuration. Note that this will require the 
+intermediate STDOUT to be written to a file and copied between containers so if this output is very large then keeping 
+the processes in the same task may be more efficient. Finally, piping very large outputs requires a lot of memory so
+your container will need an appropriate allocation of memory. </p>
+<h2 id="use-the-most-cost-effective-instance-generation">Use the most cost effective instance generation</h2>
+<p>Fifth generation EC2 types (<code>c5</code>, <code>m5</code>, <code>r5</code>) have a lower on demand price and have higher clock speeds than their 4th 
+generation counterparts (<code>c4</code>, <code>m4</code>, <code>r4</code>). Therefore, for on demand compute environments those instance types should be 
+preferred. In spot compute environments we suggest using both 4th and 5th generation types as this increases the pool of
+available types meaning Batch will be able to choose the instance type that is cheapest and least likely to be 
+interrupted. In addition, using all available availability zones for a AWS Batch compute environment will also give 
+AWS Batch a wider selection of Spot instances to choose from.</p>
+                
+                  
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../nextflow/nextflow-trouble-shooting.html" title="Trouble Shooting" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Trouble Shooting
+              </span>
+            </div>
+          </a>
+        
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            2019 Amazon Web Services
+          </div>
+        
+        powered by
+        <a href="https://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+        
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../assets/javascripts/application.9e1f3b71.js"></script>
+      
+      <script>app.initialize({version:"1.3.0",url:{base:"../.."}})</script>
+      
+    
+    
+      
+    
+  </body>
+</html>

@@ -1,0 +1,894 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+      
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-3.1.0">
+    
+    
+      
+        <title>Customized Deployment - Genomics Workflows on AWS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/application.11e41852.css">
+      
+        <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#546e7a">
+      
+    
+    
+      <script src="../assets/javascripts/modernizr.20ef595d.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="../assets/fonts/material-icons.css">
+    
+    
+      <link rel="stylesheet" href="../extra.css">
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448"
+    viewBox="0 0 416 448" id="__github">
+  <path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19-18.125
+        8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19 18.125-8.5
+        18.125 8.5 10.75 19 3.125 20.5zM320 304q0 10-3.125 20.5t-10.75
+        19-18.125 8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19
+        18.125-8.5 18.125 8.5 10.75 19 3.125 20.5zM360
+        304q0-30-17.25-51t-46.75-21q-10.25 0-48.75 5.25-17.75 2.75-39.25
+        2.75t-39.25-2.75q-38-5.25-48.75-5.25-29.5 0-46.75 21t-17.25 51q0 22 8
+        38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0
+        37.25-1.75t35-7.375 30.5-15 20.25-25.75 8-38.375zM416 260q0 51.75-15.25
+        82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5-41.75
+        1.125q-19.5 0-35.5-0.75t-36.875-3.125-38.125-7.5-34.25-12.875-30.25-20.25-21.5-28.75q-15.5-30.75-15.5-82.75
+        0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25
+        30.875q36.75-8.75 77.25-8.75 37 0 70 8 26.25-20.5
+        46.75-30.25t47.25-9.75q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34
+        99.5z" />
+</svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#customized-deployment" tabindex="1" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="../index.html" title="Genomics Workflows on AWS" class="md-header-nav__button md-logo">
+          
+            <img src="../images/AWS_logo_RGB_REV.svg" width="24" height="24">
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            
+              <span class="md-header-nav__topic">
+                Genomics Workflows on AWS
+              </span>
+              <span class="md-header-nav__topic">
+                Customized Deployment
+              </span>
+            
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          
+            <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+            
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+          
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/aws-samples/aws-genomics-workflows/" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#__github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      Contribute
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="../index.html" title="Genomics Workflows on AWS" class="md-nav__button md-logo">
+      
+        <img src="../images/AWS_logo_RGB_REV.svg" width="48" height="48">
+      
+    </a>
+    Genomics Workflows on AWS
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/aws-samples/aws-genomics-workflows/" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#__github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      Contribute
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../index.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../disclaimer.html" title="Disclaimer" class="md-nav__link">
+      Disclaimer
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../quick-start.html" title="Quick Start" class="md-nav__link">
+      Quick Start
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
+    
+    <label class="md-nav__link" for="nav-4">
+      Core Environment
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Core Environment
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="introduction.html" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="create-s3-bucket.html" title="Data Storage" class="md-nav__link">
+      Data Storage
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="create-iam-roles.html" title="Permissions" class="md-nav__link">
+      Permissions
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="create-custom-compute-resources.html" title="Compute Resources" class="md-nav__link">
+      Compute Resources
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="setup-aws-batch.html" title="AWS Batch" class="md-nav__link">
+      AWS Batch
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Customized Deployment
+      </label>
+    
+    <a href="custom-deploy.html" title="Customized Deployment" class="md-nav__link md-nav__link--active">
+      Customized Deployment
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#vpc" title="VPC" class="md-nav__link">
+    VPC
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#genomics-workflow-core" title="Genomics Workflow Core" class="md-nav__link">
+    Genomics Workflow Core
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#root-stack" title="Root Stack" class="md-nav__link">
+    Root Stack
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#artifacts-and-nested-stacks" title="Artifacts and Nested Stacks" class="md-nav__link">
+    Artifacts and Nested Stacks
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-orchestrators" title="Workflow Orchestrators" class="md-nav__link">
+    Workflow Orchestrators
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nextflow" title="Nextflow" class="md-nav__link">
+    Nextflow
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="build-custom-distribution.html" title="Building a Custom Distribution" class="md-nav__link">
+      Building a Custom Distribution
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+    
+    <label class="md-nav__link" for="nav-5">
+      Workflow Orchestration
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        Workflow Orchestration
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/orchestration-intro.html" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-2" type="checkbox" id="nav-5-2">
+    
+    <label class="md-nav__link" for="nav-5-2">
+      AWS Step Functions
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-2">
+        AWS Step Functions
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/step-functions/step-functions-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-3" type="checkbox" id="nav-5-3">
+    
+    <label class="md-nav__link" for="nav-5-3">
+      Cromwell
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-3">
+        Cromwell
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/cromwell/cromwell-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/cromwell/cromwell-examples.html" title="Examples" class="md-nav__link">
+      Examples
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/cromwell/cromwell-trouble-shooting.html" title="Trouble Shooting" class="md-nav__link">
+      Trouble Shooting
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-4" type="checkbox" id="nav-5-4">
+    
+    <label class="md-nav__link" for="nav-5-4">
+      Nextflow
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-4">
+        Nextflow
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/nextflow/nextflow-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/nextflow/nextflow-trouble-shooting.html" title="Trouble Shooting" class="md-nav__link">
+      Trouble Shooting
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/cost-effective-workflows/cost-effective-workflows.html" title="Cost Effective Workflows" class="md-nav__link">
+      Cost Effective Workflows
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#vpc" title="VPC" class="md-nav__link">
+    VPC
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#genomics-workflow-core" title="Genomics Workflow Core" class="md-nav__link">
+    Genomics Workflow Core
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#root-stack" title="Root Stack" class="md-nav__link">
+    Root Stack
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#artifacts-and-nested-stacks" title="Artifacts and Nested Stacks" class="md-nav__link">
+    Artifacts and Nested Stacks
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-orchestrators" title="Workflow Orchestrators" class="md-nav__link">
+    Workflow Orchestrators
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nextflow" title="Nextflow" class="md-nav__link">
+    Nextflow
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/aws-samples/aws-genomics-workflows/edit/master/docs/core-env/custom-deploy.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                <h1 id="customized-deployment">Customized Deployment</h1>
+<p>Deployments of the 'Nextflow on AWS Batch' solution are based on nested CloudFormation templates, and on artifacts comprising scripts, software packages, and configuration files.  The templates and artifacts are stored in S3 buckets, and their S3 URLs are used when launching the top-level template and as parameters to that template's deployment.  </p>
+<h2 id="vpc">VPC</h2>
+<p>The quick start link deploys the <a href="https://aws.amazon.com/quickstart/architecture/vpc/">AWS VPC Quickstart</a>, which creates a VPC with up to 4 Availability Zones, each with a public subnet and a private subnet with NAT Gateway access to the Internet.</p>
+<h2 id="genomics-workflow-core">Genomics Workflow Core</h2>
+<p>This quick start link deploys the CloudFormation template <code>gwfcore-root.template.yaml</code> for the Genomics Workflow Core (GWFCore) from the <a href="https://github.com/aws-samples/aws-genomics-workflows">Genomics Workflows on AWS</a> solution.  This template launches a number of nested templates, as shown below:</p>
+<ul>
+<li>Root Stack <strong>gwfcore-root</strong> - Top level template for Genomics Workflow Core<ul>
+<li>S3 Stack <strong>gwfcore-s3</strong> - S3 bucket (new or existing) for storing analysis results</li>
+<li>IAM Stack <strong>gwfcore-iam</strong> - Creates IAM roles to use with AWS Batch scalable genomics workflow environment</li>
+<li>Code Stack <strong>gwfcore-code</strong> - Creates AWS CodeCommit repos and CodeBuild projects for Genomics Workflows Core assets and artifacts</li>
+<li>Launch Template Stack <strong>gwfcore-launch-template</strong> - Creates an EC2 Launch Template for AWS Batch based genomics workflows</li>
+<li>Batch Stack <strong>gwfcore-batch</strong> - Deploys resource for a AWS Batch environment that is suitable for genomics, including default and high-priority JobQueues</li>
+</ul>
+</li>
+</ul>
+<h3 id="root-stack">Root Stack</h3>
+<p>The quick start solution links to the CloudFormation console, where the 'Amazon S3 URL' field is prefilled with the S3 URL of a copy of the root stack template, hosted in the public S3 bucket <strong>aws-genomics-workflows</strong>.</p>
+<p><img src="https://dpkk088kye7gn.cloudfront.net/aws-genomics-workflows/docs/images/custom-deploy-0.png"
+     alt="custom-deploy-0"
+     width="100%" height="100%"
+     class="screenshot" /></p>
+<p>To use a customized root stack, upload your modified stack template to an S3 bucket (see <a href="build-custom-distribution.html">Building a Custom Distribution</a>), and specify that template's URL in 'Amazon S3 URL'.</p>
+<h3 id="artifacts-and-nested-stacks">Artifacts and Nested Stacks</h3>
+<p>The subsequent screen, 'Specify Stack Details', allows for customization of the deployed resources in the 'Distribution Configuration' section.</p>
+<p><img src="https://dpkk088kye7gn.cloudfront.net/aws-genomics-workflows/docs/images/custom-deploy-1.png"
+     alt="custom-deploy-1"
+     width="70%" height="70%"
+     class="screenshot" /></p>
+<ul>
+<li><strong>Artifact S3 Bucket Name</strong> and <strong>Artifact S3 Prefix</strong> define the location of the artifacts uploaded prior to this deployment.  By default, pre-prepared artifacts are stored in the <strong>aws-genomics-workflows</strong> bucket.  </li>
+<li><strong>Template Root URL</strong> defines the bucket and prefix used to store nested templates, called by the root template.  </li>
+</ul>
+<p>To use your own modified artifacts or nested templates, build and upload as described in <a href="build-custom-distribution.html">Building a Custom Distribution</a>, and specify the  bucket and prefix in the fields above.</p>
+<h2 id="workflow-orchestrators">Workflow Orchestrators</h2>
+<h3 id="nextflow">Nextflow</h3>
+<p>This quick start deploys the Nextflow template <code>nextflow-resources.template.yaml</code>, which launches one nested stack:</p>
+<ul>
+<li>Root Stack <strong>nextflow-resources</strong> - Creates resources specific to running Nextflow on AWS<ul>
+<li>Container Build Stack <strong>container-build</strong> - Creates resources for building a Docker container image using CodeBuild, storing the image in ECR, and optionally creating a corresponding Batch Job Definition</li>
+</ul>
+</li>
+</ul>
+<p>The nextflow root stack is specified in the same way as the GWFCore root stack, above, and a location for a modified root stack may be specified as with the Core stack.</p>
+<p>The subsequent 'Specify Stack Details' screen has fields allowing the customization of the Nextflow deployment.</p>
+<p><img src="https://dpkk088kye7gn.cloudfront.net/aws-genomics-workflows/docs/images/nextflow-0.png"
+     alt="nextflow-0"
+     width="70%" height="70%"
+     class="screenshot" /></p>
+<ul>
+<li><strong>S3NextflowPrefix</strong>, <strong>S3LogsDirPrefix</strong>, and <strong>S3WorkDirPrefix</strong> specify the path within the GWFCore bucket in which to store per-run data and log files.</li>
+<li><strong>TemplateRootUrl</strong> specifies the path to the nested templates called by the Nextflow root template, as with the GWFCore root stack.</li>
+</ul>
+                
+                  
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="setup-aws-batch.html" title="AWS Batch" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                AWS Batch
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="build-custom-distribution.html" title="Building a Custom Distribution" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Building a Custom Distribution
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            2019 Amazon Web Services
+          </div>
+        
+        powered by
+        <a href="https://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+        
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../assets/javascripts/application.9e1f3b71.js"></script>
+      
+      <script>app.initialize({version:"1.3.0",url:{base:".."}})</script>
+      
+    
+    
+      
+    
+  </body>
+</html>

@@ -1,0 +1,1020 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+      
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-3.1.0">
+    
+    
+      
+        <title>Compute Resources - Genomics Workflows on AWS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/application.11e41852.css">
+      
+        <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#546e7a">
+      
+    
+    
+      <script src="../assets/javascripts/modernizr.20ef595d.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="../assets/fonts/material-icons.css">
+    
+    
+      <link rel="stylesheet" href="../extra.css">
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448"
+    viewBox="0 0 416 448" id="__github">
+  <path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19-18.125
+        8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19 18.125-8.5
+        18.125 8.5 10.75 19 3.125 20.5zM320 304q0 10-3.125 20.5t-10.75
+        19-18.125 8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19
+        18.125-8.5 18.125 8.5 10.75 19 3.125 20.5zM360
+        304q0-30-17.25-51t-46.75-21q-10.25 0-48.75 5.25-17.75 2.75-39.25
+        2.75t-39.25-2.75q-38-5.25-48.75-5.25-29.5 0-46.75 21t-17.25 51q0 22 8
+        38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0
+        37.25-1.75t35-7.375 30.5-15 20.25-25.75 8-38.375zM416 260q0 51.75-15.25
+        82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5-41.75
+        1.125q-19.5 0-35.5-0.75t-36.875-3.125-38.125-7.5-34.25-12.875-30.25-20.25-21.5-28.75q-15.5-30.75-15.5-82.75
+        0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25
+        30.875q36.75-8.75 77.25-8.75 37 0 70 8 26.25-20.5
+        46.75-30.25t47.25-9.75q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34
+        99.5z" />
+</svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#core-custom-compute-resources" tabindex="1" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="../index.html" title="Genomics Workflows on AWS" class="md-header-nav__button md-logo">
+          
+            <img src="../images/AWS_logo_RGB_REV.svg" width="24" height="24">
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            
+              <span class="md-header-nav__topic">
+                Genomics Workflows on AWS
+              </span>
+              <span class="md-header-nav__topic">
+                Compute Resources
+              </span>
+            
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          
+            <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+            
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+          
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/aws-samples/aws-genomics-workflows/" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#__github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      Contribute
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="../index.html" title="Genomics Workflows on AWS" class="md-nav__button md-logo">
+      
+        <img src="../images/AWS_logo_RGB_REV.svg" width="48" height="48">
+      
+    </a>
+    Genomics Workflows on AWS
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/aws-samples/aws-genomics-workflows/" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#__github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      Contribute
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../index.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../disclaimer.html" title="Disclaimer" class="md-nav__link">
+      Disclaimer
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../quick-start.html" title="Quick Start" class="md-nav__link">
+      Quick Start
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
+    
+    <label class="md-nav__link" for="nav-4">
+      Core Environment
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Core Environment
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="introduction.html" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="create-s3-bucket.html" title="Data Storage" class="md-nav__link">
+      Data Storage
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="create-iam-roles.html" title="Permissions" class="md-nav__link">
+      Permissions
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Compute Resources
+      </label>
+    
+    <a href="create-custom-compute-resources.html" title="Compute Resources" class="md-nav__link md-nav__link--active">
+      Compute Resources
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ec2-launch-template" title="EC2 Launch Template" class="md-nav__link">
+    EC2 Launch Template
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flexible-provisioning" title="Flexible provisioning" class="md-nav__link">
+    Flexible provisioning
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-an-ec2-launch-template" title="Creating an EC2 Launch Template" class="md-nav__link">
+    Creating an EC2 Launch Template
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#automated-via-cloudformation" title="Automated via CloudFormation" class="md-nav__link">
+    Automated via CloudFormation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manually-via-the-aws-console" title="Manually via the AWS Console" class="md-nav__link">
+    Manually via the AWS Console
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-amis" title="Custom AMIs" class="md-nav__link">
+    Custom AMIs
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="setup-aws-batch.html" title="AWS Batch" class="md-nav__link">
+      AWS Batch
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="custom-deploy.html" title="Customized Deployment" class="md-nav__link">
+      Customized Deployment
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="build-custom-distribution.html" title="Building a Custom Distribution" class="md-nav__link">
+      Building a Custom Distribution
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+    
+    <label class="md-nav__link" for="nav-5">
+      Workflow Orchestration
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        Workflow Orchestration
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/orchestration-intro.html" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-2" type="checkbox" id="nav-5-2">
+    
+    <label class="md-nav__link" for="nav-5-2">
+      AWS Step Functions
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-2">
+        AWS Step Functions
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/step-functions/step-functions-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-3" type="checkbox" id="nav-5-3">
+    
+    <label class="md-nav__link" for="nav-5-3">
+      Cromwell
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-3">
+        Cromwell
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/cromwell/cromwell-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/cromwell/cromwell-examples.html" title="Examples" class="md-nav__link">
+      Examples
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/cromwell/cromwell-trouble-shooting.html" title="Trouble Shooting" class="md-nav__link">
+      Trouble Shooting
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-4" type="checkbox" id="nav-5-4">
+    
+    <label class="md-nav__link" for="nav-5-4">
+      Nextflow
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-4">
+        Nextflow
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/nextflow/nextflow-overview.html" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/nextflow/nextflow-trouble-shooting.html" title="Trouble Shooting" class="md-nav__link">
+      Trouble Shooting
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../orchestration/cost-effective-workflows/cost-effective-workflows.html" title="Cost Effective Workflows" class="md-nav__link">
+      Cost Effective Workflows
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ec2-launch-template" title="EC2 Launch Template" class="md-nav__link">
+    EC2 Launch Template
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flexible-provisioning" title="Flexible provisioning" class="md-nav__link">
+    Flexible provisioning
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-an-ec2-launch-template" title="Creating an EC2 Launch Template" class="md-nav__link">
+    Creating an EC2 Launch Template
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#automated-via-cloudformation" title="Automated via CloudFormation" class="md-nav__link">
+    Automated via CloudFormation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manually-via-the-aws-console" title="Manually via the AWS Console" class="md-nav__link">
+    Manually via the AWS Console
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-amis" title="Custom AMIs" class="md-nav__link">
+    Custom AMIs
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/aws-samples/aws-genomics-workflows/edit/master/docs/core-env/create-custom-compute-resources.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                <h1 id="core-custom-compute-resources">Core: Custom Compute Resources</h1>
+<p>Genomics is a data-heavy workload and requires some modification to the defaults
+used by AWS Batch for job processing.  To efficiently use resources, AWS Batch places multiple jobs on an worker instance.  The data requirements for individual jobs can range from a few MB to 100s of GB.  Instances running workflow jobs will not know beforehand how much space is required, and need scalable storage to meet unpredictable runtime demands.</p>
+<p>To handle this use case, we can use a process that monitors a mountpoint on an instance and expands free space as needed based on capacity thresholds. This can be done using logical volume management and attaching EBS volumes as needed to the instance like so:</p>
+<p><img alt="Autoscaling EBS storage" src="images/ebs-autoscale.png" /></p>
+<p>The above process - "EBS autoscaling" - requires a few small dependencies and a simple daemon installed on the host instance.</p>
+<p>By default, AWS Batch uses the <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html">Amazon ECS-Optimized AMI</a>
+to launch instances for running jobs.  This is sufficient in most cases, but specialized needs, such as the large storage requirements noted above, require customization of the base AMI.  Because the provisioning requirements for EBS autoscaling are fairly simple and light weight, one can use an EC2 Launch Template to customize instances.</p>
+<h2 id="ec2-launch-template">EC2 Launch Template</h2>
+<p>The simplest method for customizing an instance is to use an EC2 Launch Template.
+This works best if your customizations are relatively light - such as installing
+a few small utilities or making specific configuration changes.</p>
+<p>This is because Launch Templates run a <code>UserData</code> script when an instance first launches.
+The longer these scripts / customizations take to complete, the longer it will
+be before your instance is ready for work.</p>
+<p>Launch Templates are capable of pre-configuring a lot of EC2 instance options.
+Since this will be working with AWS Batch, which already does a lot of automatic
+instance configuration on its own, you only need to supply a <code>UserData</code>
+script like the one below:</p>
+<pre><code class="language-text">MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary=&quot;==BOUNDARY==&quot;
+
+--==BOUNDARY==
+Content-Type: text/cloud-config; charset=&quot;us-ascii&quot;
+
+packages:
+- jq
+- btrfs-progs
+- sed
+- wget
+- unzip
+# add more package names here if you need them
+
+runcmd:
+- curl -s &quot;https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip&quot; -o &quot;/tmp/awscliv2.zip&quot;
+- unzip -q /tmp/awscliv2.zip -d /tmp
+- /tmp/aws/install
+
+###
+# add provisioning commands here
+###
+
+--==BOUNDARY==--
+</code></pre>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>The MIME boundaries are required in the <code>UserData</code> script if the Launch Template is to be used with AWS Batch. See AWS Batch's <a href="https://docs.aws.amazon.com/batch/latest/userguide/launch-templates.html">Launch Template Support</a> documentation to learn more.</p>
+</div>
+<p>In the set of provisioning commands you can add steps that retrieve and install <a href="https://github.com/awslabs/amazon-ebs-autoscale">Amazon EBS Autoscale</a>. For example, this documentation comes with a tarball that is publicly hosted on S3, allowing you to run the following to provision your instances:</p>
+<pre><code class="language-bash">cd /opt &amp;&amp; wget https://aws-genomics-workflows.s3.amazonaws.com/artifacts/amazon-ebs-autoscale.tgz &amp;&amp; tar -xzf amazon-ebs-autoscale.tgz
+sh /opt/ebs-autoscale/install.sh
+</code></pre>
+<p>The above will install an <code>ebs-autoscale</code> daemon on an instance.  By default it will
+add a 100GB EBS volume to the logical volume mounted at <code>/scratch</code>.</p>
+<p>The mount point is specific to your use case, and <code>/scratch</code> is considered a generic default.  For instances launched by AWS Batch for running containerized jobs, a good option is to apply Amazon EBS Autoscaling to <code>/var/lib/docker</code> - the location where Docker stores container volumes and metadata and is the location that containers use for their filesystems. Making this auto-expand allows containers to pull in any amount of data they need.</p>
+<h2 id="flexible-provisioning">Flexible provisioning</h2>
+<p>Provisioning needs can change over time. For instance, updrades to existing software or swapping out tools altogether. While you could explicitly write all the commands you initially need in <code>UserData</code>, any future changes will require creating a new revision of the Launch Template and subsequently require rebuilding AWS Batch resources. For more flexibility, you can store your provisioning scripts on S3 and have the Launch Template retrieve and run them. This allows you to create a generic and relatively immutable Launch Template, and update provisioning steps by uploading new scripts to S3.</p>
+<p>You can automate this further using a Git repository like <a href="https://aws.amazon.com/codecommit/">AWS CodeCommit</a> to track versions of your provisioning scripts and use CI/CD pipelines with <a href="https://aws.amazon.com/codebuild/">AWS CodeBuild</a> and <a href="https://aws.amazon.com/codepipeline/">AWS CodePipeline</a> to deploy new releases to S3.</p>
+<p>All of the above can be create in an automated fashion with CloudFormation. Look at the source code for the template below to see how this is done.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th style="text-align: center;">Source</th>
+<th style="text-align: center;">Launch Stack</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Provisioning Code</td>
+<td>Creates and installs code and artifacts used to run subsequent templates and provision EC2 instances</td>
+<td style="text-align: center;"><a href="https://github.com/aws-samples/aws-genomics-workflows/blob/master/src/templates/gwfcore/gwfcore-code.template.yaml" target="_blank"><i class="material-icons">cloud_download</i></a></td>
+<td style="text-align: center;"><a class="launch-button launch-button-disabled"><i class="material-icons">play_arrow</i></a></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>The launch button has been disabled above since this template is part of a set of nested templates. It is not recommended to launch it independently of its intended parent stack.</p>
+</div>
+<h2 id="creating-an-ec2-launch-template">Creating an EC2 Launch Template</h2>
+<p>Instructions on how to create a launch template are below.  Once your Launch Template is created, you can reference it when you setup resources in AWS Batch to ensure that jobs run therein have your customizations available
+to them.</p>
+<h3 id="automated-via-cloudformation">Automated via CloudFormation</h3>
+<p>You can use the following CloudFormation template to create a Launch Template
+suitable for your needs.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th style="text-align: center;">Source</th>
+<th style="text-align: center;">Launch Stack</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EC2 Launch Template</td>
+<td>Creates an EC2 Launch Template that provisions instances on first boot for processing genomics workflow tasks.</td>
+<td style="text-align: center;"><a href="https://github.com/aws-samples/aws-genomics-workflows/blob/master/src/templates/gwfcore/gwfcore-launch-template.template.yaml" target="_blank"><i class="material-icons">cloud_download</i></a></td>
+<td style="text-align: center;"><a class="launch-button launch-button-disabled"><i class="material-icons">play_arrow</i></a></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>The launch button has been disabled above since this template is part of a set of nested templates. It is not recommended to launch it independently of its intended parent stack.</p>
+</div>
+<h3 id="manually-via-the-aws-console">Manually via the AWS Console</h3>
+<ul>
+<li>Go to the EC2 Console</li>
+<li>Click on "Launch Templates" (under "Instances")</li>
+<li>Click on "Create launch template"</li>
+<li>
+<p>Under "Launch template name and description"</p>
+<ul>
+<li>Use "genomics-workflow-template" for "Launch template name"</li>
+</ul>
+</li>
+<li>
+<p>Under "Storage volumes"</p>
+<ul>
+<li>Click "Add new volume" - this will add an entry called "Volume 3 (custom)"<ul>
+<li>Set <strong>Size</strong> to <strong>100 GiB</strong></li>
+<li>Set <strong>Delete on termination</strong> to <strong>Yes</strong></li>
+<li>Set <strong>Device name</strong> to <strong>/dev/xvdba</strong></li>
+<li>Set <strong>Volume type</strong> to <strong>General purpose SSD (gp2)</strong></li>
+<li>Set <strong>Encrypted</strong> to <strong>Yes</strong> </li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p><strong>Volume 1</strong> is used for the root filesystem.  The default size of 8GB is typically sufficient.</p>
+<p><strong>Volume 2</strong> is the default volume used by Amazon ECS Optimized AMIs for Docker image and metadata volume using Docker's <code>devicemapper</code> driver.  We'll be replacing this volume with the custom one you created, but need to keep it for compatibility.</p>
+<p><strong>Volume 3</strong> (the one you created above) will be used for job scratch space.  This will be mapped to <code>/var/lib/docker</code> which is used for container storage - i.e. what each running container will use to create its internal filesystem.</p>
+</div>
+<ul>
+<li>
+<p>Expand the "Advanced details" section</p>
+<ul>
+<li>Add the following script to <strong>User data</strong></li>
+</ul>
+</li>
+</ul>
+<pre><code class="language-text">MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary=&quot;==BOUNDARY==&quot;
+
+--==BOUNDARY==
+Content-Type: text/cloud-config; charset=&quot;us-ascii&quot;
+
+packages:
+- jq
+- btrfs-progs
+- sed
+- wget
+- unzip
+# add more package names here if you need them
+
+runcmd:
+- curl -s &quot;https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip&quot; -o &quot;/tmp/awscliv2.zip&quot;
+- unzip -q /tmp/awscliv2.zip -d /tmp
+- /tmp/aws/install
+
+###
+# add provisioning commands here
+###
+
+--==BOUNDARY==--
+</code></pre>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>You will need to replace <code># add provisioning commands here</code> with something appropriate</p>
+</div>
+<ul>
+<li>Click on "Create launch template"</li>
+</ul>
+<h2 id="custom-amis">Custom AMIs</h2>
+<p>A slightly more involved method for customizing an instance is
+to create a new AMI based on the ECS Optimized AMI.  This is good if you have
+a lot of customization to do - lots of software to install and/or need large
+datasets preloaded that will be needed by all your jobs.</p>
+<p>You can learn more about how to <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html">create your own AMIs in the EC2 userguide</a>.</p>
+<p>If needed, you can use Custom AMIs and Lauch Templates together - e.g. for a case where you need to ship preloaded datesets or use AMI packaged software from the AWS Marketplace and use the flexible provisioning options Launch Templates provide.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This is considered advanced use.  All documentation and CloudFormation templates hereon assumes use of EC2 Launch Templates.</p>
+</div>
+                
+                  
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="create-iam-roles.html" title="Permissions" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Permissions
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="setup-aws-batch.html" title="AWS Batch" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                AWS Batch
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            2019 Amazon Web Services
+          </div>
+        
+        powered by
+        <a href="https://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+        
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../assets/javascripts/application.9e1f3b71.js"></script>
+      
+      <script>app.initialize({version:"1.3.0",url:{base:".."}})</script>
+      
+    
+    
+      
+    
+  </body>
+</html>
