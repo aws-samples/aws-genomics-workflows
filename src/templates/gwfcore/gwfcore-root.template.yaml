@@ -508,7 +508,7 @@ Resources:
 
 Outputs:
   S3BucketName:
-    Value: !Sub ${S3Stack.Outputs.BucketName}
+    Value: !GetAtt S3Stack.Outputs.BucketName
   BatchJobRoleArn:
     Value: !Sub ${IamStack.Outputs.BatchJobRoleArn}
   DefaultJobQueueArn:
