@@ -25,6 +25,7 @@ Metadata:
           - CreateEFS
           - ExistingEFS
           - CreateFSx
+          - FSxBucketName
           - FSxSubnetId
           - FSxStorageVolumeSize
           - FSxPerUnitStorageThroughput
@@ -69,6 +70,8 @@ Metadata:
         default: Template Root URL
       CreateFSx:
         default: Create Amazon FSx for Lustre File System
+      FSxBucketName:
+        default: A S3 bucket name that will be mounted on FSx
       FSxSubnetId:
         default: FSx for Lustre SubnetId
       FSxStorageVolumeSize:
@@ -153,6 +156,12 @@ Parameters:
       - "Yes"
       - "No"
     Default: "No"
+  FSxBucketName:
+    Description: >-
+      A S3 bucket name that will be mounted on FSx
+    Type: String
+    AllowedPattern: "((?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)|(^.{0}$))"
+    ConstraintDescription: "Must respect AWS naming conventions"
   FSxSubnetId:
     Type: String
     Description: 'Subnet you want FSx for Lustre to launch in. We recommend a private subnet. NOTE: Must be from the VPC provided.'
@@ -272,7 +281,7 @@ Resources:
       Parameters:
         VpcId: !Ref VpcId
         SubnetId: !Ref FSxSubnetId
-        S3BucketName: !Ref S3BucketName
+        S3BucketName: !Ref FSxBucketName
         FSxStorageType: !Ref FSxStorageType
         FSxStorageVolumeSize: !Ref FSxStorageVolumeSize
         FSxPerUnitStorageThroughput: !Ref FSxPerUnitStorageThroughput
@@ -499,7 +508,7 @@ Resources:
 
 Outputs:
   S3BucketName:
-    Value: !Sub ${S3Stack.Outputs.BucketName}
+    Value: !GetAtt S3Stack.Outputs.BucketName
   BatchJobRoleArn:
     Value: !Sub ${IamStack.Outputs.BatchJobRoleArn}
   DefaultJobQueueArn:
