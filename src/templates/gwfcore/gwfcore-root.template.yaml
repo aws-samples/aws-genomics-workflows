@@ -160,8 +160,7 @@ Parameters:
     Description: >-
       A S3 bucket name that will be mounted on FSx
     Type: String
-    AllowedPattern: "((?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)|(^.{0}$))"
-    ConstraintDescription: "Must respect AWS naming conventions"
+    Default: ""
   FSxSubnetId:
     Type: String
     Description: 'Subnet you want FSx for Lustre to launch in. We recommend a private subnet. NOTE: Must be from the VPC provided.'
