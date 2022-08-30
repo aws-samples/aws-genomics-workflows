@@ -331,6 +331,16 @@ Resources:
                   - "secretsmanager:CreateSecret"
                   - "secretsmanager:UpdateSecret"
 
+        - PolicyName: !Sub CromwellServer-Notification-Access-${AWS::Region}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              Effect: Allow
+              Resource: "*"
+              Action:
+                - "sns:Publish"
+                - "events:PutEvents"
+
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
