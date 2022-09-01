@@ -160,6 +160,7 @@ Parameters:
     Description: >-
       A S3 bucket name that will be mounted on FSx
     Type: String
+    Default: ""
     AllowedPattern: "((?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)|(^.{0}$))"
     ConstraintDescription: "Must respect AWS naming conventions"
   FSxSubnetId:
@@ -219,6 +220,7 @@ Conditions:
   EfsCondition: !Equals [ !Ref CreateEFS, "Yes"]
   ExistingEfsCondition: !And [ !Not [ !Equals [ !Ref ExistingEFS, "" ] ], !Not [ !Condition EfsCondition ] ]
   FsxCondition: !Equals [ !Ref CreateFSx, "Yes"]
+  HasFSxBucket: !Not [!Equals ["", !Ref FSxBucketName]]
 
 Resources:
   S3Stack:
@@ -281,7 +283,7 @@ Resources:
       Parameters:
         VpcId: !Ref VpcId
         SubnetId: !Ref FSxSubnetId
-        S3BucketName: !Ref FSxBucketName
+        S3BucketName: !If [HasFSxBucket, !Ref FSxBucketName, AWS::NoValue]
         FSxStorageType: !Ref FSxStorageType
         FSxStorageVolumeSize: !Ref FSxStorageVolumeSize
         FSxPerUnitStorageThroughput: !Ref FSxPerUnitStorageThroughput
