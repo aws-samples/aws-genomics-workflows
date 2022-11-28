@@ -14,10 +14,11 @@ Very minimal container images such as Alpine do not contain the `glibc` librarie
 
 ## AWS credentials not working when set in the environment
 ### Possible Cause(s)
-You are using temporary federated or IAM role temporary credentials that use the AWS_SESSION_TOKEN in addition to AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY. Nextflow does not look for the AWS_SESSION_TOKEN environment variable as detailed at [nextflow/issues/2839](https://github.com/nextflow-io/nextflow/issues/2839)
+You are using a local run of nextflow with temporary federated or IAM role credentials that use the AWS_SESSION_TOKEN in addition to AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY. Nextflow does not look for the AWS_SESSION_TOKEN environment variable as detailed at [nextflow/issues/2839](https://github.com/nextflow-io/nextflow/issues/2839)
 
 ### Suggested Solution(s)
-  * Set the AWS credentials up in your `nextflow.config` which will support the AWS_SESSION_TOKEN
+  * Instead of using local credentials consider using an IAM role associated to an EC2 instance or ECS container where the Nextflow binary runs from. This will not require setting any local credentials and remove the need to update a session token.
+  * If you are using just using Nextflow locally for testing purposes, you can set credentials in a local `nextflow.config` which does support the AWS_SESSION_TOKEN
 ```
 aws {
     accessKey = 'XXXXXXXXXXXXXXXX'
@@ -25,6 +26,7 @@ aws {
     sessionToken = 'XXXXXXXXXXXXXXX'
 } 
 ```
+  * ***N.B.*** If you set the `sessionToken` in the Nextflow config it will expire and will need to be updated. This expiry time will depend on the configuration of credentials generation within your account. 
 
 ##  Container start errors
 ```
