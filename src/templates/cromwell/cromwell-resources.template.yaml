@@ -419,7 +419,27 @@ Resources:
               mode: 000664
               owner: root
               group: root
-            
+
+            "/home/ec2-user/create_db.py":
+              content: !Sub
+              - |
+                import pymysql
+                import time
+                while True:
+                    try:
+                        connection = pymysql.connect(host="${DBAddress}", user="${DBUsername}", password="${DBPassword}")
+                    except:
+                        time.sleep(60)
+                    else:
+                        break
+                with connection:
+                    with connection.cursor() as cursor:
+                        cursor.execute("CREATE DATABASE cromwell")
+              - DBAddress: !GetAtt RDSDBCluster.Endpoint.Address
+              mode: 000664
+              owner: ec2-user
+              group: ec2-user
+
             "/home/ec2-user/get_cromwell.sh":
               content: !Sub
               - |
@@ -545,7 +565,7 @@ Resources:
                       }
                     }
                   }
-                - DBAddress: !GetAtt RDSCluster.Endpoint.Address
+                - DBAddress: !GetAtt RDSDBCluster.Endpoint.Address
                   BatchQueue: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/job-queue/default:1}}'
                   S3Bucket: !Sub "{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
               mode: "000644"
@@ -628,7 +648,7 @@ Resources:
                       }
                     }
                   }
-                - DBAddress: !GetAtt RDSCluster.Endpoint.Address
+                - DBAddress: !GetAtt RDSDBCluster.Endpoint.Address
                   BatchQueue: !Sub '{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/job-queue/default:1}}'
                   S3Bucket: !Sub "{{resolve:ssm:/gwfcore/${GWFCoreNamespace}/s3-bucket:1}}"
               mode: "000644"
@@ -830,6 +850,12 @@ Resources:
             03_start_nginx:
               command: "systemctl start nginx"
 
+            04_install_deps:
+              command: "python3 -m pip install pymysql"
+
+            05_create_db:
+              command: "python3 /home/ec2-user/create_db.py &"
+
         config3:
           commands:
             00_get_cromwell:
@@ -935,30 +961,31 @@ Resources:
         - Key: solution
           Value: !FindInMap ["TagMap", "default", "solution"]
 
-  RDSCluster:
+  RDSDBCluster:
     Type: 'AWS::RDS::DBCluster'
+    DeletionPolicy: Delete
     Properties:
+      Engine: aurora-mysql
+      EngineVersion: 5.7.mysql_aurora.2.11.0
       MasterUsername: !Ref DBUsername
       MasterUserPassword: !Ref DBPassword
       DBClusterIdentifier: !Sub cromwell-${Namespace}
-      BackupRetentionPeriod: 7
-      DatabaseName: cromwell
-      Engine: aurora
-      EngineMode: serverless
-      EnableHttpEndpoint: true
-      DBSubnetGroupName: !Ref DBSubnetGroup
-      ScalingConfiguration:
-        AutoPause: true
-        MinCapacity: 1
-        MaxCapacity: 64
-        SecondsUntilAutoPause: 1000
-      StorageEncrypted: true
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: 0.5
+        MaxCapacity: 2
       VpcSecurityGroupIds: [!GetAtt RDSSecurityGroup.GroupId]
+      DBSubnetGroupName: !Ref DBSubnetGroup
       Tags:
         - Key: architecture
           Value: !FindInMap ["TagMap", "default", "architecture"]
         - Key: solution
           Value: !FindInMap ["TagMap", "default", "solution"]
+  RDSDBInstance:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      Engine: aurora-mysql
+      DBClusterIdentifier: !Ref RDSDBCluster
+      DBInstanceClass: db.r6g.large
 
   ParamOrchestrator:
     Type: "AWS::SSM::Parameter"

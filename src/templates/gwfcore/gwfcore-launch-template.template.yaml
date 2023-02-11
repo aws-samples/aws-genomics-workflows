@@ -68,6 +68,10 @@ Resources:
             Tags:
             - Key: architecture
               Value: !FindInMap ["TagMap", "default", "architecture"]
+        
+        # ssh key:
+        KeyName: "amw-test-1"
+
         BlockDeviceMappings:
           - Ebs:
               DeleteOnTermination: True
