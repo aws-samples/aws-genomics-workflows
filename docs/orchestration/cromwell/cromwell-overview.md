@@ -1,5 +1,7 @@
 # Cromwell on AWS Batch
 
+{{ deprecation_notice() }}
+
 ![Cromwell on AWS](./images/cromwell-on-aws_infrastructure.png)
 
 [Cromwell](https://cromwell.readthedocs.io/en/stable/) is a workflow management

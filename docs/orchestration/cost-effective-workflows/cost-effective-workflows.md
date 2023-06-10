@@ -1,5 +1,7 @@
 # Optimizing AWS Batch Resources for Cost Effective Genomics Workflows
 
+{{ deprecation_notice() }}
+
 Tasks in a workflow run in Docker containers. Each task contains a `runtime` definition that specifies the 
 number of CPUs and amount of RAM allocated to the task. 
 

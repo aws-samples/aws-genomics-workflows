@@ -1,5 +1,7 @@
 # Workflow Orchestration
 
+{{ deprecation_notice() }}
+
 Having deployed a way to execute individual tasks via AWS Batch, we turn to
 orchestration of complete workflows.
 

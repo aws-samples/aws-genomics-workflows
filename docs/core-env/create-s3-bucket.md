@@ -1,5 +1,7 @@
 # Core: Data Storage
 
+{{ deprecation_notice() }}
+
 You will need a robust location to store your input and output data.  Genomics data files often equal or exceed 100GB per file.  In addition to input sample files, genomics data processing typically relies on additional items like reference sequences or annotation databases that can be equally large.
 
 The following are key criteria for storing data for genomics workflows

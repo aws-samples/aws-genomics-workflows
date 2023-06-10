@@ -1,5 +1,7 @@
 # Core: Custom Compute Resources
 
+{{ deprecation_notice() }}
+
 Genomics is a data-heavy workload and requires some modification to the defaults
 used by AWS Batch for job processing.  To efficiently use resources, AWS Batch places multiple jobs on an worker instance.  The data requirements for individual jobs can range from a few MB to 100s of GB.  Instances running workflow jobs will not know beforehand how much space is required, and need scalable storage to meet unpredictable runtime demands.
 

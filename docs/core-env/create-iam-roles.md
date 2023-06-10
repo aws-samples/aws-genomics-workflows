@@ -1,5 +1,7 @@
 # Core: Permissions
 
+{{ deprecation_notice() }}
+
 IAM is used to control access to your AWS resources.  This includes access by users and groups in your account, as well as access by AWS services such as AWS Batch operating on your behalf.
 
 Services use IAM Roles which provide temporary access to AWS resources when needed.

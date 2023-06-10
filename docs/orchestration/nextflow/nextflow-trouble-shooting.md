@@ -1,5 +1,7 @@
 # Nextflow Troubleshooting
 
+{{ deprecation_notice() }}
+
 The following are some common errors that we have seen and suggested solutions
 
 ## Job Logs say there is an error in AWS CLI while loading shared libraries

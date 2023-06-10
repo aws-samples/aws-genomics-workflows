@@ -95,3 +95,18 @@ def declare_variables(variables, macro):
             cfn_button=cfn_button(stack_name, template, enabled=enable_cfn_button),
             description=description
         )
+
+    @macro
+    @dedented
+    def deprecation_notice():
+        return """
+!!! error "DEPRECATION NOTICE"
+    This site and related code are no longer actively maintained.
+    
+    This site will be disabled and the underlying Github repository will be **archived on 2023-07-31**. This allows all code and assets presented here to remain publicly available for historical reference purposes only.
+
+    For more up to date solutions to running Genomics workflows on AWS checkout:
+
+    - [Amazon Omics](https://aws.amazon.com/omics/) - a fully managed service for storing, processing, and querying genomic, transcriptomic, and other omics data into insights. [Omics Workflows](https://docs.aws.amazon.com/omics/latest/dev/workflows.html) provides fully managed execution of pre-packaged [Ready2Run](https://docs.aws.amazon.com/omics/latest/dev/service-workflows.html) workflows or private workflows you create using WDL or Nextflow.
+    - [Amazon Genomics CLI](https://aws.amazon.com/genomics-cli/) - an open source tool that automates deploying and running workflow engines in AWS. AGC uses the same architectural patterns described here (i.e. operating workflow engines with AWS Batch). It provides support for running WDL, Nextflow, Snakemake, and CWL based workflows.
+        """

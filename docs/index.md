@@ -1,5 +1,7 @@
 # Genomics Workflows on AWS
 
+{{ deprecation_notice() }}
+
 ![banner](images/aws-genomics-workflows-banner.png)
 
 ## Introduction

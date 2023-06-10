@@ -1,5 +1,7 @@
 # Building Custom Resources
 
+{{ deprecation_notice() }}
+
 This section describes how to build and upload templates and artifacts to use in a customized deployment.  Once uploaded, the locations of the templates and artifacts are used when deploying the Nextflow on AWS Batch solution (see [Customized Deployment](custom-deploy.md))
 
 ## Building a Custom Distribution

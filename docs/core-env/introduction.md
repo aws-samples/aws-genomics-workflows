@@ -1,5 +1,7 @@
 # Core: Introduction
 
+{{ deprecation_notice() }}
+
 A high level view of the architecture you will need to run workflows is shown is below.
 
 ![high level architecture](images/aws-genomics-workflows-high-level-arch.png)

@@ -1,5 +1,7 @@
 # Cromwell Examples
 
+{{ deprecation_notice() }}
+
 The following are some example workflows you can use to test Cromwell on AWS.
 The `curl` commands assume that you have access to a Cromwell server via `localhost:8000`.
 

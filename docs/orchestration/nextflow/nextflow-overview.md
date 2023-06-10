@@ -1,5 +1,7 @@
 # Nextflow on AWS Batch
 
+{{ deprecation_notice() }}
+
 ![Nextflow on AWS](./images/nextflow-on-aws-infrastructure.png)
 
 [Nextflow](https://www.nextflow.io) is a reactive workflow framework and domain specific language (DSL) developed by the [Comparative Bioinformatics group](https://www.crg.eu/en/programmes-groups/notredame-lab) at the Barcelona [Centre for Genomic Regulation (CRG)](http://www.crg.eu/) that enables scalable and reproducible scientific workflows using software containers.

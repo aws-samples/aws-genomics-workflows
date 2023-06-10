@@ -1,5 +1,7 @@
 # Core: AWS Batch
 
+{{ deprecation_notice() }}
+
 [AWS Batch](https://aws.amazon.com/batch/) is a managed service that helps you efficiently run batch computing workloads on the AWS Cloud. Users submit jobs to job queues, specifying the application to be run and the compute resources (CPU and memory) required by the job. AWS Batch is responsible for launching the appropriate quantity and types of instances needed to run your jobs.
 
 AWS Batch manages the following resources:

@@ -1,5 +1,7 @@
 # Quick Start - For rapid deployment
 
+{{ deprecation_notice() }}
+
 ## Step 0: Amazon VPC
 
 While you can use an existing "default" VPC to implement deployment of your genomics environment, we strongly recommend utilizing a VPC with private subnets for processing sensitive data with AWS Batch. Doing so will restrict access to the instances from the internet, and help meet security and compliance requirements, such as [dbGaP](http://j.mp/aws-dbgap). 
