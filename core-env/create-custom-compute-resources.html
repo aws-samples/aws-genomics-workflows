@@ -743,6 +743,16 @@
                 
                 
                 <h1 id="core-custom-compute-resources">Core: Custom Compute Resources</h1>
+<div class="admonition error">
+<p class="admonition-title">DEPRECATION NOTICE</p>
+<p>This site and related code are no longer actively maintained.</p>
+<p>This site will be disabled and the underlying Github repository will be <strong>archived on 2023-07-31</strong>. This allows all code and assets presented here to remain publicly available for historical reference purposes only.</p>
+<p>For more up to date solutions to running Genomics workflows on AWS checkout:</p>
+<ul>
+<li><a href="https://aws.amazon.com/omics/">Amazon Omics</a> - a fully managed service for storing, processing, and querying genomic, transcriptomic, and other omics data into insights. <a href="https://docs.aws.amazon.com/omics/latest/dev/workflows.html">Omics Workflows</a> provides fully managed execution of pre-packaged <a href="https://docs.aws.amazon.com/omics/latest/dev/service-workflows.html">Ready2Run</a> workflows or private workflows you create using WDL or Nextflow.</li>
+<li><a href="https://aws.amazon.com/genomics-cli/">Amazon Genomics CLI</a> - an open source tool that automates deploying and running workflow engines in AWS. AGC uses the same architectural patterns described here (i.e. operating workflow engines with AWS Batch). It provides support for running WDL, Nextflow, Snakemake, and CWL based workflows.</li>
+</ul>
+</div>
 <p>Genomics is a data-heavy workload and requires some modification to the defaults
 used by AWS Batch for job processing.  To efficiently use resources, AWS Batch places multiple jobs on an worker instance.  The data requirements for individual jobs can range from a few MB to 100s of GB.  Instances running workflow jobs will not know beforehand how much space is required, and need scalable storage to meet unpredictable runtime demands.</p>
 <p>To handle this use case, we can use a process that monitors a mountpoint on an instance and expands free space as needed based on capacity thresholds. This can be done using logical volume management and attaching EBS volumes as needed to the instance like so:</p>

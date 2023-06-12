@@ -603,6 +603,60 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#aws-credentials-not-working-when-set-in-the-environment" title="AWS credentials not working when set in the environment" class="md-nav__link">
+    AWS credentials not working when set in the environment
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#possible-causes_1" title="Possible Cause(s)" class="md-nav__link">
+    Possible Cause(s)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#suggested-solutions_1" title="Suggested Solution(s)" class="md-nav__link">
+    Suggested Solution(s)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#container-start-errors" title="Container start errors" class="md-nav__link">
+    Container start errors
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#possible-causes_2" title="Possible Cause(s)" class="md-nav__link">
+    Possible Cause(s)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#suggested-solutions_2" title="Suggested Solution(s)" class="md-nav__link">
+    Suggested Solution(s)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
       
       
       
@@ -683,6 +737,60 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#aws-credentials-not-working-when-set-in-the-environment" title="AWS credentials not working when set in the environment" class="md-nav__link">
+    AWS credentials not working when set in the environment
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#possible-causes_1" title="Possible Cause(s)" class="md-nav__link">
+    Possible Cause(s)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#suggested-solutions_1" title="Suggested Solution(s)" class="md-nav__link">
+    Suggested Solution(s)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#container-start-errors" title="Container start errors" class="md-nav__link">
+    Container start errors
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#possible-causes_2" title="Possible Cause(s)" class="md-nav__link">
+    Possible Cause(s)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#suggested-solutions_2" title="Suggested Solution(s)" class="md-nav__link">
+    Suggested Solution(s)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
       
       
       
@@ -703,6 +811,16 @@
                 
                 
                 <h1 id="nextflow-troubleshooting">Nextflow Troubleshooting</h1>
+<div class="admonition error">
+<p class="admonition-title">DEPRECATION NOTICE</p>
+<p>This site and related code are no longer actively maintained.</p>
+<p>This site will be disabled and the underlying Github repository will be <strong>archived on 2023-07-31</strong>. This allows all code and assets presented here to remain publicly available for historical reference purposes only.</p>
+<p>For more up to date solutions to running Genomics workflows on AWS checkout:</p>
+<ul>
+<li><a href="https://aws.amazon.com/omics/">Amazon Omics</a> - a fully managed service for storing, processing, and querying genomic, transcriptomic, and other omics data into insights. <a href="https://docs.aws.amazon.com/omics/latest/dev/workflows.html">Omics Workflows</a> provides fully managed execution of pre-packaged <a href="https://docs.aws.amazon.com/omics/latest/dev/service-workflows.html">Ready2Run</a> workflows or private workflows you create using WDL or Nextflow.</li>
+<li><a href="https://aws.amazon.com/genomics-cli/">Amazon Genomics CLI</a> - an open source tool that automates deploying and running workflow engines in AWS. AGC uses the same architectural patterns described here (i.e. operating workflow engines with AWS Batch). It provides support for running WDL, Nextflow, Snakemake, and CWL based workflows.</li>
+</ul>
+</div>
 <p>The following are some common errors that we have seen and suggested solutions</p>
 <h2 id="job-logs-say-there-is-an-error-in-aws-cli-while-loading-shared-libraries">Job Logs say there is an error in AWS CLI while loading shared libraries</h2>
 <h3 id="possible-causes">Possible Cause(s)</h3>
@@ -712,6 +830,52 @@ Very minimal container images such as Alpine do not contain the <code>glibc</cod
 <ul>
 <li>Modify your image to include or mount these dependencies</li>
 <li>Use an image (or build from a base) that already contains these such as <code>ubuntu:latest</code></li>
+</ul>
+<h2 id="aws-credentials-not-working-when-set-in-the-environment">AWS credentials not working when set in the environment</h2>
+<h3 id="possible-causes_1">Possible Cause(s)</h3>
+<p>You are using a local run of nextflow with temporary federated or IAM role credentials that use the AWS_SESSION_TOKEN in addition to AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY. Nextflow does not look for the AWS_SESSION_TOKEN environment variable as detailed at <a href="https://github.com/nextflow-io/nextflow/issues/2839">nextflow/issues/2839</a></p>
+<h3 id="suggested-solutions_1">Suggested Solution(s)</h3>
+<ul>
+<li>Instead of using local credentials consider using an IAM role associated to an EC2 instance or ECS container where the Nextflow binary runs from. This will not require setting any local credentials and remove the need to update a session token.</li>
+<li>If you are using just using Nextflow locally for testing purposes, you can set credentials in a local <code>nextflow.config</code> which does support the AWS_SESSION_TOKEN</li>
+</ul>
+<pre><code>aws {
+    accessKey = 'XXXXXXXXXXXXXXXX'
+    secretKey = 'XXXXXXXXXXXXXXXX'
+    sessionToken = 'XXXXXXXXXXXXXXX'
+} 
+</code></pre>
+<ul>
+<li><strong><em>N.B.</em></strong> If you set the <code>sessionToken</code> in the Nextflow config it will expire and will need to be updated. This expiry time will depend on the configuration of credentials generation within your account. </li>
+</ul>
+<h2 id="container-start-errors">Container start errors</h2>
+<pre><code>CannotStartContainerError: Error response from daemon: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: exec: &quot;/usr/local/env-execute&quot;: stat /usr/local/env-execute: no such file or directory: un
+</code></pre>
+<h3 id="possible-causes_2">Possible Cause(s)</h3>
+<p>Nextflow on AWS Batch relies on the process containers being able to use a number of scripts that are mounted to the container. If references to these are wrong or do not exist then the tasks will not start.</p>
+<h3 id="suggested-solutions_2">Suggested Solution(s)</h3>
+<ul>
+<li>If using the provided image setup with no changes, check the path specified for the aws-cli in your <code>nextflow.config</code> is set to</li>
+</ul>
+<pre><code> aws.batch.cliPath = '/opt/aws-cli/bin/aws'
+</code></pre>
+<ul>
+<li>Check the target S3 bucket created in the set-up has the following path: <code>bucket-name/&lt;namespace&gt;-ecs-additions/SourceStag/</code> and that content is present. </li>
+<li>This location should contain a zip file that has the following in it:</li>
+</ul>
+<pre><code>.
+├── awscli-shim.sh
+├── ecs-additions-common.sh
+├── ecs-additions-cromwell.sh
+├── ecs-additions-nextflow.sh
+├── ecs-additions-step-functions.sh
+├── ecs-logs-collector.sh
+├── fetch_and_run.sh
+├── get-amazon-ebs-autoscale.sh
+└── provision.sh
+</code></pre>
+<ul>
+<li>If this is missing check that <code>&lt;namespace&gt;-ecs-additions</code> exists and ran successfully in AWS Codepipeline and rerun if failures are present.</li>
 </ul>
                 
                   

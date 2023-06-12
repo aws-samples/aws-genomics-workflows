@@ -895,6 +895,16 @@
                 
                 
                 <h1 id="nextflow-on-aws-batch">Nextflow on AWS Batch</h1>
+<div class="admonition error">
+<p class="admonition-title">DEPRECATION NOTICE</p>
+<p>This site and related code are no longer actively maintained.</p>
+<p>This site will be disabled and the underlying Github repository will be <strong>archived on 2023-07-31</strong>. This allows all code and assets presented here to remain publicly available for historical reference purposes only.</p>
+<p>For more up to date solutions to running Genomics workflows on AWS checkout:</p>
+<ul>
+<li><a href="https://aws.amazon.com/omics/">Amazon Omics</a> - a fully managed service for storing, processing, and querying genomic, transcriptomic, and other omics data into insights. <a href="https://docs.aws.amazon.com/omics/latest/dev/workflows.html">Omics Workflows</a> provides fully managed execution of pre-packaged <a href="https://docs.aws.amazon.com/omics/latest/dev/service-workflows.html">Ready2Run</a> workflows or private workflows you create using WDL or Nextflow.</li>
+<li><a href="https://aws.amazon.com/genomics-cli/">Amazon Genomics CLI</a> - an open source tool that automates deploying and running workflow engines in AWS. AGC uses the same architectural patterns described here (i.e. operating workflow engines with AWS Batch). It provides support for running WDL, Nextflow, Snakemake, and CWL based workflows.</li>
+</ul>
+</div>
 <p><img alt="Nextflow on AWS" src="images/nextflow-on-aws-infrastructure.png" /></p>
 <p><a href="https://www.nextflow.io">Nextflow</a> is a reactive workflow framework and domain specific language (DSL) developed by the <a href="https://www.crg.eu/en/programmes-groups/notredame-lab">Comparative Bioinformatics group</a> at the Barcelona <a href="http://www.crg.eu/">Centre for Genomic Regulation (CRG)</a> that enables scalable and reproducible scientific workflows using software containers.</p>
 <p>Nextflow can be run either locally or on a dedicated EC2 instance.  The latter is preferred if you have long running workflows - with the caveat that you are responsible for stopping the instance when your workflow is complete.  The architecture presented in this guide demonstrates how you can run Nextflow using AWS Batch in a managed and cost effective fashion.</p>

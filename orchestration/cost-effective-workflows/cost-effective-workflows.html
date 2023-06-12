@@ -757,6 +757,16 @@
                 
                 
                 <h1 id="optimizing-aws-batch-resources-for-cost-effective-genomics-workflows">Optimizing AWS Batch Resources for Cost Effective Genomics Workflows</h1>
+<div class="admonition error">
+<p class="admonition-title">DEPRECATION NOTICE</p>
+<p>This site and related code are no longer actively maintained.</p>
+<p>This site will be disabled and the underlying Github repository will be <strong>archived on 2023-07-31</strong>. This allows all code and assets presented here to remain publicly available for historical reference purposes only.</p>
+<p>For more up to date solutions to running Genomics workflows on AWS checkout:</p>
+<ul>
+<li><a href="https://aws.amazon.com/omics/">Amazon Omics</a> - a fully managed service for storing, processing, and querying genomic, transcriptomic, and other omics data into insights. <a href="https://docs.aws.amazon.com/omics/latest/dev/workflows.html">Omics Workflows</a> provides fully managed execution of pre-packaged <a href="https://docs.aws.amazon.com/omics/latest/dev/service-workflows.html">Ready2Run</a> workflows or private workflows you create using WDL or Nextflow.</li>
+<li><a href="https://aws.amazon.com/genomics-cli/">Amazon Genomics CLI</a> - an open source tool that automates deploying and running workflow engines in AWS. AGC uses the same architectural patterns described here (i.e. operating workflow engines with AWS Batch). It provides support for running WDL, Nextflow, Snakemake, and CWL based workflows.</li>
+</ul>
+</div>
 <p>Tasks in a workflow run in Docker containers. Each task contains a <code>runtime</code> definition that specifies the 
 number of CPUs and amount of RAM allocated to the task. </p>
 <pre><code>  runtime {

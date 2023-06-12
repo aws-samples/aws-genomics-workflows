@@ -755,6 +755,16 @@
                 
                 
                 <h1 id="customized-deployment">Customized Deployment</h1>
+<div class="admonition error">
+<p class="admonition-title">DEPRECATION NOTICE</p>
+<p>This site and related code are no longer actively maintained.</p>
+<p>This site will be disabled and the underlying Github repository will be <strong>archived on 2023-07-31</strong>. This allows all code and assets presented here to remain publicly available for historical reference purposes only.</p>
+<p>For more up to date solutions to running Genomics workflows on AWS checkout:</p>
+<ul>
+<li><a href="https://aws.amazon.com/omics/">Amazon Omics</a> - a fully managed service for storing, processing, and querying genomic, transcriptomic, and other omics data into insights. <a href="https://docs.aws.amazon.com/omics/latest/dev/workflows.html">Omics Workflows</a> provides fully managed execution of pre-packaged <a href="https://docs.aws.amazon.com/omics/latest/dev/service-workflows.html">Ready2Run</a> workflows or private workflows you create using WDL or Nextflow.</li>
+<li><a href="https://aws.amazon.com/genomics-cli/">Amazon Genomics CLI</a> - an open source tool that automates deploying and running workflow engines in AWS. AGC uses the same architectural patterns described here (i.e. operating workflow engines with AWS Batch). It provides support for running WDL, Nextflow, Snakemake, and CWL based workflows.</li>
+</ul>
+</div>
 <p>Deployments of the 'Nextflow on AWS Batch' solution are based on nested CloudFormation templates, and on artifacts comprising scripts, software packages, and configuration files.  The templates and artifacts are stored in S3 buckets, and their S3 URLs are used when launching the top-level template and as parameters to that template's deployment.  </p>
 <h2 id="vpc">VPC</h2>
 <p>The quick start link deploys the <a href="https://aws.amazon.com/quickstart/architecture/vpc/">AWS VPC Quickstart</a>, which creates a VPC with up to 4 Availability Zones, each with a public subnet and a private subnet with NAT Gateway access to the Internet.</p>
