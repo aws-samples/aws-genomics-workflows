@@ -1,10 +1,8 @@
 # Genomics Workflows on AWS
 
-:warning: DEPRECATION NOTICE :warning:
+:warning: This site and related code are no longer actively maintained as of 2023-07-31. :warning:
 
-This site and related code are no longer actively maintained.
-
-This site will be disabled and the underlying Github repository will be **archived on 2023-07-31**. This allows all code and assets presented here to remain publicly available for historical reference purposes only.
+This allows all code and assets presented here to remain publicly available for historical reference purposes only.
 
 For more up to date solutions to running Genomics workflows on AWS checkout:
 
